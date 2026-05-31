@@ -1,0 +1,594 @@
+.pos-layout {
+  display: flex;
+  height: 100%;
+  gap: 1.5rem;
+  padding-right: 1.5rem;
+}
+
+.pos-products {
+  flex: 2;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem;
+  overflow: hidden;
+}
+
+.pos-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--border);
+}
+
+.pos-header h2 {
+  font-size: 1.25rem;
+}
+
+.pos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 1rem;
+  overflow-y: auto;
+  padding-right: 0.5rem;
+}
+
+.pos-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 1.25rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 120px;
+}
+
+.pos-card:hover {
+  border-color: var(--primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.1);
+}
+
+.pos-card.out-of-stock {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.pos-card.out-of-stock:hover {
+  transform: none;
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.pos-card-info h4 {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.pos-price {
+  font-weight: 700;
+  color: var(--primary);
+  font-size: 1.1rem;
+}
+
+.pos-card-stock {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 1rem;
+}
+
+.text-error {
+  color: var(--error);
+  font-weight: 600;
+}
+
+/* Cart Side */
+.pos-cart {
+  flex: 1;
+  min-width: 380px;
+  max-width: 450px;
+  display: flex;
+  flex-direction: column;
+}
+
+.badge {
+  background: rgba(79, 70, 229, 0.1);
+  color: var(--primary);
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.cart-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 0 1.5rem;
+}
+
+.empty-cart {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-muted);
+  opacity: 0.5;
+  gap: 1rem;
+}
+
+.cart-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.cart-item-info h5 {
+  font-size: 1rem;
+  margin-bottom: 0.25rem;
+}
+
+.cart-item-info p {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+}
+
+.cart-item-actions {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.qty-picker {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: var(--background);
+  border-radius: 8px;
+  padding: 0.25rem;
+}
+
+.qty-picker button {
+  padding: 0.25rem;
+  border-radius: 4px;
+}
+
+.qty-picker button:hover {
+  background: var(--border);
+}
+
+.qty-picker span {
+  min-width: 20px;
+  text-align: center;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.item-total {
+  font-weight: 600;
+  min-width: 60px;
+  text-align: right;
+}
+
+.remove-btn {
+  color: var(--error);
+  padding: 0.25rem;
+  opacity: 0.7;
+}
+
+.remove-btn:hover {
+  opacity: 1;
+}
+
+.cart-footer {
+  padding: 1.5rem;
+  border-top: 1px solid var(--border);
+  background: var(--background);
+  border-radius: 0 0 12px 12px;
+}
+
+.cart-total-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.total-val {
+  color: var(--primary);
+  font-size: 1.75rem;
+  font-weight: 700;
+}
+
+.checkout-btn {
+  width: 100%;
+  padding: 1rem;
+  font-size: 1.1rem;
+  border-radius: 12px;
+}
+
+
+/* -------------------------------------
+   INVOICE STYLING (ON SCREEN & PRINT)
+-------------------------------------- */
+
+.pos-invoice-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100%;
+  padding: 2rem;
+  overflow-y: auto;
+  background-color: var(--background);
+}
+
+.invoice-actions {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  width: 100%;
+  max-width: 148mm;
+  justify-content: flex-end;
+}
+
+/* A5 Paper Settings */
+.a5-invoice-wrapper {
+  background: white;
+  padding: 0;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+  border: 1px solid #e2e8f0;
+}
+
+.a5-invoice {
+  width: 148mm;
+  min-height: 210mm;
+  background-color: #ffffff;
+  color: #1a1a1a; /* Force dark text */
+  padding: 15mm;
+  font-family: 'Inter', sans-serif;
+  box-sizing: border-box;
+}
+
+.invoice-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 8mm;
+  border-bottom: 2px solid #f1f5f9;
+  padding-bottom: 6mm;
+}
+
+.invoice-branding {
+  display: flex;
+  align-items: center;
+  gap: 4mm;
+}
+
+.invoice-logo {
+  width: 14mm;
+  height: 14mm;
+  background: var(--primary);
+  color: white;
+  border-radius: 3mm;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 5mm;
+  letter-spacing: -1px;
+}
+
+.invoice-company h2 {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 2px;
+  color: #0f172a;
+}
+
+.invoice-company p {
+  font-size: 9px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.invoice-title h1 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #e2e8f0;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  margin: 0;
+}
+
+.invoice-details {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 8mm;
+}
+
+.invoice-to h3 {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 3px;
+  font-weight: 600;
+}
+
+.invoice-to p {
+  font-size: 12px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+.invoice-meta {
+  text-align: right;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-bottom: 3px;
+  font-size: 11px;
+}
+
+.meta-label {
+  color: #64748b;
+  font-weight: 500;
+}
+
+.meta-value {
+  color: #0f172a;
+  font-weight: 600;
+  min-width: 60px;
+}
+
+/* Invoice Table */
+.invoice-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 8mm;
+}
+
+.invoice-table th {
+  background-color: #f8fafc;
+  padding: 8px 10px;
+  font-size: 10px;
+  text-transform: uppercase;
+  color: #64748b;
+  font-weight: 600;
+  border-top: 1px solid #e2e8f0;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.invoice-table td {
+  padding: 10px;
+  font-size: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  color: #334155;
+}
+
+.a5-invoice .text-left { text-align: left; }
+.a5-invoice .text-center { text-align: center; }
+.a5-invoice .text-right { text-align: right; }
+.a5-invoice .font-medium { font-weight: 500; color: #0f172a; }
+
+/* Summary */
+.invoice-summary-box {
+  width: 50%;
+  margin-left: auto;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px;
+  background-color: #f8fafc;
+  margin-bottom: 10mm;
+}
+
+.summary-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 11px;
+  color: #64748b;
+  margin-bottom: 6px;
+}
+
+.summary-row.total-row {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed #cbd5e1;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--primary);
+  margin-bottom: 0;
+}
+
+/* Footer */
+.invoice-footer {
+  text-align: center;
+  margin-top: auto;
+  border-top: 1px solid #e2e8f0;
+  padding-top: 6mm;
+}
+
+.thank-you {
+  font-size: 12px;
+  font-weight: 600;
+  color: #0f172a;
+  margin-bottom: 4px;
+}
+
+.terms {
+  font-size: 9px;
+  color: #94a3b8;
+}
+
+/* Print CSS specific to A5 format */
+@media print {
+  /* Hide sidebar and non-printable elements */
+  .billing-sidebar, .no-print {
+    display: none !important;
+  }
+
+  /* Reset layout constraints to allow proper printing */
+  html, body, #root, .billing-module-layout, .billing-content, .pos-invoice-container {
+    height: auto !important;
+    width: auto !important;
+    overflow: visible !important;
+    position: static !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    display: block !important;
+  }
+
+  .a5-invoice-wrapper {
+    border: none !important;
+    box-shadow: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .a5-invoice {
+    width: 148mm !important;
+    min-height: 210mm !important;
+    margin: 0 auto !important;
+    padding: 10mm !important;
+    box-sizing: border-box !important;
+    page-break-after: always;
+  }
+
+  /* Ensure backgrounds render on print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Force A5 dimensions in browser print dialog */
+  @page {
+    size: A5 portrait;
+    margin: 0;
+  }
+}
+
+.pos-search-box { display: flex; align-items: center; background: var(--background); border: 1px solid var(--border); border-radius: 8px; padding: 0 0.75rem; width: 250px; }
+.pos-search-box .search-icon { color: var(--text-muted); margin-right: 0.5rem; }
+.pos-search-input { border: none; background: transparent; padding: 0.5rem 0; width: 100%; outline: none; font-size: 0.875rem; color: var(--text); }
+
+.cart-discount-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.pos-discount-input {
+  width: 100px;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--text);
+  text-align: right;
+  font-size: 1rem;
+}
+
+.pos-discount-input:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.cart-total-row {
+  margin-bottom: 0.75rem;
+}
+
+.cart-total-row.final-total {
+  margin-bottom: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px dashed var(--border);
+}
+
+.total-val.subtotal {
+  font-size: 1.25rem;
+  color: var(--text);
+  font-weight: 600;
+}
+
+
+.quick-sale-bar { display: flex; justify-content: space-between; align-items: center; background: rgba(79, 70, 229, 0.05); border: 1px solid rgba(79, 70, 229, 0.2); padding: 1rem 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; }
+.quick-sale-info h4 { font-size: 1rem; color: var(--primary); margin-bottom: 0.25rem; }
+.quick-sale-info p { font-size: 0.8rem; color: var(--text-muted); }
+.quick-sale-actions { display: flex; align-items: center; gap: 0.75rem; }
+.qty-label { font-size: 0.875rem; color: var(--text-muted); font-weight: 500; }
+.success-flash { background: var(--secondary) !important; color: white !important; transition: all 0.2s; }
+
+
+@media (max-width: 768px) {
+  .pos-layout {
+    flex-direction: column;
+    height: auto;
+    padding-right: 0;
+    gap: 1rem;
+  }
+
+  .pos-products {
+    overflow: visible;
+  }
+
+  .pos-cart {
+    min-width: unset;
+    max-width: 100%;
+  }
+
+  .pos-grid {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    overflow-y: visible;
+  }
+
+  .pos-header {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .pos-search-box {
+    width: 100%;
+  }
+
+  .quick-sale-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .quick-sale-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .cart-footer {
+    padding: 1rem;
+  }
+
+  .pos-footer-row {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .checkout-btn {
+    width: 100%;
+  }
+}
