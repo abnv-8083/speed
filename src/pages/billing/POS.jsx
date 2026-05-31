@@ -427,8 +427,8 @@ const POS = () => {
             <span>Customer Name</span>
             <input 
               type="text" 
-              className="pos-discount-input text-left" 
-              style={{ width: '150px' }}
+              className="pos-discount-input" 
+              style={{ width: '160px', textAlign: 'right' }}
               value={customerName}
               onChange={(e) => setCustomerName(e.target.value)}
               placeholder="Walk-in Customer"
@@ -439,6 +439,7 @@ const POS = () => {
             <input 
               type="number" 
               className="pos-discount-input" 
+              style={{ width: '160px', textAlign: 'right' }}
               min="0" 
               step="0.01" 
               value={discount || ''}
@@ -448,11 +449,11 @@ const POS = () => {
           </div>
           <div className="cart-total-row">
             <span>Subtotal</span>
-            <span className="total-val subtotal">₹{cartSubtotal.toFixed(2)}</span>
+            <span className="total-val subtotal" style={{ width: '160px', textAlign: 'right' }}>₹{cartSubtotal.toFixed(2)}</span>
           </div>
           <div className="cart-total-row final-total">
             <span>Total</span>
-            <span className="total-val">₹{cartTotal.toFixed(2)}</span>
+            <span className="total-val" style={{ width: '160px', textAlign: 'right' }}>₹{cartTotal.toFixed(2)}</span>
           </div>
           <button 
             className="btn btn-primary checkout-btn"
