@@ -3,27 +3,53 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  background: var(--background);
   padding: 1rem;
+  position: relative;
+  overflow: hidden;
 }
 
-@media (prefers-color-scheme: dark) {
-  .login-container {
-    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  }
+/* Decorative background elements */
+.login-container::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  left: -10%;
+  width: 50%;
+  height: 50%;
+  background: var(--primary-gradient);
+  filter: blur(100px);
+  opacity: 0.15;
+  z-index: 0;
+  border-radius: 50%;
+}
+
+.login-container::after {
+  content: '';
+  position: absolute;
+  bottom: -20%;
+  right: -10%;
+  width: 50%;
+  height: 50%;
+  background: var(--secondary-gradient);
+  filter: blur(100px);
+  opacity: 0.15;
+  z-index: 0;
+  border-radius: 50%;
 }
 
 .login-card {
   width: 100%;
   max-width: 420px;
   padding: 2.5rem;
-  background: rgba(255, 255, 255, 0.8);
-}
-
-@media (prefers-color-scheme: dark) {
-  .login-card {
-    background: rgba(30, 41, 59, 0.7);
-  }
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 1;
+  animation: fadeIn 0.5s ease-out;
 }
 
 .login-header {
@@ -37,11 +63,11 @@
   justify-content: center;
   width: 64px;
   height: 64px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+  background: var(--primary-gradient);
   color: white;
   border-radius: 16px;
   margin-bottom: 1rem;
-  box-shadow: 0 8px 16px rgba(79, 70, 229, 0.3);
+  box-shadow: 0 8px 16px rgba(139, 92, 246, 0.3);
 }
 
 .login-header h1 {
@@ -49,6 +75,7 @@
   font-weight: 700;
   margin-bottom: 0.5rem;
   letter-spacing: -0.025em;
+  color: var(--text);
 }
 
 .login-header p {
@@ -92,7 +119,15 @@
   padding: 0.875rem;
   font-size: 1rem;
   justify-content: center;
+  margin-top: 0.5rem;
 }
 
-.error-message { color: var(--error); background: rgba(239, 68, 68, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 1.5rem; text-align: center; font-size: 0.875rem; }
-
+.error-message { 
+  color: var(--error); 
+  background: rgba(239, 68, 68, 0.1); 
+  padding: 0.75rem; 
+  border-radius: var(--radius-sm); 
+  margin-bottom: 1.5rem; 
+  text-align: center; 
+  font-size: 0.875rem; 
+}

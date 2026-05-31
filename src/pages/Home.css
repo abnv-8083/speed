@@ -1,117 +1,62 @@
-.home-layout {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.home-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1rem 2rem;
-  margin: 1rem;
-  border-radius: 16px;
-  position: sticky;
-  top: 1rem;
-  z-index: 10;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-weight: 700;
-  font-size: 1.25rem;
-  color: var(--primary);
-}
-
-.logo-icon {
-  background: var(--primary);
-  color: white;
-  padding: 4px;
-  border-radius: 6px;
-}
-
-.user-profile {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-}
-
-.avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.875rem;
-}
-
-.user-name {
-  font-weight: 500;
-  font-size: 0.95rem;
-}
-
-.btn-icon {
-  color: var(--text-muted);
-  transition: color 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 0.5rem;
-  border-radius: 8px;
-}
-
-.btn-icon:hover {
-  color: var(--error);
-  background: rgba(239, 68, 68, 0.1);
-}
-
-.home-main {
-  flex: 1;
-  padding: 3rem 2rem;
+.dashboard-container {
   max-width: 1200px;
   margin: 0 auto;
-  width: 100%;
+  animation: fadeIn 0.4s ease-out;
 }
 
-.welcome-section {
-  text-align: center;
-  margin-bottom: 4rem;
+.welcome-banner {
+  background: var(--primary-gradient);
+  border-radius: var(--radius);
+  padding: 3rem 2rem;
+  color: white;
+  margin-bottom: 2.5rem;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(139, 92, 246, 0.2);
 }
 
-.welcome-section h1 {
+.welcome-banner::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  background: radial-gradient(circle at top right, rgba(255,255,255,0.2), transparent 50%);
+  pointer-events: none;
+}
+
+.welcome-banner h1 {
   font-size: 2.5rem;
-  font-weight: 800;
-  margin-bottom: 1rem;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  letter-spacing: -0.025em;
+  font-weight: 700;
+  margin-bottom: 0.5rem;
 }
 
-.welcome-section p {
+.welcome-banner p {
   font-size: 1.1rem;
-  color: var(--text-muted);
+  opacity: 0.9;
+  max-width: 600px;
 }
 
 .portals-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-  gap: 2rem;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
 }
 
 .portal-card {
-  padding: 2.5rem;
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  transition: transform 0.3s, box-shadow 0.3s;
   position: relative;
   overflow: hidden;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  cursor: pointer;
+  z-index: 1;
 }
 
 .portal-card::before {
@@ -119,138 +64,92 @@
   position: absolute;
   top: 0;
   left: 0;
-  width: 100%;
-  height: 4px;
-  background: linear-gradient(90deg, var(--primary), var(--secondary));
+  right: 0;
+  bottom: 0;
+  background: var(--primary-gradient);
   opacity: 0;
-  transition: opacity 0.3s;
+  z-index: -1;
+  transition: opacity 0.4s ease;
 }
 
 .portal-card:hover {
-  transform: translateY(-5px);
-  box-shadow: var(--shadow-lg);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: var(--shadow-lg), var(--shadow-glow);
+  border-color: rgba(139, 92, 246, 0.4);
 }
 
 .portal-card:hover::before {
-  opacity: 1;
+  opacity: 0.03;
 }
 
-.portal-icon {
-  width: 64px;
-  height: 64px;
+.portal-icon-wrapper {
+  width: 60px;
+  height: 60px;
   border-radius: 16px;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--primary);
+  transition: all 0.3s ease;
+}
+
+.portal-card:hover .portal-icon-wrapper {
+  background: var(--primary-gradient);
   color: white;
+  transform: scale(1.1) rotate(5deg);
+  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
 }
-
-.billing-icon {
-  background: linear-gradient(135deg, var(--primary) 0%, #8b5cf6 100%);
-}
-
-.financial-icon {
-  background: linear-gradient(135deg, var(--secondary) 0%, #14b8a6 100%);
-}
-
-.cv-icon {
-  background: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
-}
-
-.btn-cv {
-  background: linear-gradient(135deg, #ec4899, #a855f7);
-  color: white;
-}
-
-.btn-cv:hover {
-  opacity: 0.88;
-  transform: translateY(-1px);
-}
-
-.pm-icon {
-  background: linear-gradient(135deg, #4F46E5 0%, #7c3aed 100%);
-}
-
-.btn-pm-card {
-  background: linear-gradient(135deg, #4F46E5, #7c3aed);
-  color: white;
-}
-
-.btn-pm-card:hover {
-  opacity: 0.88;
-  transform: translateY(-1px);
-}
-
-.tools-icon {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
-}
-
-.btn-tools {
-  background: linear-gradient(135deg, #f59e0b, #d97706);
-  color: white;
-}
-
-.btn-tools:hover {
-  opacity: 0.88;
-  transform: translateY(-1px);
-}
-
 
 .portal-card h2 {
-  font-size: 1.5rem;
-  margin-bottom: 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin-bottom: 0.75rem;
+  color: var(--text);
+  transition: color 0.3s ease;
 }
 
 .portal-card p {
   color: var(--text-muted);
-  margin-bottom: 2rem;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
   flex: 1;
 }
 
-.btn-secondary {
-  background-color: var(--secondary);
-  color: white;
+.portal-card:hover h2 {
+  color: var(--primary);
 }
 
-.btn-secondary:hover {
-  background-color: #059669;
-  transform: translateY(-1px);
+.portal-action {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+  color: var(--primary);
+  margin-top: auto;
+  opacity: 0.8;
+  transition: all 0.3s ease;
 }
 
-.portal-btn {
-  width: 100%;
-  padding: 1rem;
-  font-size: 1rem;
+.portal-card:hover .portal-action {
+  opacity: 1;
+  gap: 0.75rem;
 }
 
-@media (max-width: 768px) {
-  .home-header {
-    margin: 0.5rem;
-    padding: 1rem;
-  }
-  
-  .user-name {
-    display: none;
-  }
-  
-  .home-main {
-    padding: 2rem 1rem;
-  }
-  
-  .welcome-section h1 {
-    font-size: 2rem;
-  }
-}
+/* Specific Card Accents */
+.card-billing .portal-icon-wrapper { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+.card-billing:hover .portal-icon-wrapper { background: linear-gradient(135deg, #10b981, #059669); }
+.card-billing:hover h2, .card-billing .portal-action { color: #10b981; }
+.card-billing:hover { border-color: rgba(16, 185, 129, 0.4); box-shadow: 0 0 30px rgba(16, 185, 129, 0.15); }
 
-@media (max-width: 480px) {
-  .portals-grid {
-    grid-template-columns: 1fr;
-  }
-  .welcome-section h1 {
-    font-size: 1.6rem;
-  }
-  .portal-card {
-    padding: 1.5rem;
-  }
-}
+.card-cv .portal-icon-wrapper { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+.card-cv:hover .portal-icon-wrapper { background: linear-gradient(135deg, #f59e0b, #d97706); }
+.card-cv:hover h2, .card-cv .portal-action { color: #f59e0b; }
+.card-cv:hover { border-color: rgba(245, 158, 11, 0.4); box-shadow: 0 0 30px rgba(245, 158, 11, 0.15); }
+
+.card-pass .portal-icon-wrapper { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+.card-pass:hover .portal-icon-wrapper { background: linear-gradient(135deg, #ef4444, #b91c1c); }
+.card-pass:hover h2, .card-pass .portal-action { color: #ef4444; }
+.card-pass:hover { border-color: rgba(239, 68, 68, 0.4); box-shadow: 0 0 30px rgba(239, 68, 68, 0.15); }

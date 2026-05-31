@@ -1,20 +1,17 @@
 import React, { useEffect, useState } from 'react';
 import { Sun, Moon } from 'lucide-react';
 
-const ThemeToggle = () => {
-  const [theme, setTheme] = useState('dark');
+const ThemeToggle = ({ inline = false }) => {
+  const [theme, setTheme] = useState('dark'); // Default to dark as requested
 
   useEffect(() => {
-    // Check local storage or system preference
     const savedTheme = localStorage.getItem('speednet-theme');
     if (savedTheme) {
       setTheme(savedTheme);
       document.documentElement.setAttribute('data-theme', savedTheme);
     } else {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const initialTheme = prefersDark ? 'dark' : 'light';
-      setTheme(initialTheme);
-      document.documentElement.setAttribute('data-theme', initialTheme);
+      document.documentElement.setAttribute('data-theme', 'dark');
+      setTheme('dark');
     }
   }, []);
 
@@ -25,10 +22,23 @@ const ThemeToggle = () => {
     localStorage.setItem('speednet-theme', newTheme);
   };
 
+  if (inline) {
+    return (
+      <button 
+        onClick={toggleTheme}
+        className="btn-icon"
+        title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
+      >
+        {theme === 'dark' ? <Sun size={20} style={{ color: '#f59e0b' }} /> : <Moon size={20} className="text-primary" />}
+      </button>
+    );
+  }
+
+  // Floating version for login page
   return (
     <button 
       onClick={toggleTheme}
-      className="theme-toggle-btn glass-panel"
+      className="glass-panel"
       title={`Switch to ${theme === 'dark' ? 'Light' : 'Dark'} Mode`}
       style={{
         position: 'fixed',
@@ -42,10 +52,11 @@ const ThemeToggle = () => {
         justifyContent: 'center',
         zIndex: 9999,
         cursor: 'pointer',
-        boxShadow: 'var(--shadow-lg)'
+        boxShadow: 'var(--shadow-lg)',
+        border: 'none'
       }}
     >
-      {theme === 'dark' ? <Sun size={24} className="text-warning" style={{ color: '#f59e0b' }} /> : <Moon size={24} className="text-primary" />}
+      {theme === 'dark' ? <Sun size={24} style={{ color: '#f59e0b' }} /> : <Moon size={24} style={{ color: 'var(--primary)' }} />}
     </button>
   );
 };
