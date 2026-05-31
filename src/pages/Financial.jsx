@@ -10,6 +10,34 @@ import './Financial.css';
 
 const BLANK = { loan_type: 'lent', person_name: '', amount: '', due_date: '' };
 
+// ── Shared form fields renderer ───────────────────────────────
+const LoanFields = ({ values, onChange }) => (
+  <>
+    <div className="form-group">
+      <label>Type</label>
+      <select className="input-field" value={values.loan_type} onChange={e => onChange('loan_type', e.target.value)}>
+        <option value="lent">I Lent Money (To Customer/Staff)</option>
+        <option value="borrowed">I Borrowed Money (From Bank/Person)</option>
+      </select>
+    </div>
+    <div className="form-group">
+      <label>Person / Entity Name</label>
+      <input type="text" className="input-field" value={values.person_name}
+        onChange={e => onChange('person_name', e.target.value)} required placeholder="e.g. John Doe" />
+    </div>
+    <div className="form-group">
+      <label>Amount (₹)</label>
+      <input type="number" className="input-field" value={values.amount}
+        onChange={e => onChange('amount', e.target.value)} required min="1" step="0.01" placeholder="1000" />
+    </div>
+    <div className="form-group">
+      <label>Due Date (Optional)</label>
+      <input type="date" className="input-field" value={values.due_date}
+        onChange={e => onChange('due_date', e.target.value)} />
+    </div>
+  </>
+);
+
 const Financial = () => {
   const navigate = useNavigate();
   const [loans, setLoans]           = useState([]);
@@ -102,33 +130,7 @@ const Financial = () => {
   const totalLent     = loans.filter(l => l.loan_type === 'lent'     && l.status === 'active').reduce((s, l) => s + (Number(l.amount) - Number(l.amount_paid || 0)), 0);
   const totalBorrowed = loans.filter(l => l.loan_type === 'borrowed'  && l.status === 'active').reduce((s, l) => s + (Number(l.amount) - Number(l.amount_paid || 0)), 0);
 
-  // ── Shared form fields renderer ───────────────────────────────
-  const LoanFields = ({ values, onChange }) => (
-    <>
-      <div className="form-group">
-        <label>Type</label>
-        <select className="input-field" value={values.loan_type} onChange={e => onChange('loan_type', e.target.value)}>
-          <option value="lent">I Lent Money (To Customer/Staff)</option>
-          <option value="borrowed">I Borrowed Money (From Bank/Person)</option>
-        </select>
-      </div>
-      <div className="form-group">
-        <label>Person / Entity Name</label>
-        <input type="text" className="input-field" value={values.person_name}
-          onChange={e => onChange('person_name', e.target.value)} required placeholder="e.g. John Doe" />
-      </div>
-      <div className="form-group">
-        <label>Amount (₹)</label>
-        <input type="number" className="input-field" value={values.amount}
-          onChange={e => onChange('amount', e.target.value)} required min="1" step="0.01" placeholder="1000" />
-      </div>
-      <div className="form-group">
-        <label>Due Date (Optional)</label>
-        <input type="date" className="input-field" value={values.due_date}
-          onChange={e => onChange('due_date', e.target.value)} />
-      </div>
-    </>
-  );
+
 
   return (
     <div className="finance-layout">
