@@ -1,150 +1,69 @@
 .billing-module-layout {
   display: flex;
-  height: calc(100vh - 70px);
+  flex-direction: column;
+  height: calc(100vh - 70px); /* Fill the remaining screen height under global header */
   overflow: hidden;
   background: transparent;
-  margin: -2rem;
+  margin: -2rem; /* Negate the 2rem padding from global layout-main */
+  padding: 1.5rem;
+  gap: 1.5rem;
 }
 
-.billing-sidebar {
-  width: 260px;
-  display: flex;
-  flex-direction: column;
-  margin: 1rem;
-  border-radius: 16px;
-  flex-shrink: 0;
-}
-
-.sidebar-header {
-  padding: 2rem 1.5rem;
+.billing-top-nav {
   display: flex;
   align-items: center;
   gap: 1rem;
-  border-bottom: 1px solid var(--border);
+  padding: 0.75rem 1rem;
+  border-radius: var(--radius);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto; /* Allow horizontal scroll on very small screens */
+  flex-shrink: 0;
 }
 
-.brand-icon {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-hover) 100%);
+.nav-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.25rem;
+  border-radius: var(--radius-full);
+  color: var(--text-muted);
+  font-weight: 500;
+  font-size: 0.95rem;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+}
+
+.nav-tab:hover {
+  background: rgba(139, 92, 246, 0.05);
+  color: var(--text);
+}
+
+.nav-tab.active {
+  background: var(--primary-gradient);
   color: white;
-  padding: 0.5rem;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.sidebar-header h2 {
-  font-size: 1.25rem;
-  font-weight: 700;
-  letter-spacing: -0.025em;
-}
-
-.sidebar-nav {
-  flex: 1;
-  padding: 1.5rem 1rem;
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.nav-item {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.875rem 1rem;
-  border-radius: 10px;
-  color: var(--text-muted);
-  font-weight: 500;
-  transition: all 0.2s;
-}
-
-.nav-item:hover {
-  background: rgba(79, 70, 229, 0.05);
-  color: var(--primary);
-}
-
-.nav-item.active {
-  background: linear-gradient(135deg, rgba(79, 70, 229, 0.1) 0%, rgba(79, 70, 229, 0.05) 100%);
-  color: var(--primary);
-  border-left: 3px solid var(--primary);
-}
-
-.sidebar-footer {
-  padding: 1.5rem;
-  border-top: 1px solid var(--border);
-}
-
-.btn-back {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem;
-  border-radius: 8px;
-  color: var(--text-muted);
-  font-weight: 500;
-  transition: all 0.2s;
-  background: rgba(0,0,0,0.02);
-}
-
-.btn-back:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--error);
+  box-shadow: 0 4px 10px rgba(139, 92, 246, 0.3);
 }
 
 .billing-content {
   flex: 1;
-  padding: 1rem 1rem 1rem 0;
   overflow-y: auto;
   position: relative;
+  /* Add custom scrollbar styling if desired, but native is fine */
 }
 
+/* Mobile responsive adjustments */
 @media (max-width: 768px) {
   .billing-module-layout {
-    flex-direction: column;
-    height: auto;
-    overflow: visible;
+    margin: -1rem; /* Less negative margin on mobile */
+    padding: 1rem;
+    gap: 1rem;
+    height: calc(100vh - 60px); /* Adjust for mobile header height */
   }
 
-  .billing-sidebar {
-    width: 100%;
-    margin: 0.5rem;
-    border-radius: 12px;
-  }
-
-  .sidebar-header {
-    padding: 1rem 1.25rem;
-  }
-
-  .sidebar-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    padding: 0.75rem 1rem;
-    gap: 0.5rem;
-    flex-wrap: wrap;
-  }
-
-  .nav-item {
-    flex-shrink: 0;
-    padding: 0.6rem 0.9rem;
+  .nav-tab {
+    padding: 0.5rem 1rem;
     font-size: 0.85rem;
-  }
-
-  .nav-item.active {
-    border-left: none;
-    border-bottom: 3px solid var(--primary);
-  }
-
-  .sidebar-footer {
-    padding: 0.75rem 1rem;
-  }
-
-  .btn-back {
-    width: auto;
-  }
-
-  .billing-content {
-    padding: 0 0.5rem 1rem 0.5rem;
-    overflow-y: visible;
   }
 }
