@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Zap } from 'lucide-react';
+import { LogIn, Zap, UserCheck } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import './Login.css';
 
@@ -17,20 +17,34 @@ const Login = () => {
     setErrorMsg('');
     
     // Attempt Supabase login
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setErrorMsg(error.message);
+      if (error) {
+        setErrorMsg(error.message);
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
+        navigate('/home');
+      }
+    } catch (err) {
+      setErrorMsg('Failed to connect to authentication server.');
       setLoading(false);
-      return;
     }
+  };
 
-    if (data.user) {
+  const handleDemoLogin = () => {
+    // Bypass authentication for demonstration purposes
+    setEmail('demo@speednet.com');
+    setPassword('demo123');
+    setTimeout(() => {
       navigate('/home');
-    }
+    }, 800);
   };
 
   return (
@@ -40,7 +54,7 @@ const Login = () => {
           <div className="logo-container">
             <Zap className="logo-icon" size={32} />
           </div>
-          <h1>Speed@net</h1>
+          <h1>SpeedNet</h1>
           <p>Welcome back! Please enter your details.</p>
         </div>
         
@@ -87,6 +101,22 @@ const Login = () => {
             )}
           </button>
         </form>
+
+        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
+            <span style={{ fontSize: '0.85rem' }}>OR</span>
+            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
+          </div>
+          
+          <button 
+            type="button" 
+            className="btn btn-outline login-btn" 
+            onClick={handleDemoLogin}
+          >
+            Sign in as Demo User <UserCheck size={18} />
+          </button>
+        </div>
       </div>
     </div>
   );
