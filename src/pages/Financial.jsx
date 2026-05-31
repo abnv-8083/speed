@@ -123,6 +123,40 @@ const Financial = () => {
     setDeleting(false);
   };
 
+  // ── Quick Pay ────────────────────────────────────────────────
+  const handleQuickPay = async (loan) => {
+    const balance = loan.amount - (loan.amount_paid || 0);
+    const paymentStr = window.prompt(`Enter payment amount for ${loan.person_name}\n(Remaining balance: ₹${balance.toFixed(2)})`);
+    if (!paymentStr) return;
+    
+    const paymentAmount = parseFloat(paymentStr);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+      alert('Invalid payment amount');
+      return;
+    }
+
+    if (paymentAmount > balance) {
+      alert('Payment cannot exceed remaining balance');
+      return;
+    }
+
+    const newAmountPaid = Number(loan.amount_paid || 0) + paymentAmount;
+    const newStatus = newAmountPaid >= loan.amount ? 'settled' : 'active';
+
+    // Optimistically could show loader, but fetchLoans covers it
+    await supabase.from('loan_payments').insert([{
+      loan_id: loan.id,
+      amount: paymentAmount
+    }]);
+
+    await supabase.from('loans').update({ 
+      amount_paid: newAmountPaid, 
+      status: newStatus 
+    }).eq('id', loan.id);
+    
+    fetchLoans();
+  };
+
   const filteredLoans = loans.filter(l =>
     l.person_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -253,14 +287,25 @@ const Financial = () => {
                       </div>
                     </div>
 
-                    <div className="loan-card-footer">
+                    <div className="loan-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div className="loan-status">
                         {loan.status === 'active'
                           ? <span className="status-badge status-warning">Active</span>
                           : <span className="status-badge status-good">Settled</span>
                         }
                       </div>
-                      <div className="text-primary text-sm font-medium">View Details →</div>
+                      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                        {loan.status === 'active' && (
+                          <button 
+                            className="btn btn-primary" 
+                            style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
+                            onClick={(e) => { e.stopPropagation(); handleQuickPay(loan); }}
+                          >
+                            Pay Now
+                          </button>
+                        )}
+                        <span className="text-primary text-sm font-medium">View Details →</span>
+                      </div>
                     </div>
                   </div>
                 ))
