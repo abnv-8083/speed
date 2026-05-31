@@ -1,27 +1,51 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Shield } from 'lucide-react';
-import MasterLock from './MasterLock';
 import Vault from './Vault';
+import PremiumLoader from '../../components/PremiumLoader';
+import { isVaultSetup, setupVault, verifyPassword, loadVault, clearVault } from './crypto';
 import './PasswordManager.css';
+
+const AUTO_PWD = "SpeedNetAutoLock123!";
 
 export default function PasswordManager() {
   const navigate = useNavigate();
   const [unlocked, setUnlocked]     = useState(false);
-  const [masterPwd, setMasterPwd]   = useState('');
   const [entries, setEntries]       = useState([]);
+  const [loading, setLoading]       = useState(true);
 
-  const handleUnlock = (pwd, loadedEntries) => {
-    setMasterPwd(pwd);
-    setEntries(loadedEntries);
-    setUnlocked(true);
-  };
-
-  const handleLock = () => {
-    setUnlocked(false);
-    setMasterPwd('');
-    setEntries([]);
-  };
+  useEffect(() => {
+    async function init() {
+      try {
+        const setup = await isVaultSetup();
+        if (!setup) {
+          await setupVault(AUTO_PWD);
+          setEntries([]);
+          setUnlocked(true);
+        } else {
+          // Verify if it works with auto password
+          const ok = await verifyPassword(AUTO_PWD);
+          if (!ok) {
+            // It was set up with a DIFFERENT password before!
+            // We must clear it to allow auto-login
+            await clearVault();
+            await setupVault(AUTO_PWD);
+            setEntries([]);
+            setUnlocked(true);
+          } else {
+            const data = await loadVault(AUTO_PWD);
+            setEntries(data);
+            setUnlocked(true);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    init();
+  }, []);
 
   return (
     <div className="pm-layout">
@@ -37,7 +61,7 @@ export default function PasswordManager() {
           <div>
             <span className="pm-header-title">Password Manager</span>
             <span className="pm-header-sub">
-              {unlocked ? '🔓 Vault unlocked' : '🔒 Vault locked'}
+              🔓 Vault unlocked
             </span>
           </div>
         </div>
@@ -46,10 +70,13 @@ export default function PasswordManager() {
 
       {/* Main */}
       <main className="pm-main">
-        {!unlocked
-          ? <MasterLock onUnlock={handleUnlock} />
-          : <Vault masterPwd={masterPwd} initialEntries={entries} onLock={handleLock} />
-        }
+        {loading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '50vh', width: '100%' }}>
+            <PremiumLoader text="Unlocking Vault..." />
+          </div>
+        ) : (
+          <Vault masterPwd={AUTO_PWD} initialEntries={entries} onLock={() => {}} />
+        )}
       </main>
     </div>
   );
