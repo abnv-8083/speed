@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Receipt, Search, Loader2, Printer, ArrowLeft, FileDown } from 'lucide-react';
+import { Receipt, Search, Printer, ArrowLeft, FileDown } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import Pagination from '../../components/Pagination';
+import PremiumLoader from '../../components/PremiumLoader';
 import './Invoices.css';
 
 const Invoices = () => {
@@ -200,8 +201,8 @@ const Invoices = () => {
         </div>
 
         {loading ? (
-          <div className="loading-state">
-            <Loader2 className="animate-spin text-primary" size={40} />
+          <div style={{ padding: '3rem 0' }}>
+            <PremiumLoader text="Loading Invoices..." />
           </div>
         ) : (
           <>

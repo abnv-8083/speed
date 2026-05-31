@@ -4,6 +4,7 @@ import { supabase } from '../../supabaseClient';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Pagination from '../../components/Pagination';
+import PremiumLoader from '../../components/PremiumLoader';
 import './SalesReport.css';
 
 const SalesReport = () => {
@@ -179,8 +180,8 @@ const SalesReport = () => {
 
       <main className="report-main">
         {loading ? (
-          <div className="flex-center" style={{ height: '50vh' }}>
-            <div className="loader"></div>
+          <div style={{ padding: '3rem 0' }}>
+            <PremiumLoader text="Crunching Data..." />
           </div>
         ) : (
           <>

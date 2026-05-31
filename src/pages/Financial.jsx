@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import {
   ArrowLeft, ArrowUpRight, ArrowDownRight, Plus, Search,
-  Loader2, Trash2, Edit2, X, Check, AlertTriangle
+  Trash2, Edit2, X, Check, AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
+import PremiumLoader from '../components/PremiumLoader';
 import './Financial.css';
 
 const BLANK = { loan_type: 'lent', person_name: '', amount: '', due_date: '' };
@@ -193,8 +194,8 @@ const Financial = () => {
           </div>
 
           {loading ? (
-            <div className="flex-center" style={{ height: '200px' }}>
-              <Loader2 className="animate-spin text-primary" size={32} />
+            <div style={{ padding: '3rem 0', gridColumn: '1 / -1' }}>
+              <PremiumLoader text="Loading Financials..." />
             </div>
           ) : (
             <div className="loans-grid">

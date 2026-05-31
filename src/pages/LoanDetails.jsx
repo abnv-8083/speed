@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, History, CreditCard, Banknote } from 'lucide-react';
 import { supabase } from '../supabaseClient';
+import PremiumLoader from '../components/PremiumLoader';
 import './LoanDetails.css';
 
 const LoanDetails = () => {
@@ -66,10 +67,8 @@ const LoanDetails = () => {
 
   if (loading) {
     return (
-      <div className="loan-details-layout">
-        <div className="flex-center" style={{ height: '50vh' }}>
-          <div className="loader"></div>
-        </div>
+      <div className="flex-center" style={{ minHeight: '100vh' }}>
+        <PremiumLoader text="Loading Details..." />
       </div>
     );
   }

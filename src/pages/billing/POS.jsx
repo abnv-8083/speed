@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Minus, X, FileText, Loader2, Printer, ArrowLeft, Search } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
+import PremiumLoader from '../../components/PremiumLoader';
 import './POS.css';
 
 const POS = () => {
@@ -366,9 +367,7 @@ const POS = () => {
         </div>
         
         {loading ? (
-          <div className="flex-center">
-            <Loader2 className="animate-spin text-primary" size={40} />
-          </div>
+          <PremiumLoader text="Loading Products..." />
         ) : (
           <div className="pos-grid">
             {filteredProducts.map(product => (

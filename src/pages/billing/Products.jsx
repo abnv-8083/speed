@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Check, X, Loader2, Trash2, Ban, Unlock } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import Pagination from '../../components/Pagination';
+import PremiumLoader from '../../components/PremiumLoader';
 import './Products.css';
 
 const Products = () => {
@@ -149,8 +150,8 @@ const Products = () => {
         )}
 
         {loading ? (
-          <div className="loading-state">
-            <Loader2 className="animate-spin text-primary" size={40} />
+          <div style={{ padding: '3rem 0' }}>
+            <PremiumLoader text="Loading Inventory..." />
           </div>
         ) : (
           <>
