@@ -10,6 +10,7 @@ const POS = () => {
   const [cart, setCart] = useState([]);
   const [submittingInvoice, setSubmittingInvoice] = useState(false);
   const [showInvoice, setShowInvoice] = useState(false);
+  const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [lastInvoice, setLastInvoice] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [discount, setDiscount] = useState(0);
@@ -79,14 +80,15 @@ const POS = () => {
   const cartSubtotal = cart.reduce((sum, item) => sum + item.total, 0);
   const cartTotal = Math.max(0, cartSubtotal - discount);
 
-  const checkout = async () => {
+  const checkout = async (overrideName) => {
     if (cart.length === 0) return;
     
     setSubmittingInvoice(true);
+    const finalName = (overrideName && overrideName.trim()) ? overrideName : 'Walk-in Customer';
 
     const { data: invoiceData, error: invoiceError } = await supabase
       .from('invoices')
-      .insert([{ total_amount: cartTotal, discount: discount, customer_name: customerName }])
+      .insert([{ total_amount: cartTotal, discount: discount, customer_name: finalName }])
       .select();
 
     if (invoiceError) {
@@ -121,7 +123,7 @@ const POS = () => {
       subtotal: cartSubtotal,
       discount: discount,
       total: cartTotal,
-      customerName: customerName,
+      customerName: finalName,
       date: new Date()
     });
 
@@ -424,17 +426,6 @@ const POS = () => {
 
         <div className="cart-footer">
           <div className="cart-discount-row">
-            <span>Customer Name</span>
-            <input 
-              type="text" 
-              className="pos-discount-input" 
-              style={{ width: '160px', textAlign: 'right' }}
-              value={customerName}
-              onChange={(e) => setCustomerName(e.target.value)}
-              placeholder="Walk-in Customer"
-            />
-          </div>
-          <div className="cart-discount-row">
             <span>Discount (₹)</span>
             <input 
               type="number" 
@@ -458,7 +449,7 @@ const POS = () => {
           <button 
             className="btn btn-primary checkout-btn"
             disabled={cart.length === 0 || submittingInvoice}
-            onClick={checkout}
+            onClick={() => setShowCustomerModal(true)}
           >
             {submittingInvoice ? (
               <><Loader2 className="animate-spin" size={20} /> Processing...</>
@@ -468,6 +459,60 @@ const POS = () => {
           </button>
         </div>
       </div>
+
+      {/* Customer Modal Overlay */}
+      {showCustomerModal && (
+        <div className="pos-modal-overlay animate-fade-in">
+          <div className="pos-modal-content">
+            <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>Customer Details</h3>
+            <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
+              Enter customer details for the invoice. (Optional)
+            </p>
+            <div style={{ marginBottom: '2rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>
+                Customer Name
+              </label>
+              <input 
+                type="text" 
+                style={{ 
+                  width: '100%', 
+                  padding: '0.75rem', 
+                  borderRadius: '8px', 
+                  border: '1px solid var(--border)', 
+                  background: 'var(--background)', 
+                  color: 'var(--text)',
+                  fontSize: '1rem'
+                }}
+                value={customerName === 'Walk-in Customer' ? '' : customerName}
+                onChange={(e) => setCustomerName(e.target.value)}
+                placeholder="Walk-in Customer"
+                autoFocus
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => {
+                  setShowCustomerModal(false);
+                  setCustomerName('Walk-in Customer');
+                }}
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={() => {
+                  setShowCustomerModal(false);
+                  checkout(customerName);
+                }}
+                disabled={submittingInvoice}
+              >
+                {submittingInvoice ? 'Processing...' : 'Complete Checkout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
