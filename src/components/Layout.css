@@ -97,7 +97,7 @@
 /* Layout Header (Top Bar) */
 .layout-header {
   height: 70px;
-  background: rgba(var(--surface), 0.8);
+  background: var(--glass-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border-light);
