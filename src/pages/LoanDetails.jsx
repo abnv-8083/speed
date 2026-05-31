@@ -95,7 +95,7 @@ const LoanDetails = () => {
           <h2>{loan.person_name}'s Loan Details</h2>
         </div>
         <div className="header-actions">
-          {loan.status === 'active' ? (
+          {(loan.status || 'active') === 'active' ? (
             <button className="btn btn-primary" onClick={handlePayment}>
               <CreditCard size={18} /> Make Payment
             </button>

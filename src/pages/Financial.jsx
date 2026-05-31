@@ -79,6 +79,7 @@ const Financial = () => {
       loan_type:   form.loan_type,
       person_name: form.person_name,
       amount:      parseFloat(form.amount),
+      status:      'active',
       due_date:    form.due_date || null,
     }]);
     if (!error) {
@@ -177,8 +178,8 @@ const Financial = () => {
     l.person_name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalLent     = loans.filter(l => l.loan_type === 'lent'     && l.status === 'active').reduce((s, l) => s + (Number(l.amount) - Number(l.amount_paid || 0)), 0);
-  const totalBorrowed = loans.filter(l => l.loan_type === 'borrowed'  && l.status === 'active').reduce((s, l) => s + (Number(l.amount) - Number(l.amount_paid || 0)), 0);
+  const totalLent     = loans.filter(l => l.loan_type === 'lent'     && (l.status || 'active') === 'active').reduce((s, l) => s + (Number(l.amount) - Number(l.amount_paid || 0)), 0);
+  const totalBorrowed = loans.filter(l => l.loan_type === 'borrowed'  && (l.status || 'active') === 'active').reduce((s, l) => s + (Number(l.amount) - Number(l.amount_paid || 0)), 0);
 
 
 
@@ -305,13 +306,13 @@ const Financial = () => {
 
                     <div className="loan-card-footer" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <div className="loan-status">
-                        {loan.status === 'active'
+                        {(loan.status || 'active') === 'active'
                           ? <span className="status-badge status-warning">Active</span>
                           : <span className="status-badge status-good">Settled</span>
                         }
                       </div>
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                        {loan.status === 'active' && (
+                        {(loan.status || 'active') === 'active' && (
                           <button 
                             className="btn btn-primary" 
                             style={{ padding: '0.25rem 0.75rem', fontSize: '0.8rem' }}
