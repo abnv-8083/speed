@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  /* Vibrant Light Mode Defaults */
+  /* Vibrant Colors */
   --primary: #8b5cf6; /* Violet */
   --primary-hover: #7c3aed;
   --primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
@@ -10,38 +10,6 @@
   --secondary: #10B981; /* Emerald */
   --secondary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
   
-  --background: #f8fafc;
-  --surface: #ffffff;
-  --surface-hover: #f1f5f9;
-  
-  --text: #0f172a;
-  --text-muted: #64748b;
-  --border: #e2e8f0;
-  --border-light: rgba(226, 232, 240, 0.5);
-  
-  --error: #ef4444;
-  --warning: #f59e0b;
-  --success: #10b981;
-  
-  --radius: 16px;
-  --radius-sm: 8px;
-  --radius-full: 9999px;
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-  --shadow-glow: 0 0 20px rgba(139, 92, 246, 0.3);
-  
-  --font-sans: 'Outfit', 'Inter', sans-serif;
-  --sidebar-width: 260px;
-  --sidebar-collapsed-width: 80px;
-  
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.5);
-}
-
-:root[data-theme="dark"] {
   /* Premium Deep Dark Mode */
   --background: #09090b; /* Very dark zinc */
   --surface: #18181b;    /* Dark zinc for cards */
@@ -53,10 +21,26 @@
   --border: #27272a;
   --border-light: rgba(39, 39, 42, 0.5);
   
+  --error: #ef4444;
+  --warning: #f59e0b;
+  --success: #10b981;
+  
+  --radius: 16px;
+  --radius-sm: 8px;
+  --radius-full: 9999px;
+  
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.15);
+  
+  --font-sans: 'Outfit', 'Inter', sans-serif;
+  --sidebar-width: 260px;
+  --sidebar-collapsed-width: 80px;
+  
   --glass-bg: rgba(24, 24, 27, 0.7);
   --glass-border: rgba(255, 255, 255, 0.08);
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.15);
 }
 
 * {

@@ -15,7 +15,6 @@ import CVGenerator from './pages/cv/CVGenerator';
 import SavedCVs from './pages/cv/SavedCVs';
 import ToolsPortal from './pages/tools/ToolsPortal';
 import PasswordManager from './pages/passwords/PasswordManager';
-import ThemeToggle from './components/ThemeToggle';
 import Layout from './components/Layout';
 
 function App() {
@@ -24,12 +23,7 @@ function App() {
       <ToastProvider>
         <Router>
           <Routes>
-            <Route path="/login" element={
-              <>
-                <ThemeToggle />
-                <Login />
-              </>
-            } />
+            <Route path="/login" element={<Login />} />
             
             {/* Protected Routes wrapped in Layout */}
             <Route element={<Layout />}>

@@ -13,7 +13,6 @@ import {
   ChevronRight,
   Menu
 } from 'lucide-react';
-import ThemeToggle from './ThemeToggle';
 import './Layout.css';
 
 const Layout = () => {
@@ -89,7 +88,6 @@ const Layout = () => {
           </div>
 
           <div className="header-right">
-            <ThemeToggle inline />
             <div className="user-profile">
               <div className="avatar">AD</div>
               <span className="user-name hidden-mobile">Admin User</span>
