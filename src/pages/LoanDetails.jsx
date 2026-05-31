@@ -32,7 +32,8 @@ const LoanDetails = () => {
   const handlePayment = async () => {
     if (!loan) return;
     
-    const balance = loan.amount - loan.amount_paid;
+    const amountPaid = Number(loan.amount_paid || 0);
+    const balance = loan.amount - amountPaid;
     const paymentStr = window.prompt(`Enter payment amount (Remaining balance: ₹${balance.toFixed(2)})`);
     if (!paymentStr) return;
     
@@ -47,7 +48,7 @@ const LoanDetails = () => {
       return;
     }
 
-    const newAmountPaid = Number(loan.amount_paid) + paymentAmount;
+    const newAmountPaid = amountPaid + paymentAmount;
     const newStatus = newAmountPaid >= loan.amount ? 'settled' : 'active';
 
     // 1. Insert payment record

@@ -103,10 +103,15 @@ const Financial = () => {
     e.preventDefault();
     if (!editForm.person_name || !editForm.amount) return;
     setEditSaving(true);
+    const newAmount = parseFloat(editForm.amount);
+    const amountPaid = Number(editLoan.amount_paid || 0);
+    const newStatus = amountPaid >= newAmount ? 'settled' : 'active';
+    
     const { error } = await supabase.from('loans').update({
       loan_type:   editForm.loan_type,
       person_name: editForm.person_name,
-      amount:      parseFloat(editForm.amount),
+      amount:      newAmount,
+      status:      newStatus,
       due_date:    editForm.due_date || null,
     }).eq('id', editLoan.id);
     if (!error) { setEditLoan(null); fetchLoans(); }
