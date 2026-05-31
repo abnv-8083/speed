@@ -3,9 +3,11 @@ import { Plus, Edit2, Check, X, Loader2, Trash2, Ban, Unlock } from 'lucide-reac
 import { supabase } from '../../supabaseClient';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
+import { useToast } from '../../components/ToastContext';
 import './Products.css';
 
 const Products = () => {
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -62,8 +64,9 @@ const Products = () => {
         setNewProdPrice('');
         setNewProdStock('');
         setShowAddForm(false);
+        toast.success("Product added successfully");
       } else {
-        alert('Error adding product: ' + error.message);
+        toast.error('Error adding product: ' + error.message);
       }
     }
   };
@@ -84,8 +87,10 @@ const Products = () => {
         .eq('id', id);
         
       if (error) {
-        alert('Failed to update stock');
+        toast.error('Failed to update stock');
         fetchProducts();
+      } else {
+        toast.success("Stock updated successfully");
       }
     }
     setEditingStockId(null);
@@ -95,9 +100,10 @@ const Products = () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) {
-        alert('Error deleting product: ' + error.message);
+        toast.error('Error deleting product: ' + error.message);
       } else {
         setProducts(products.filter(p => p.id !== id));
+        toast.success("Product deleted successfully");
       }
     }
   };
@@ -106,9 +112,10 @@ const Products = () => {
     const newStatus = !currentStatus;
     const { error } = await supabase.from('products').update({ is_blocked: newStatus }).eq('id', id);
     if (error) {
-      alert('Error updating status: ' + error.message);
+      toast.error('Error updating status: ' + error.message);
     } else {
       setProducts(products.map(p => p.id === id ? { ...p, is_blocked: newStatus } : p));
+      toast.success(`Product ${newStatus ? 'blocked' : 'unblocked'} successfully`);
     }
   };
 

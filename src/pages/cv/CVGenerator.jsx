@@ -122,7 +122,7 @@ export default function CVGenerator() {
   const [showSaveModal, setShowSaveModal] = useState(false);
   const [modalSaving, setModalSaving]     = useState(false);
   const [currentSaveId, setCurrentSaveId] = useState(null);
-  const [savedToast, setSavedToast]       = useState('');
+  const toast = useToast();
   const previewRef = useRef(null);
 
   // ── Load saves from Supabase on mount ──────────────────────
@@ -184,11 +184,9 @@ export default function CVGenerator() {
       setCurrentSaveId(id);
       await refreshSaves();
       setShowSaveModal(false);
-      setSavedToast(`✅ Saved as "${name}"`);
-      setTimeout(() => setSavedToast(''), 2500);
+      toast.success(`Saved as "${name}"`);
     } catch (e) {
-      setSavedToast(`❌ Save failed: ${e.message}`);
-      setTimeout(() => setSavedToast(''), 3000);
+      toast.error(`Save failed: ${e.message}`);
     } finally {
       setModalSaving(false);
     }
@@ -270,9 +268,6 @@ export default function CVGenerator() {
           )}
         </div>
       </header>
-
-      {/* ── Toast ── */}
-      {savedToast && <div className="cv-toast animate-fade-in">{savedToast}</div>}
 
       {/* ── Content ── */}
       <main className="cvgen-main">

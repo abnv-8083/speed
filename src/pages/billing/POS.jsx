@@ -2,9 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Minus, X, FileText, Loader2, Printer, ArrowLeft, Search } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import PremiumLoader from '../../components/PremiumLoader';
+import { useToast } from '../../components/ToastContext';
 import './POS.css';
 
 const POS = () => {
+  const toast = useToast();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cart, setCart] = useState([]);
@@ -38,14 +40,14 @@ const POS = () => {
 
   const addToCart = (product) => {
     if (product.stock <= 0) {
-      alert('Out of stock!');
+      toast.warning('Out of stock!');
       return;
     }
 
     const existingItem = cart.find(item => item.product.id === product.id);
     if (existingItem) {
       if (existingItem.quantity >= product.stock) {
-        alert('Cannot add more than available stock!');
+        toast.warning('Cannot add more than available stock!');
         return;
       }
       setCart(cart.map(item => 
@@ -66,7 +68,7 @@ const POS = () => {
     if (newQuantity < 1) return;
     const product = products.find(p => p.id === productId);
     if (newQuantity > product.stock) {
-      alert('Cannot exceed available stock!');
+      toast.warning('Cannot exceed available stock!');
       return;
     }
     
@@ -92,7 +94,7 @@ const POS = () => {
       .select();
 
     if (invoiceError) {
-      alert('Error creating invoice: ' + invoiceError.message);
+      toast.error('Error creating invoice: ' + invoiceError.message);
       setSubmittingInvoice(false);
       return;
     }
@@ -161,7 +163,7 @@ const POS = () => {
     
     if (printProduct) {
       if (quickQty > printProduct.stock) {
-        alert('Not enough stock!');
+        toast.warning('Not enough stock!');
         setQuickLoading(false);
         return;
       }

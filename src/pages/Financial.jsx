@@ -6,6 +6,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import PremiumLoader from '../components/PremiumLoader';
+import { useToast } from '../components/ToastContext';
 import './Financial.css';
 
 const BLANK = { loan_type: 'lent', person_name: '', amount: '', due_date: '' };
@@ -40,6 +41,7 @@ const LoanFields = ({ values, onChange }) => (
 
 const Financial = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [loans, setLoans]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -83,7 +85,8 @@ const Financial = () => {
       setForm({ ...BLANK });
       setShowAddForm(false);
       fetchLoans();
-    } else alert('Error adding loan: ' + error.message);
+      toast.success("Loan record added successfully");
+    } else toast.error('Error adding loan: ' + error.message);
     setSubmitting(false);
   };
 
@@ -114,8 +117,12 @@ const Financial = () => {
       status:      newStatus,
       due_date:    editForm.due_date || null,
     }).eq('id', editLoan.id);
-    if (!error) { setEditLoan(null); fetchLoans(); }
-    else alert('Error updating loan: ' + error.message);
+    if (!error) { 
+      setEditLoan(null); 
+      fetchLoans(); 
+      toast.success("Loan updated successfully");
+    }
+    else toast.error('Error updating loan: ' + error.message);
     setEditSaving(false);
   };
 
@@ -123,8 +130,12 @@ const Financial = () => {
   const handleDelete = async () => {
     setDeleting(true);
     const { error } = await supabase.from('loans').delete().eq('id', deleteId);
-    if (!error) { setDeleteId(null); fetchLoans(); }
-    else alert('Error deleting loan: ' + error.message);
+    if (!error) { 
+      setDeleteId(null); 
+      fetchLoans(); 
+      toast.success("Loan deleted successfully");
+    }
+    else toast.error('Error deleting loan: ' + error.message);
     setDeleting(false);
   };
 

@@ -4,15 +4,12 @@ import './PremiumLoader.css';
 const PremiumLoader = ({ text = "Loading..." }) => {
   return (
     <div className="premium-loader-container">
-      <div className="premium-loader-spinner">
-        <div className="spinner-ring"></div>
-        <div className="spinner-ring"></div>
-        <div className="spinner-ring"></div>
-        <div className="spinner-center">
-          <div className="spinner-bolt">⚡</div>
-        </div>
+      <div className="ios-spinner">
+        {[...Array(12)].map((_, i) => (
+          <div key={i} className="ios-spinner-blade"></div>
+        ))}
       </div>
-      <div className="premium-loader-text">{text}</div>
+      {text && <div className="premium-loader-text">{text}</div>}
     </div>
   );
 };

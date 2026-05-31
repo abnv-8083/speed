@@ -5,6 +5,7 @@ import {
   Wifi, Lock, Star, ChevronDown, ChevronUp, X, Check, Sliders
 } from 'lucide-react';
 import { saveVault, generatePassword, passwordStrength } from './crypto';
+import { useToast } from '../../components/ToastContext';
 
 const CATEGORIES = [
   { id: 'all',       label: 'All',       icon: Shield },
@@ -307,6 +308,7 @@ function EntryCard({ entry, onEdit, onDelete }) {
 
 // ── Vault Dashboard ─────────────────────────────────────────────
 export default function Vault({ masterPwd, initialEntries, onLock }) {
+  const toast = useToast();
   const [entries, setEntries]   = useState(initialEntries);
   const [search, setSearch]     = useState('');
   const [category, setCategory] = useState('all');
@@ -329,15 +331,17 @@ export default function Vault({ masterPwd, initialEntries, onLock }) {
   });
 
   const handleSave = async (entry) => {
-    const next = entries.find(e => e.id === entry.id)
-      ? entries.map(e => e.id === entry.id ? entry : e)
-      : [...entries, entry];
+    const isNew = !entries.find(e => e.id === entry.id);
+    const next = isNew
+      ? [...entries, entry]
+      : entries.map(e => e.id === entry.id ? entry : e);
     setEntries(next);
     try {
       await persist(next);
       setModal(null);
+      toast.success(isNew ? "Password securely saved" : "Password securely updated");
     } catch (e) {
-      alert("Error saving: " + e.message);
+      toast.error("Error saving: " + e.message);
     }
   };
 
@@ -347,8 +351,9 @@ export default function Vault({ masterPwd, initialEntries, onLock }) {
     try {
       await persist(next);
       setDeleteId(null);
+      toast.success("Password securely deleted");
     } catch (e) {
-      alert("Error deleting: " + e.message);
+      toast.error("Error deleting: " + e.message);
     }
   };
 
