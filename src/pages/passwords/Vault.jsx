@@ -333,15 +333,23 @@ export default function Vault({ masterPwd, initialEntries, onLock }) {
       ? entries.map(e => e.id === entry.id ? entry : e)
       : [...entries, entry];
     setEntries(next);
-    await persist(next);
-    setModal(null);
+    try {
+      await persist(next);
+      setModal(null);
+    } catch (e) {
+      alert("Error saving: " + e.message);
+    }
   };
 
   const handleDelete = async (id) => {
     const next = entries.filter(e => e.id !== id);
     setEntries(next);
-    await persist(next);
-    setDeleteId(null);
+    try {
+      await persist(next);
+      setDeleteId(null);
+    } catch (e) {
+      alert("Error deleting: " + e.message);
+    }
   };
 
   return (

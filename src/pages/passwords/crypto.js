@@ -65,12 +65,11 @@ async function upsertRow(fields) {
 /** Returns true if a vault has been set up for this device */
 export async function isVaultSetup() {
   const row = await fetchRow();
-  return !!row?.ver_hash;
+  return !!row?.encrypted_data;
 }
 
 /** Create a new vault with master password */
 export async function setupVault(password) {
-  const hash = await hashPassword(password);
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const b64Salt = buf2b64(salt);
 
@@ -84,32 +83,33 @@ export async function setupVault(password) {
   );
 
   await upsertRow({
-    salt:       b64Salt,
-    ver_hash:   hash,
-    vault_data: JSON.stringify({ iv: buf2b64(iv), data: buf2b64(enc) }),
+    salt:           b64Salt,
+    iv:             buf2b64(iv),
+    encrypted_data: buf2b64(enc),
   });
 }
 
 /** Returns true if password matches stored hash */
 export async function verifyPassword(password) {
-  const row = await fetchRow();
-  if (!row) return false;
-  const hash = await hashPassword(password);
-  return hash === row.ver_hash;
+  try {
+    await loadVault(password);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** Decrypt and return entries array */
 export async function loadVault(password) {
   const row = await fetchRow();
-  if (!row?.vault_data) return [];
+  if (!row?.encrypted_data) return [];
   const salt = b642buf(row.salt);
   const key  = await deriveKey(password, salt);
-  const { iv, data } = JSON.parse(row.vault_data);
   try {
     const dec = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: b642buf(iv) },
+      { name: 'AES-GCM', iv: b642buf(row.iv) },
       key,
-      b642buf(data)
+      b642buf(row.encrypted_data)
     );
     return JSON.parse(new TextDecoder().decode(dec));
   } catch {
@@ -133,8 +133,9 @@ export async function saveVault(password, entries) {
   );
 
   await upsertRow({
-    salt:       buf2b64(salt),
-    vault_data: JSON.stringify({ iv: buf2b64(iv), data: buf2b64(enc) }),
+    salt:           buf2b64(salt),
+    iv:             buf2b64(iv),
+    encrypted_data: buf2b64(enc),
   });
 }
 
