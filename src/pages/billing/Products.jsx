@@ -100,7 +100,11 @@ const Products = () => {
     if (window.confirm("Are you sure you want to delete this product?")) {
       const { error } = await supabase.from('products').delete().eq('id', id);
       if (error) {
-        toast.error('Error deleting product: ' + error.message);
+        if (error.message.includes('foreign key constraint')) {
+          toast.error('Cannot delete: Product has sales history. Please Block it instead to hide it from POS.');
+        } else {
+          toast.error('Error deleting product: ' + error.message);
+        }
       } else {
         setProducts(products.filter(p => p.id !== id));
         toast.success("Product deleted successfully");
