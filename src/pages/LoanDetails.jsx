@@ -3,11 +3,15 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, History, CreditCard, Banknote } from 'lucide-react';
 import { supabase } from '../supabaseClient';
 import PremiumLoader from '../components/PremiumLoader';
+import { useToast } from '../components/ToastContext';
+import { useModal } from '../components/ModalContext';
 import './LoanDetails.css';
 
 const LoanDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const toast = useToast();
+  const modal = useModal();
   const [loan, setLoan] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -34,17 +38,23 @@ const LoanDetails = () => {
     
     const amountPaid = Number(loan.amount_paid || 0);
     const balance = loan.amount - amountPaid;
-    const paymentStr = window.prompt(`Enter payment amount (Remaining balance: ₹${balance.toFixed(2)})`);
+    
+    const paymentStr = await modal.prompt(
+      'Make Payment',
+      `Enter payment amount (Remaining balance: ₹${balance.toFixed(2)})`,
+      '',
+      'number'
+    );
     if (!paymentStr) return;
     
     const paymentAmount = parseFloat(paymentStr);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      alert('Invalid payment amount');
+      toast.warning('Invalid payment amount');
       return;
     }
 
     if (paymentAmount > balance) {
-      alert('Payment cannot exceed remaining balance');
+      toast.warning('Payment cannot exceed remaining balance');
       return;
     }
 

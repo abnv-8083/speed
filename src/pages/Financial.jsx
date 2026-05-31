@@ -7,6 +7,7 @@ import { useNavigate } from 'react-router-dom';
 import { supabase } from '../supabaseClient';
 import PremiumLoader from '../components/PremiumLoader';
 import { useToast } from '../components/ToastContext';
+import { useModal } from '../components/ModalContext';
 import './Financial.css';
 
 const BLANK = { loan_type: 'lent', person_name: '', amount: '', due_date: '' };
@@ -42,6 +43,7 @@ const LoanFields = ({ values, onChange }) => (
 const Financial = () => {
   const navigate = useNavigate();
   const toast = useToast();
+  const modal = useModal();
   const [loans, setLoans]           = useState([]);
   const [loading, setLoading]       = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -143,17 +145,22 @@ const Financial = () => {
   // ── Quick Pay ────────────────────────────────────────────────
   const handleQuickPay = async (loan) => {
     const balance = loan.amount - (loan.amount_paid || 0);
-    const paymentStr = window.prompt(`Enter payment amount for ${loan.person_name}\n(Remaining balance: ₹${balance.toFixed(2)})`);
+    const paymentStr = await modal.prompt(
+      'Make Payment', 
+      `Enter payment amount for ${loan.person_name} (Remaining balance: ₹${balance.toFixed(2)})`,
+      '',
+      'number'
+    );
     if (!paymentStr) return;
     
     const paymentAmount = parseFloat(paymentStr);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      alert('Invalid payment amount');
+      toast.warning('Invalid payment amount');
       return;
     }
 
     if (paymentAmount > balance) {
-      alert('Payment cannot exceed remaining balance');
+      toast.warning('Payment cannot exceed remaining balance');
       return;
     }
 

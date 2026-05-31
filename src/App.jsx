@@ -1,6 +1,7 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { ToastProvider } from './components/ToastContext';
+import { ModalProvider } from './components/ModalContext';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Financial from './pages/Financial';
@@ -19,41 +20,43 @@ import Layout from './components/Layout';
 
 function App() {
   return (
-    <ToastProvider>
-      <Router>
-        <Routes>
-          <Route path="/login" element={
-            <>
-              <ThemeToggle />
-              <Login />
-            </>
-          } />
-          
-          {/* Protected Routes wrapped in Layout */}
-          <Route element={<Layout />}>
-            <Route path="/home" element={<Home />} />
+    <ModalProvider>
+      <ToastProvider>
+        <Router>
+          <Routes>
+            <Route path="/login" element={
+              <>
+                <ThemeToggle />
+                <Login />
+              </>
+            } />
             
-            {/* Billing Module Nested Routes */}
-            <Route path="/billing" element={<BillingLayout />}>
-              <Route index element={<Navigate to="pos" replace />} />
-              <Route path="pos" element={<POS />} />
-              <Route path="products" element={<Products />} />
-              <Route path="invoices" element={<Invoices />} />
-              <Route path="reports" element={<SalesReport />} />
+            {/* Protected Routes wrapped in Layout */}
+            <Route element={<Layout />}>
+              <Route path="/home" element={<Home />} />
+              
+              {/* Billing Module Nested Routes */}
+              <Route path="/billing" element={<BillingLayout />}>
+                <Route index element={<Navigate to="pos" replace />} />
+                <Route path="pos" element={<POS />} />
+                <Route path="products" element={<Products />} />
+                <Route path="invoices" element={<Invoices />} />
+                <Route path="reports" element={<SalesReport />} />
+              </Route>
+              
+              <Route path="/financial" element={<Financial />} />
+              <Route path="/financial/loan/:id" element={<LoanDetails />} />
+              <Route path="/cv" element={<CVGenerator />} />
+              <Route path="/cv/saved" element={<SavedCVs />} />
+              <Route path="/tools" element={<ToolsPortal />} />
+              <Route path="/passwords" element={<PasswordManager />} />
             </Route>
-            
-            <Route path="/financial" element={<Financial />} />
-            <Route path="/financial/loan/:id" element={<LoanDetails />} />
-            <Route path="/cv" element={<CVGenerator />} />
-            <Route path="/cv/saved" element={<SavedCVs />} />
-            <Route path="/tools" element={<ToolsPortal />} />
-            <Route path="/passwords" element={<PasswordManager />} />
-          </Route>
 
-          <Route path="/" element={<Navigate to="/login" replace />} />
-        </Routes>
-      </Router>
-    </ToastProvider>
+            <Route path="/" element={<Navigate to="/login" replace />} />
+          </Routes>
+        </Router>
+      </ToastProvider>
+    </ModalProvider>
   );
 }
 

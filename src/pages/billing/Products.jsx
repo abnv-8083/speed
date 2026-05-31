@@ -4,10 +4,12 @@ import { supabase } from '../../supabaseClient';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
 import { useToast } from '../../components/ToastContext';
+import { useModal } from '../../components/ModalContext';
 import './Products.css';
 
 const Products = () => {
   const toast = useToast();
+  const modal = useModal();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   
@@ -98,7 +100,7 @@ const Products = () => {
   };
 
   const handleDeleteProduct = async (product) => {
-    if (window.confirm(`Are you sure you want to delete ${product.name}?`)) {
+    if (await modal.confirm("Delete Product", `Are you sure you want to delete ${product.name}?`)) {
       const { error } = await supabase.from('products').delete().eq('id', product.id);
       
       if (error && error.message.includes('foreign key constraint')) {
