@@ -35,6 +35,7 @@ const Products = () => {
     const { data, error } = await supabase
       .from('products')
       .select('*')
+      .not('name', 'ilike', '[DELETED]%')
       .order('id', { ascending: true });
       
     if (!error && data) {
@@ -96,17 +97,28 @@ const Products = () => {
     setEditingStockId(null);
   };
 
-  const handleDeleteProduct = async (id) => {
-    if (window.confirm("Are you sure you want to delete this product?")) {
-      const { error } = await supabase.from('products').delete().eq('id', id);
-      if (error) {
-        if (error.message.includes('foreign key constraint')) {
-          toast.error('Cannot delete: Product has sales history. Please Block it instead to hide it from POS.');
+  const handleDeleteProduct = async (product) => {
+    if (window.confirm(`Are you sure you want to delete ${product.name}?`)) {
+      const { error } = await supabase.from('products').delete().eq('id', product.id);
+      
+      if (error && error.message.includes('foreign key constraint')) {
+        // Soft delete workaround: rename and block so it hides from UI but keeps invoice history
+        const archivedName = `[DELETED] ${product.name}`;
+        const { error: archiveError } = await supabase
+          .from('products')
+          .update({ is_blocked: true, name: archivedName })
+          .eq('id', product.id);
+          
+        if (archiveError) {
+          toast.error('Failed to archive product: ' + archiveError.message);
         } else {
-          toast.error('Error deleting product: ' + error.message);
+          setProducts(products.filter(p => p.id !== product.id));
+          toast.success("Product was soft-deleted (It has past invoices).");
         }
+      } else if (error) {
+        toast.error('Error deleting product: ' + error.message);
       } else {
-        setProducts(products.filter(p => p.id !== id));
+        setProducts(products.filter(p => p.id !== product.id));
         toast.success("Product deleted successfully");
       }
     }
@@ -235,7 +247,7 @@ const Products = () => {
                             <button 
                               className="btn-icon danger-text"
                               title="Delete Product"
-                              onClick={() => handleDeleteProduct(product.id)}
+                              onClick={() => handleDeleteProduct(product)}
                             >
                               <Trash2 size={16} />
                             </button>
