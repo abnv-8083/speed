@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, PieChart, ArrowRight, FileText, ShieldCheck, Wrench } from 'lucide-react';
+import { CreditCard, PieChart, ArrowRight, FileText, ShieldCheck, Wrench, Printer } from 'lucide-react';
 import './Home.css';
 
 const Home = () => {
@@ -27,6 +27,22 @@ const Home = () => {
           <p>Manage products, stock, and generate professional A5 invoices for your photostat business.</p>
           <div className="portal-action">
             Open Billing <ArrowRight size={18} />
+          </div>
+        </div>
+
+        {/* Printing Hub Card */}
+        <div 
+          className="portal-card animate-fade-in" 
+          style={{ animationDelay: '0.15s' }}
+          onClick={() => navigate('/printing')}
+        >
+          <div className="portal-icon-wrapper" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
+            <Printer size={32} />
+          </div>
+          <h2>Printing & Stock Hub</h2>
+          <p>Track A4, A3, and A5 print stocks, log color/B&W jobs, and connect OS Print Spooler.</p>
+          <div className="portal-action">
+            Open Printing Hub <ArrowRight size={18} />
           </div>
         </div>
 

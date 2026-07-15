@@ -52,23 +52,7 @@ const Invoices = () => {
     setCurrentPage(1); // reset to page 1 on new search
   };
 
-  const deductAndPrint = async (printType) => {
-    const { data: products } = await supabase
-      .from('products')
-      .select('*')
-      .eq('is_print', true)
-      .ilike('name', `%${printType}%`);
-
-    if (products && products.length > 0) {
-      const printProduct = products[0];
-      if (printProduct.stock > 0) {
-        await supabase
-          .from('products')
-          .update({ stock: printProduct.stock - 1 })
-          .eq('id', printProduct.id);
-      }
-    }
-    
+  const handlePrintInvoice = () => {
     window.print();
   };
 
@@ -83,10 +67,10 @@ const Invoices = () => {
           <button className="btn btn-secondary" onClick={() => setSelectedInvoice(null)}>
             <ArrowLeft size={18} /> Back to History
           </button>
-          <button className="btn btn-primary" onClick={() => deductAndPrint('B&W')}>
+          <button className="btn btn-primary" onClick={handlePrintInvoice}>
             <Printer size={18} /> Print (B&W)
           </button>
-          <button className="btn btn-primary" style={{ background: 'var(--secondary)' }} onClick={() => deductAndPrint('Color')}>
+          <button className="btn btn-primary" style={{ background: 'var(--secondary)' }} onClick={handlePrintInvoice}>
             <Printer size={18} /> Print (Color)
           </button>
         </div>

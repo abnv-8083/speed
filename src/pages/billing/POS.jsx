@@ -137,21 +137,8 @@ const POS = () => {
     setShowInvoice(true);
   };
 
-  const deductAndPrint = async (printType) => {
-    // Find the product corresponding to the print type
-    const printProduct = products.find(p => p.is_print && p.name.includes(printType));
-    
-    if (printProduct && printProduct.stock > 0) {
-      // Deduct 1 from stock for printing the invoice
-      await supabase
-        .from('products')
-        .update({ stock: printProduct.stock - 1 })
-        .eq('id', printProduct.id);
-        
-      await fetchProducts();
-    }
-    
-    // Open the browser print dialog
+  const handlePrintInvoice = () => {
+    // Open the browser print dialog without deducting stock
     window.print();
   };
 
@@ -217,10 +204,10 @@ const POS = () => {
           <button className="btn btn-secondary" onClick={() => setShowInvoice(false)}>
             <ArrowLeft size={18} /> New Sale
           </button>
-          <button className="btn btn-primary" onClick={() => deductAndPrint('B&W')}>
+          <button className="btn btn-primary" onClick={handlePrintInvoice}>
             <Printer size={18} /> Print (B&W)
           </button>
-          <button className="btn btn-primary" style={{ background: 'var(--secondary)' }} onClick={() => deductAndPrint('Color')}>
+          <button className="btn btn-primary" style={{ background: 'var(--secondary)' }} onClick={handlePrintInvoice}>
             <Printer size={18} /> Print (Color)
           </button>
         </div>
