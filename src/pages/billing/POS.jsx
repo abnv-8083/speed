@@ -322,40 +322,6 @@ const POS = () => {
           </div>
         </div>
 
-        <div className="quick-sale-bar">
-          <div className="quick-sale-info">
-            <h4>⚡ Quick Print Logger</h4>
-            <p>Instantly log prints from WhatsApp/Email. Deducts stock & adds to revenue.</p>
-          </div>
-          <div className="quick-sale-actions">
-            <input 
-              type="number" 
-              className="pos-discount-input" 
-              style={{ width: '70px', textAlign: 'center' }}
-              min="1" 
-              value={quickQty}
-              onChange={(e) => setQuickQty(parseInt(e.target.value) || 1)}
-            />
-            <span className="qty-label">pages</span>
-            <button 
-              id="quick-btn-B&W"
-              className="btn btn-secondary btn-sm" 
-              onClick={() => handleQuickSale('B&W')}
-              disabled={quickLoading}
-            >
-              Log B&W
-            </button>
-            <button 
-              id="quick-btn-Color"
-              className="btn btn-primary btn-sm" 
-              style={{ background: 'var(--secondary)' }}
-              onClick={() => handleQuickSale('Color')}
-              disabled={quickLoading}
-            >
-              Log Color
-            </button>
-          </div>
-        </div>
         
         {loading ? (
           <PremiumLoader text="Loading Products..." />
