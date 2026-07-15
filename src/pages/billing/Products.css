@@ -105,67 +105,116 @@
   gap: 0.75rem;
 }
 
-/* Sleek Table Container with Smooth Scroll */
-.table-responsive {
+/* Sleek Inventory Cards List */
+.inventory-cards-list {
   flex: 1 !important;
   min-height: 0 !important;
   overflow-y: auto !important;
-  overflow-x: auto;
+  padding-right: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.empty-inventory-cards {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 3rem 0;
+}
+
+.inventory-list-card {
+  background: rgba(15, 23, 42, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 10px;
-  background: rgba(15, 23, 42, 0.65);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  padding: 0.8rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  gap: 1rem;
 }
 
-.products-table {
-  width: 100%;
-  border-collapse: collapse;
-  text-align: left;
+.inventory-list-card:hover {
+  border-color: #38bdf8;
+  background: rgba(30, 41, 59, 0.9);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(56, 189, 248, 0.15);
 }
 
-.products-table th {
-  background: #0f172a !important;
-  padding: 0.75rem 1.25rem !important;
+.inventory-list-card.card-blocked {
+  opacity: 0.6;
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.card-left-section {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  min-width: 220px;
+  flex: 1.2;
+}
+
+.card-prod-title {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.card-prod-id {
+  font-size: 0.82rem;
   font-weight: 700;
-  font-size: 0.82rem !important;
   color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.16);
-  position: sticky;
-  top: 0;
-  z-index: 10;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 0.15rem 0.45rem;
+  border-radius: 6px;
 }
 
-.products-table td {
-  padding: 0.65rem 1.25rem !important;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  vertical-align: middle;
-  font-size: 0.92rem !important;
-  color: #e2e8f0;
-  transition: background 0.15s;
+.card-prod-title h4 {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
 }
 
-.products-table tr:hover td {
-  background: rgba(30, 41, 59, 0.65);
+.card-prod-price {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #38bdf8;
 }
 
-.products-table tr:last-child td {
-  border-bottom: none;
+.card-middle-section {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  flex: 1;
 }
 
-.font-medium {
+.card-stock-display {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.92rem;
+}
+
+.stock-label {
+  color: #94a3b8;
   font-weight: 600;
-  color: #fff;
 }
 
-.text-center {
-  text-align: center;
+.stock-val {
+  font-size: 1.05rem;
+  font-weight: 800;
+  color: #f8fafc;
 }
 
-.py-4 {
-  padding-top: 2rem !important;
-  padding-bottom: 2rem !important;
+.card-right-section {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-shrink: 0;
 }
 
 /* Status Badges */

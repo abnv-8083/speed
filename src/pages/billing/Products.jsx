@@ -195,86 +195,83 @@ const Products = () => {
           </div>
         ) : (
           <>
-            <div className="table-responsive">
-              <table className="products-table">
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Product Name</th>
-                    <th>Price</th>
-                    <th>Current Stock</th>
-                    <th>Status</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {products.length === 0 ? (
-                    <tr>
-                      <td colSpan="6" className="text-center text-muted py-4">No products found.</td>
-                    </tr>
-                  ) : (
-                    paginatedProducts.map(product => (
-                      <tr key={product.id}>
-                        <td className="text-muted">#{product.id}</td>
-                        <td className="font-medium">{product.name}</td>
-                        <td>₹{Number(product.price).toFixed(2)}</td>
-                        <td>
-                          {editingStockId === product.id ? (
-                            <div className="stock-edit-inline">
-                              <input 
-                                type="number" 
-                                className="input-field small-input" 
-                                value={newStockValue} 
-                                onChange={(e) => setNewStockValue(e.target.value)}
-                              />
-                              <button className="icon-btn success" onClick={() => saveStockEdit(product.id)}><Check size={16} /></button>
-                              <button className="icon-btn danger" onClick={() => setEditingStockId(null)}><X size={16} /></button>
-                            </div>
-                          ) : (
-                            <span className={product.stock < 10 ? 'text-error font-medium' : ''}>
-                              {product.stock}
-                            </span>
-                          )}
-                        </td>
-                        <td>
-                          {product.is_blocked ? (
-                            <span className="status-badge status-error">Blocked</span>
-                          ) : product.stock > 10 ? (
-                            <span className="status-badge status-good">In Stock</span>
-                          ) : product.stock > 0 ? (
-                            <span className="status-badge status-warning">Low Stock</span>
-                          ) : (
-                            <span className="status-badge status-error">Out of Stock</span>
-                          )}
-                        </td>
-                        <td>
-                          <div className="action-buttons-row">
-                            {editingStockId !== product.id && (
-                              <button className="btn-icon" title="Update Stock" onClick={() => startStockEdit(product)}>
-                                <Edit2 size={16} />
-                              </button>
-                            )}
-                            <button 
-                              className={`btn-icon ${product.is_blocked ? 'success-text' : 'warning-text'}`}
-                              title={product.is_blocked ? "Unblock Product" : "Block Product"}
-                              onClick={() => handleToggleBlock(product.id, product.is_blocked)}
-                            >
-                              {product.is_blocked ? <Unlock size={16} /> : <Ban size={16} />}
-                            </button>
-                            <button 
-                              className="btn-icon danger-text"
-                              title="Delete Product"
-                              onClick={() => handleDeleteProduct(product)}
-                            >
-                              <Trash2 size={16} />
-                            </button>
+            <div className="inventory-cards-list">
+              {filteredProducts.length === 0 ? (
+                <div className="empty-inventory-cards">
+                  <p className="text-muted">No products found matching your search.</p>
+                </div>
+              ) : (
+                paginatedProducts.map(product => (
+                  <div key={product.id} className={`inventory-list-card ${product.is_blocked ? 'card-blocked' : ''}`}>
+                    {/* Left: Product Name, ID, Price */}
+                    <div className="card-left-section">
+                      <div className="card-prod-title">
+                        <span className="card-prod-id">#{product.id}</span>
+                        <h4>{product.name}</h4>
+                      </div>
+                      <div className="card-prod-price">₹{Number(product.price).toFixed(2)}</div>
+                    </div>
+
+                    {/* Middle: Stock Readout & Status Badge */}
+                    <div className="card-middle-section">
+                      <div className="card-stock-display">
+                        <span className="stock-label">Stock:</span>
+                        {editingStockId === product.id ? (
+                          <div className="stock-edit-inline">
+                            <input 
+                              type="number" 
+                              className="input-field small-input" 
+                              value={newStockValue} 
+                              onChange={(e) => setNewStockValue(e.target.value)}
+                            />
+                            <button className="icon-btn success" onClick={() => saveStockEdit(product.id)}><Check size={16} /></button>
+                            <button className="icon-btn danger" onClick={() => setEditingStockId(null)}><X size={16} /></button>
                           </div>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                        ) : (
+                          <span className={`stock-val ${product.stock < 10 ? 'text-error font-bold' : 'font-bold'}`}>
+                            {product.stock}
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="card-status-wrapper">
+                        {product.is_blocked ? (
+                          <span className="status-badge status-error">Blocked</span>
+                        ) : product.stock > 10 ? (
+                          <span className="status-badge status-good">In Stock</span>
+                        ) : product.stock > 0 ? (
+                          <span className="status-badge status-warning">Low Stock</span>
+                        ) : (
+                          <span className="status-badge status-error">Out of Stock</span>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Right: Actions */}
+                    <div className="card-right-section action-buttons-row">
+                      {editingStockId !== product.id && (
+                        <button className="btn-icon" title="Update Stock" onClick={() => startStockEdit(product)}>
+                          <Edit2 size={16} />
+                        </button>
+                      )}
+                      <button 
+                        className={`btn-icon ${product.is_blocked ? 'success-text' : 'warning-text'}`}
+                        title={product.is_blocked ? "Unblock Product" : "Block Product"}
+                        onClick={() => handleToggleBlock(product.id, product.is_blocked)}
+                      >
+                        {product.is_blocked ? <Unlock size={16} /> : <Ban size={16} />}
+                      </button>
+                      <button 
+                        className="btn-icon danger-text"
+                        title="Delete Product"
+                        onClick={() => handleDeleteProduct(product)}
+                      >
+                        <Trash2 size={16} />
+                      </button>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
             <Pagination
               currentPage={currentPage}
