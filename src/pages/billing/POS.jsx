@@ -380,27 +380,33 @@ const POS = () => {
         </div>
 
         <div className="cart-footer">
-          <div className="cart-discount-row">
-            <span>Discount (₹)</span>
-            <input 
-              type="number" 
-              className="pos-discount-input" 
-              style={{ width: '160px', textAlign: 'right' }}
-              min="0" 
-              step="0.01" 
-              value={discount || ''}
-              onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-              placeholder="0.00"
-            />
+          {/* Line 1: Subtotal & Discount side-by-side */}
+          <div className="cart-subtotal-discount-row">
+            <div className="footer-subtotal-box">
+              <span className="footer-label">Subtotal:</span>
+              <span className="footer-val">₹{cartSubtotal.toFixed(2)}</span>
+            </div>
+            <div className="footer-discount-box">
+              <span className="footer-label">Discount (₹):</span>
+              <input 
+                type="number" 
+                className="pos-discount-input compact-input" 
+                min="0" 
+                step="0.01" 
+                value={discount || ''}
+                onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
+                placeholder="0.00"
+              />
+            </div>
           </div>
-          <div className="cart-total-row">
-            <span>Subtotal</span>
-            <span className="total-val subtotal" style={{ width: '160px', textAlign: 'right' }}>₹{cartSubtotal.toFixed(2)}</span>
-          </div>
+
+          {/* Line 2: Total */}
           <div className="cart-total-row final-total">
             <span>Total</span>
-            <span className="total-val" style={{ width: '160px', textAlign: 'right' }}>₹{cartTotal.toFixed(2)}</span>
+            <span className="total-val">₹{cartTotal.toFixed(2)}</span>
           </div>
+
+          {/* Line 3: Checkout & Print button */}
           <button 
             className="btn btn-primary checkout-btn"
             disabled={cart.length === 0 || submittingInvoice}
