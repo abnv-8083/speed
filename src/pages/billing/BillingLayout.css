@@ -48,7 +48,8 @@
 
 .billing-content {
   flex: 1;
-  overflow-y: auto;
+  overflow: hidden !important;
+  min-height: 0 !important;
   position: relative;
   display: flex;
   flex-direction: column;
