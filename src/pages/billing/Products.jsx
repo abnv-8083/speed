@@ -195,27 +195,61 @@ const Products = () => {
           </div>
         ) : (
           <>
-            <div className="inventory-cards-list">
+            <div className="inventory-cards-grid">
               {filteredProducts.length === 0 ? (
                 <div className="empty-inventory-cards">
                   <p className="text-muted">No products found matching your search.</p>
                 </div>
               ) : (
                 paginatedProducts.map(product => (
-                  <div key={product.id} className={`inventory-list-card ${product.is_blocked ? 'card-blocked' : ''}`}>
-                    {/* Left: Product Name, ID, Price */}
-                    <div className="card-left-section">
-                      <div className="card-prod-title">
+                  <div key={product.id} className={`inventory-grid-card ${product.is_blocked ? 'card-blocked' : ''}`}>
+                    {/* Top Row: ID + Status Badge on Left, Action Buttons on Right */}
+                    <div className="grid-card-top">
+                      <div className="grid-card-badges">
                         <span className="card-prod-id">#{product.id}</span>
-                        <h4>{product.name}</h4>
+                        {product.is_blocked ? (
+                          <span className="status-badge status-error">Blocked</span>
+                        ) : product.stock > 10 ? (
+                          <span className="status-badge status-good">In Stock</span>
+                        ) : product.stock > 0 ? (
+                          <span className="status-badge status-warning">Low Stock</span>
+                        ) : (
+                          <span className="status-badge status-error">Out of Stock</span>
+                        )}
                       </div>
-                      <div className="card-prod-price">₹{Number(product.price).toFixed(2)}</div>
+                      <div className="grid-card-actions action-buttons-row">
+                        {editingStockId !== product.id && (
+                          <button className="btn-icon" title="Update Stock" onClick={() => startStockEdit(product)}>
+                            <Edit2 size={15} />
+                          </button>
+                        )}
+                        <button 
+                          className={`btn-icon ${product.is_blocked ? 'success-text' : 'warning-text'}`}
+                          title={product.is_blocked ? "Unblock Product" : "Block Product"}
+                          onClick={() => handleToggleBlock(product.id, product.is_blocked)}
+                        >
+                          {product.is_blocked ? <Unlock size={15} /> : <Ban size={15} />}
+                        </button>
+                        <button 
+                          className="btn-icon danger-text"
+                          title="Delete Product"
+                          onClick={() => handleDeleteProduct(product)}
+                        >
+                          <Trash2 size={15} />
+                        </button>
+                      </div>
                     </div>
 
-                    {/* Middle: Stock Readout & Status Badge */}
-                    <div className="card-middle-section">
+                    {/* Middle Row: Product Title & Price */}
+                    <div className="grid-card-body">
+                      <h4 className="grid-prod-title" title={product.name}>{product.name}</h4>
+                      <div className="grid-prod-price">₹{Number(product.price).toFixed(2)}</div>
+                    </div>
+
+                    {/* Bottom Row: Stock readout or editor */}
+                    <div className="grid-card-footer">
                       <div className="card-stock-display">
-                        <span className="stock-label">Stock:</span>
+                        <span className="stock-label">Stock Level:</span>
                         {editingStockId === product.id ? (
                           <div className="stock-edit-inline">
                             <input 
@@ -233,41 +267,6 @@ const Products = () => {
                           </span>
                         )}
                       </div>
-
-                      <div className="card-status-wrapper">
-                        {product.is_blocked ? (
-                          <span className="status-badge status-error">Blocked</span>
-                        ) : product.stock > 10 ? (
-                          <span className="status-badge status-good">In Stock</span>
-                        ) : product.stock > 0 ? (
-                          <span className="status-badge status-warning">Low Stock</span>
-                        ) : (
-                          <span className="status-badge status-error">Out of Stock</span>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Right: Actions */}
-                    <div className="card-right-section action-buttons-row">
-                      {editingStockId !== product.id && (
-                        <button className="btn-icon" title="Update Stock" onClick={() => startStockEdit(product)}>
-                          <Edit2 size={16} />
-                        </button>
-                      )}
-                      <button 
-                        className={`btn-icon ${product.is_blocked ? 'success-text' : 'warning-text'}`}
-                        title={product.is_blocked ? "Unblock Product" : "Block Product"}
-                        onClick={() => handleToggleBlock(product.id, product.is_blocked)}
-                      >
-                        {product.is_blocked ? <Unlock size={16} /> : <Ban size={16} />}
-                      </button>
-                      <button 
-                        className="btn-icon danger-text"
-                        title="Delete Product"
-                        onClick={() => handleDeleteProduct(product)}
-                      >
-                        <Trash2 size={16} />
-                      </button>
                     </div>
                   </div>
                 ))
