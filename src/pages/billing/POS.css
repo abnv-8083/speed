@@ -44,20 +44,23 @@
 .pos-card {
   background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.75rem 0.85rem;
+  border-radius: 12px !important;
+  padding: 0.85rem 1rem !important;
   cursor: pointer;
   transition: all 0.2s;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 75px;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  gap: 0.5rem !important;
+  min-height: 90px !important;
+  height: auto !important;
+  position: relative;
 }
 
 .pos-card:hover {
   border-color: var(--primary);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+  box-shadow: 0 6px 16px rgba(79, 70, 229, 0.2);
 }
 
 .pos-card.out-of-stock {
@@ -71,23 +74,38 @@
   box-shadow: none;
 }
 
+.pos-card-info {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 0.2rem !important;
+}
+
 .pos-card-info h4 {
-  font-size: 0.92rem;
-  font-weight: 700;
-  margin-bottom: 0.15rem;
-  color: var(--text);
+  font-size: 0.95rem !important;
+  font-weight: 700 !important;
+  margin: 0 !important;
+  color: var(--text) !important;
+  line-height: 1.2 !important;
 }
 
 .pos-price {
-  font-weight: 700;
-  color: var(--primary);
-  font-size: 0.98rem;
+  font-weight: 800 !important;
+  color: var(--primary) !important;
+  font-size: 1.05rem !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
 }
 
 .pos-card-stock {
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  margin-top: 0.35rem;
+  font-size: 0.78rem !important;
+  color: var(--text-muted) !important;
+  margin: 0 !important;
+  padding-top: 0.4rem !important;
+  border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  line-height: 1.2 !important;
 }
 
 .text-error {
