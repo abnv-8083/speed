@@ -172,63 +172,76 @@
   font-size: 0.95rem;
 }
 
-/* Sleek, Compact Cards for Each Added Bill Item */
+/* Sleek, Ultra-Compact Cards for Each Added Bill Item */
 .cart-item {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 0.65rem 1rem;
-  margin-bottom: 0.5rem;
+  display: flex !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  padding: 0.45rem 0.65rem !important;
+  margin-bottom: 0.35rem !important;
   background: rgba(15, 23, 42, 0.75);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  border-radius: 10px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  border-radius: 8px !important;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
   transition: all 0.2s;
+  gap: 0.5rem !important;
 }
 
 .cart-item:hover {
   border-color: #3b82f6;
   background: rgba(30, 41, 59, 0.9);
   transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.35);
+}
+
+.cart-item-info {
+  flex: 1 !important;
+  min-width: 0 !important;
 }
 
 .cart-item-info h5 {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 0.15rem;
+  font-size: 0.88rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.1rem 0 !important;
   color: #ffffff;
+  line-height: 1.2 !important;
 }
 
 .cart-item-info p {
-  font-size: 0.82rem;
+  font-size: 0.75rem !important;
   color: #38bdf8;
-  font-weight: 600;
+  font-weight: 600 !important;
+  margin: 0 !important;
+  line-height: 1.2 !important;
 }
 
 .cart-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 0.85rem;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  flex-shrink: 0 !important;
 }
 
 .qty-picker {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.25rem !important;
   background: #0f172a;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  padding: 0.2rem 0.4rem;
+  border-radius: 6px !important;
+  padding: 0.15rem 0.3rem !important;
 }
 
 .qty-picker button {
-  padding: 0.2rem;
-  border-radius: 4px;
+  padding: 0.15rem !important;
+  border-radius: 3px !important;
   background: rgba(255, 255, 255, 0.1);
   color: #fff;
   cursor: pointer;
   transition: all 0.2s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .qty-picker button:hover {
@@ -237,27 +250,30 @@
 }
 
 .qty-picker span {
-  min-width: 20px;
+  min-width: 16px !important;
   text-align: center;
   font-weight: 800;
-  font-size: 0.95rem;
+  font-size: 0.85rem !important;
   color: #fff;
 }
 
 .item-total {
-  font-weight: 800;
-  min-width: 75px;
-  text-align: right;
-  font-size: 1.05rem;
+  font-weight: 800 !important;
+  min-width: 58px !important;
+  text-align: right !important;
+  font-size: 0.95rem !important;
   color: #10b981;
 }
 
 .remove-btn {
   color: #f43f5e;
-  padding: 0.35rem;
+  padding: 0.25rem !important;
   background: rgba(244, 63, 94, 0.15);
-  border-radius: 6px;
+  border-radius: 5px !important;
   transition: all 0.2s;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
 }
 
 .remove-btn:hover {
