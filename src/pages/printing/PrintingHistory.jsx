@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Printer, Search, Filter, RefreshCw, Plus, Check, AlertTriangle, 
-  Terminal, ArrowLeft, ArrowRight, Layers, FileText, Download, HelpCircle 
+  Terminal, ArrowLeft, ArrowRight, Layers, FileText, Download, HelpCircle, Package 
 } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { useToast } from '../../components/ToastContext';
@@ -22,6 +22,11 @@ export default function PrintingHistory() {
   const [logs, setLogs] = useState([]);
   const [loading, setLoading] = useState(true);
   const [spoolerModalOpen, setSpoolerModalOpen] = useState(false);
+  const [restoreModalOpen, setRestoreModalOpen] = useState(false);
+
+  // Custom stock quantities for the restore / replenish modal
+  const [customStocks, setCustomStocks] = useState({});
+  const [savingStocks, setSavingStocks] = useState(false);
 
   // Form State for Manual Logging
   const [jobName, setJobName] = useState('');
@@ -84,7 +89,6 @@ export default function PrintingHistory() {
         .order('created_at', { ascending: false });
 
       if (error) {
-        // Fallback to local storage if print_logs table not created yet in Supabase
         const local = localStorage.getItem('speednet_print_logs');
         setLogs(local ? JSON.parse(local) : []);
       } else {
@@ -96,32 +100,65 @@ export default function PrintingHistory() {
     }
   };
 
-  // Initialize or restore missing A4/A3/A5 stocks
-  const initializeStocks = async () => {
-    setLoading(true);
-    let createdCount = 0;
+  // Open Restore / Replenish modal and pre-fill current values
+  const openRestoreModal = () => {
+    const initialValues = {};
+    DEFAULT_STOCKS.forEach(def => {
+      const found = stocks.find(s => s.size === def.size && s.mode === def.mode);
+      const key = `${def.size}_${def.mode}`;
+      initialValues[key] = found ? found.stock : def.stock;
+    });
+    setCustomStocks(initialValues);
+    setRestoreModalOpen(true);
+  };
 
-    for (const item of DEFAULT_STOCKS) {
-      const exists = stocks.find(s => s.size === item.size && s.mode === item.mode);
-      if (!exists) {
-        const { error } = await supabase.from('products').insert([{
-          name: item.name,
-          price: item.price,
-          stock: item.stock,
-          is_print: true
-        }]);
-        if (!error) createdCount++;
+  // Quick adjust sheet count in modal
+  const adjustCustomStock = (key, delta, isAbsolute = false) => {
+    setCustomStocks(prev => {
+      const current = prev[key] || 0;
+      const nextVal = isAbsolute ? delta : Math.max(0, current + delta);
+      return { ...prev, [key]: nextVal };
+    });
+  };
+
+  // Save exact requested stock counts to Supabase
+  const handleSaveCustomStocks = async () => {
+    setSavingStocks(true);
+    let updatedCount = 0;
+
+    try {
+      for (const def of DEFAULT_STOCKS) {
+        const key = `${def.size}_${def.mode}`;
+        const targetCount = parseInt(customStocks[key]) || 0;
+        const exists = stocks.find(s => s.size === def.size && s.mode === def.mode);
+
+        if (exists) {
+          await supabase
+            .from('products')
+            .update({ stock: targetCount })
+            .eq('id', exists.id);
+          updatedCount++;
+        } else {
+          await supabase
+            .from('products')
+            .insert([{
+              name: def.name,
+              price: def.price,
+              stock: targetCount,
+              is_print: true
+            }]);
+          updatedCount++;
+        }
       }
-    }
 
-    if (createdCount > 0) {
-      toast.success(`Initialized ${createdCount} A4/A3/A5 print stock items!`);
-    } else {
-      toast.info('All A4, A3, and A5 print stocks are already initialized.');
+      toast.success(`Successfully set and replenished ${updatedCount} paper stock inventories!`);
+      await fetchStocks();
+      setRestoreModalOpen(false);
+    } catch (err) {
+      toast.error('Error saving custom stock counts');
+    } finally {
+      setSavingStocks(false);
     }
-
-    await fetchStocks();
-    setLoading(false);
   };
 
   // Log Print Job & Deduct Stock
@@ -150,7 +187,7 @@ export default function PrintingHistory() {
           .update({ stock: newStock })
           .eq('id', matchingProduct.id);
       } else {
-        toast.info(`Note: No product initialized for ${paperSize} ${colorMode} yet. Click 'Initialize Stocks' to track inventory.`);
+        toast.info(`Note: No product initialized for ${paperSize} ${colorMode} yet. Click 'Restore Stock' to track inventory.`);
       }
 
       // 2. Insert into print_logs
@@ -167,7 +204,6 @@ export default function PrintingHistory() {
       const { data, error } = await supabase.from('print_logs').insert([newLog]).select();
 
       if (error) {
-        // Fallback to localStorage
         const updatedLocal = [newLog, ...logs];
         localStorage.setItem('speednet_print_logs', JSON.stringify(updatedLocal));
         setLogs(updatedLocal);
@@ -284,22 +320,56 @@ export default function PrintingHistory() {
           <p>Real-time inventory tracking and comprehensive printing history with OS Print Spooler bridge</p>
         </div>
         <div className="printing-header-actions">
-          <button className="btn btn-secondary" onClick={initializeStocks} title="Create missing A4/A3/A5 products in Supabase">
-            <RefreshCw size={18} /> Initialize / Restore Stocks
+          <button 
+            className="btn" 
+            onClick={openRestoreModal} 
+            title="Set exact sheet quantity for each paper size"
+            style={{ 
+              background: '#10b981', 
+              color: '#ffffff', 
+              fontWeight: 700, 
+              border: 'none', 
+              padding: '10px 18px', 
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
+            }}
+          >
+            <Package size={18} /> Replenish / Set Stock Levels
           </button>
-          <button className="btn btn-primary" onClick={() => setSpoolerModalOpen(true)} style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)' }}>
+          <button 
+            className="btn btn-primary" 
+            onClick={() => setSpoolerModalOpen(true)} 
+            style={{ 
+              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', 
+              color: '#ffffff',
+              fontWeight: 700,
+              padding: '10px 18px',
+              borderRadius: '8px',
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              border: 'none',
+              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
+            }}
+          >
             <Terminal size={18} /> 🖥️ OS Print Spooler Bridge
           </button>
         </div>
       </div>
 
-      {/* Stock Overview Cards */}
+      {/* Stock Overview Cards with Solid Rich Backgrounds */}
       <div className="print-stocks-grid">
         {DEFAULT_STOCKS.map((def, idx) => {
           const count = getStockCount(def.size, def.mode);
           const isLow = count < 100;
+          const cardClass = `card-${def.size.toLowerCase()}-${def.mode === 'Color' ? 'color' : 'bw'}`;
           return (
-            <div key={idx} className="stock-card">
+            <div key={idx} className={`stock-card ${cardClass}`}>
               <div className="stock-card-top">
                 <span className="stock-card-title">
                   <span className={`paper-badge ${def.size.toLowerCase()}`}>{def.size}</span>
@@ -307,10 +377,10 @@ export default function PrintingHistory() {
                 </span>
                 {isLow && <AlertTriangle size={18} className="text-error" title="Low stock warning!" />}
               </div>
-              <div className={`stock-card-count ${isLow ? 'low' : ''}`}>
+              <div className={`stock-card-count ${isLow ? 'low' : ''}`} style={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
                 {loading ? '...' : count.toLocaleString()}
               </div>
-              <div className="stock-card-sub">Available sheets in inventory</div>
+              <div className="stock-card-sub" style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>Available sheets in inventory</div>
             </div>
           );
         })}
@@ -358,7 +428,7 @@ export default function PrintingHistory() {
               required
             />
           </div>
-          <button type="submit" className="btn btn-primary" disabled={submitting} style={{ height: '42px', padding: '0 24px' }}>
+          <button type="submit" className="btn btn-primary" disabled={submitting} style={{ height: '42px', padding: '0 24px', fontWeight: 700 }}>
             <Check size={18} /> {submitting ? 'Logging...' : 'Log & Deduct Stock'}
           </button>
         </form>
@@ -467,6 +537,69 @@ export default function PrintingHistory() {
         </div>
       </div>
 
+      {/* Restore & Replenish Stock Modal */}
+      {restoreModalOpen && (
+        <div className="modal-overlay" onClick={() => setRestoreModalOpen(false)}>
+          <div className="modal-content glass-panel animate-scale-up" onClick={e => e.stopPropagation()} style={{ maxWidth: '750px', padding: '24px' }}>
+            <div className="modal-header" style={{ marginBottom: '16px' }}>
+              <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <Package size={22} style={{ color: '#10b981' }} /> Replenish & Set Exact Sheet Stock
+              </h3>
+              <button className="btn-close" onClick={() => setRestoreModalOpen(false)}>×</button>
+            </div>
+            
+            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>
+              Set exact quantities for each paper size and color mode in your inventory. You can type the total available sheets or use the quick buttons to replenish.
+            </p>
+
+            <div className="restore-modal-grid">
+              {DEFAULT_STOCKS.map((def, idx) => {
+                const key = `${def.size}_${def.mode}`;
+                const val = customStocks[key] !== undefined ? customStocks[key] : def.stock;
+                return (
+                  <div key={idx} className="restore-stock-item">
+                    <div className="restore-stock-header">
+                      <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span className={`paper-badge ${def.size.toLowerCase()}`}>{def.size}</span>
+                        <span className={`mode-badge ${def.mode === 'Color' ? 'color' : 'bw'}`}>{def.mode}</span>
+                      </span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Default: {def.stock.toLocaleString()}</span>
+                    </div>
+
+                    <div className="restore-stock-input-row">
+                      <input 
+                        type="number" 
+                        min="0" 
+                        value={val}
+                        onChange={(e) => setCustomStocks({ ...customStocks, [key]: e.target.value })}
+                      />
+                    </div>
+
+                    <div className="restore-quick-btns">
+                      <button type="button" onClick={() => adjustCustomStock(key, def.stock, true)}>Reset Default</button>
+                      <button type="button" onClick={() => adjustCustomStock(key, 500)}>+500 Sheets</button>
+                      <button type="button" onClick={() => adjustCustomStock(key, 1000)}>+1,000 Sheets</button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
+              <button className="btn btn-secondary" onClick={() => setRestoreModalOpen(false)} disabled={savingStocks}>Cancel</button>
+              <button 
+                className="btn" 
+                onClick={handleSaveCustomStocks} 
+                disabled={savingStocks}
+                style={{ background: '#10b981', color: '#fff', fontWeight: 700, padding: '10px 24px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+              >
+                <Check size={18} /> {savingStocks ? 'Saving...' : 'Save & Update Stock Levels'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* OS Spooler Bridge Modal */}
       {spoolerModalOpen && (
         <div className="modal-overlay" onClick={() => setSpoolerModalOpen(false)}>
@@ -506,7 +639,7 @@ export default function PrintingHistory() {
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
                   Click the button below to simulate an OS print job arriving from the local Windows Spooler queue. Watch your table update and stock deduct instantly!
                 </p>
-                <button className="btn btn-primary" onClick={simulateSpoolerJob} style={{ width: '100%' }}>
+                <button className="btn btn-primary" onClick={simulateSpoolerJob} style={{ width: '100%', fontWeight: 700 }}>
                   <Terminal size={18} /> Simulate OS Spooler Job Arrival
                 </button>
               </div>

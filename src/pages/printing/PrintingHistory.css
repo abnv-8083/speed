@@ -45,19 +45,45 @@
 }
 
 .stock-card {
-  padding: 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  background: var(--bg-card, rgba(30, 32, 47, 0.6));
+  padding: 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .stock-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+  transform: translateY(-3px);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+}
+
+/* Distinct Solid/Rich Background Colors for Each Card */
+.stock-card.card-a4-bw {
+  background: linear-gradient(135deg, #1e293b, #0f172a);
+  border-color: #3b82f6;
+}
+.stock-card.card-a4-color {
+  background: linear-gradient(135deg, #4c0519, #2d0611);
+  border-color: #f43f5e;
+}
+.stock-card.card-a3-bw {
+  background: linear-gradient(135deg, #3b0764, #1e053a);
+  border-color: #a855f7;
+}
+.stock-card.card-a3-color {
+  background: linear-gradient(135deg, #500724, #2a0414);
+  border-color: #ec4899;
+}
+.stock-card.card-a5-bw {
+  background: linear-gradient(135deg, #064e3b, #022c22);
+  border-color: #10b981;
+}
+.stock-card.card-a5-color {
+  background: linear-gradient(135deg, #451a03, #240c01);
+  border-color: #f59e0b;
 }
 
 .stock-card-top {
@@ -354,4 +380,68 @@
 
 .copy-btn-absolute:hover {
   background: rgba(255, 255, 255, 0.2);
+}
+
+/* Restore & Replenish Stock Modal */
+.restore-modal-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+  margin: 16px 0;
+}
+
+.restore-stock-item {
+  padding: 14px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.restore-stock-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.restore-stock-input-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.restore-stock-input-row input {
+  flex: 1;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: #0f172a;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.restore-quick-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.restore-quick-btns button {
+  padding: 4px 8px;
+  font-size: 0.75rem;
+  border-radius: 4px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.restore-quick-btns button:hover {
+  background: rgba(59, 130, 246, 0.2);
+  color: #fff;
+  border-color: #3b82f6;
 }
