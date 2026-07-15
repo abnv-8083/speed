@@ -20,10 +20,16 @@ const Products = () => {
   
   const [editingStockId, setEditingStockId] = useState(null);
   const [newStockValue, setNewStockValue] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  const paginatedProducts = products.slice(
+  const filteredProducts = products.filter(p => 
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+    p.id.toString().includes(searchTerm)
+  );
+
+  const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE
   );
@@ -145,9 +151,18 @@ const Products = () => {
             <h2>Inventory Management</h2>
             <p className="text-muted">Manage your store products and stock levels.</p>
           </div>
-          <button className="btn btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
-            <Plus size={18} /> Add New Product
-          </button>
+          <div className="products-header-actions">
+            <input 
+              type="text" 
+              placeholder="🔍 Search products..." 
+              value={searchTerm} 
+              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+              className="inventory-search-input"
+            />
+            <button className="btn btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
+              <Plus size={18} /> Add New Product
+            </button>
+          </div>
         </div>
 
         {showAddForm && (
@@ -263,7 +278,7 @@ const Products = () => {
             </div>
             <Pagination
               currentPage={currentPage}
-              totalItems={products.length}
+              totalItems={filteredProducts.length}
               itemsPerPage={ITEMS_PER_PAGE}
               onPageChange={setCurrentPage}
             />
