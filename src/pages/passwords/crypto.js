@@ -1,10 +1,10 @@
 // ── Web Crypto AES-GCM vault encryption ───────────────────────
-// Vault blob stored in Supabase (vault_store table).
+// Vault blob stored in MongoDB via Express API.
 // Master password is NEVER sent to the server.
 
-import { supabase } from '../../supabaseClient';
+import { api } from '../../api';
 
-const DEVICE_KEY = 'pm_device_id'; // only thing kept in localStorage — a random device ID
+const DEVICE_KEY = 'pm_device_id';
 const ITER       = 200_000;
 
 // ── Helpers ─────────────────────────────────────────────────────
@@ -15,7 +15,6 @@ function b642buf(b64) {
   return Uint8Array.from(atob(b64), c => c.charCodeAt(0));
 }
 
-/** Get or create a stable device ID (only non-sensitive thing in localStorage) */
 function getDeviceId() {
   let id = localStorage.getItem(DEVICE_KEY);
   if (!id) {
@@ -37,69 +36,43 @@ async function deriveKey(password, salt) {
   );
 }
 
-async function hashPassword(password) {
-  const enc  = new TextEncoder();
-  const hash = await crypto.subtle.digest('SHA-256', enc.encode(password));
-  return Array.from(new Uint8Array(hash)).map(b => b.toString(16).padStart(2, '0')).join('');
-}
-
-// ── Supabase row helpers ─────────────────────────────────────────
+// ── API row helpers ──────────────────────────────────────────────
 async function fetchRow() {
-  const { data } = await supabase
-    .from('vault_store')
-    .select('*')
-    .eq('device_id', getDeviceId())
-    .maybeSingle();
-  return data; // null if not found
+  try {
+    return await api.getVault(getDeviceId());
+  } catch {
+    return null;
+  }
 }
 
 async function upsertRow(fields) {
-  const { error } = await supabase
-    .from('vault_store')
-    .upsert({ device_id: getDeviceId(), updated_at: new Date().toISOString(), ...fields });
-  if (error) throw new Error('Supabase error: ' + error.message);
+  await api.upsertVault({ device_id: getDeviceId(), ...fields });
 }
 
 // ── Public API ───────────────────────────────────────────────────
-
-/** Returns true if a vault has been set up for this device */
 export async function isVaultSetup() {
   const row = await fetchRow();
   return !!row?.encrypted_data;
 }
 
-/** Create a new vault with master password */
 export async function setupVault(password) {
-  const salt = crypto.getRandomValues(new Uint8Array(16));
+  const salt    = crypto.getRandomValues(new Uint8Array(16));
   const b64Salt = buf2b64(salt);
-
-  // Encrypt empty array to create initial vault
-  const key  = await deriveKey(password, salt);
-  const iv   = crypto.getRandomValues(new Uint8Array(12));
-  const enc  = await crypto.subtle.encrypt(
+  const key     = await deriveKey(password, salt);
+  const iv      = crypto.getRandomValues(new Uint8Array(12));
+  const enc     = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
     key,
     new TextEncoder().encode(JSON.stringify([]))
   );
-
-  await upsertRow({
-    salt:           b64Salt,
-    iv:             buf2b64(iv),
-    encrypted_data: buf2b64(enc),
-  });
+  await upsertRow({ salt: b64Salt, iv: buf2b64(iv), encrypted_data: buf2b64(enc) });
 }
 
-/** Returns true if password matches stored hash */
 export async function verifyPassword(password) {
-  try {
-    await loadVault(password);
-    return true;
-  } catch {
-    return false;
-  }
+  try { await loadVault(password); return true; }
+  catch { return false; }
 }
 
-/** Decrypt and return entries array */
 export async function loadVault(password) {
   const row = await fetchRow();
   if (!row?.encrypted_data) return [];
@@ -117,13 +90,11 @@ export async function loadVault(password) {
   }
 }
 
-/** Encrypt entries and persist to Supabase */
 export async function saveVault(password, entries) {
   const row  = await fetchRow();
   const salt = row?.salt
     ? b642buf(row.salt)
     : crypto.getRandomValues(new Uint8Array(16));
-
   const key = await deriveKey(password, salt);
   const iv  = crypto.getRandomValues(new Uint8Array(12));
   const enc = await crypto.subtle.encrypt(
@@ -131,17 +102,11 @@ export async function saveVault(password, entries) {
     key,
     new TextEncoder().encode(JSON.stringify(entries))
   );
-
-  await upsertRow({
-    salt:           buf2b64(salt),
-    iv:             buf2b64(iv),
-    encrypted_data: buf2b64(enc),
-  });
+  await upsertRow({ salt: buf2b64(salt), iv: buf2b64(iv), encrypted_data: buf2b64(enc) });
 }
 
-/** Delete all vault data for this device from Supabase */
 export async function clearVault() {
-  await supabase.from('vault_store').delete().eq('device_id', getDeviceId());
+  await api.deleteVault(getDeviceId());
   localStorage.removeItem(DEVICE_KEY);
 }
 

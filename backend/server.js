@@ -13,6 +13,8 @@ const invoiceRoutes     = require('./routes/invoices');
 const loanRoutes        = require('./routes/loans');
 const loanPaymentRoutes = require('./routes/loanPayments');
 const printLogRoutes    = require('./routes/printLogs');
+const vaultRoutes       = require('./routes/vault');
+const cvSaveRoutes      = require('./routes/cvSaves');
 
 const app = express();
 
@@ -30,6 +32,8 @@ app.use('/api/invoices',      invoiceRoutes);
 app.use('/api/loans',         loanRoutes);
 app.use('/api/loan-payments', loanPaymentRoutes);
 app.use('/api/print-logs',    printLogRoutes);
+app.use('/api/vault',         vaultRoutes);
+app.use('/api/cv-saves',      cvSaveRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

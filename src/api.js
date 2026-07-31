@@ -89,4 +89,14 @@ export const api = {
   // ── Print Logs ──────────────────────────────────────────────
   getPrintLogs:    ()          => request('GET',  '/api/print-logs'),
   createPrintLog:  (body)      => request('POST', '/api/print-logs', body),
+
+  // ── Vault (Password Manager) ─────────────────────────────────
+  getVault:    (device_id)     => request('GET',  `/api/vault?device_id=${encodeURIComponent(device_id)}`),
+  upsertVault: (body)          => request('POST', '/api/vault', body),
+  deleteVault: (device_id)     => request('DELETE', `/api/vault?device_id=${encodeURIComponent(device_id)}`),
+
+  // ── CV Saves ─────────────────────────────────────────────────
+  getCvSaves:    ()            => request('GET',    '/api/cv-saves'),
+  upsertCvSave:  (body)        => request('POST',   '/api/cv-saves', body),
+  deleteCvSave:  (id)          => request('DELETE', `/api/cv-saves/${id}`),
 };
