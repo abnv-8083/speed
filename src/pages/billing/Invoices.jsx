@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Receipt, Search, Printer, ArrowLeft, Package } from 'lucide-react';
-import { supabase } from '../../supabaseClient';
+import { api } from '../../api';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
 import './Invoices.css';
@@ -19,20 +19,11 @@ const Invoices = () => {
 
   const fetchInvoices = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('invoices')
-      .select(`
-        *,
-        invoice_items (
-          quantity,
-          price_at_time,
-          products ( name )
-        )
-      `)
-      .order('created_at', { ascending: false });
-
-    if (!error && data) {
+    try {
+      const data = await api.getInvoices();
       setInvoices(data);
+    } catch (err) {
+      console.error('Failed to load invoices:', err.message);
     }
     setLoading(false);
   };

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, CheckCircle2, History, CreditCard, Banknote } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { api } from '../api';
 import PremiumLoader from '../components/PremiumLoader';
 import { useToast } from '../components/ToastContext';
 import { useModal } from '../components/ModalContext';
@@ -21,14 +21,11 @@ const LoanDetails = () => {
 
   const fetchLoanDetails = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('loans')
-      .select('*, loan_payments(*)')
-      .eq('id', id)
-      .single();
-
-    if (!error && data) {
+    try {
+      const data = await api.getLoan(id);
       setLoan(data);
+    } catch (err) {
+      console.error('Failed to load loan:', err.message);
     }
     setLoading(false);
   };
@@ -61,19 +58,13 @@ const LoanDetails = () => {
     const newAmountPaid = amountPaid + paymentAmount;
     const newStatus = newAmountPaid >= loan.amount ? 'settled' : 'active';
 
-    // 1. Insert payment record
-    await supabase.from('loan_payments').insert([{
-      loan_id: loan.id,
-      amount: paymentAmount
-    }]);
-
-    // 2. Update loan totals
-    await supabase.from('loans').update({ 
-      amount_paid: newAmountPaid, 
-      status: newStatus 
-    }).eq('id', loan.id);
-    
-    fetchLoanDetails();
+    try {
+      await api.createLoanPayment({ loan_id: loan.id, amount: paymentAmount });
+      await api.updateLoan(loan.id, { amount_paid: newAmountPaid, status: newStatus });
+      fetchLoanDetails();
+    } catch (err) {
+      toast.error('Payment failed: ' + err.message);
+    }
   };
 
   if (loading) {

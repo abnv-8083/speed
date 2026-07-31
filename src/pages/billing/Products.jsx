@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Plus, Edit2, Check, X, Trash2, Ban, Unlock, Search, Package } from 'lucide-react';
-import { supabase } from '../../supabaseClient';
+import { api } from '../../api';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
 import { useToast } from '../../components/ToastContext';
@@ -40,13 +40,12 @@ const Products = () => {
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .not('name', 'ilike', '[DELETED]%')
-      .order('id', { ascending: true });
-
-    if (!error && data) setProducts(data);
+    try {
+      const data = await api.getProducts();
+      setProducts(data);
+    } catch (err) {
+      toast.error('Failed to load products: ' + err.message);
+    }
     setLoading(false);
   };
 
@@ -59,16 +58,16 @@ const Products = () => {
         stock: parseInt(newProdStock),
         is_print: false,
       };
-      const { data, error } = await supabase.from('products').insert([newProduct]).select();
-      if (!error && data) {
-        setProducts([...products, data[0]]);
+      try {
+        const data = await api.createProduct(newProduct);
+        setProducts([...products, data]);
         setNewProdName('');
         setNewProdPrice('');
         setNewProdStock('');
         setShowAddForm(false);
         toast.success('Product added successfully');
-      } else {
-        toast.error('Error adding product: ' + error.message);
+      } catch (err) {
+        toast.error('Error adding product: ' + err.message);
       }
     }
   };
@@ -82,12 +81,12 @@ const Products = () => {
     const val = parseInt(newStockValue);
     if (!isNaN(val) && val >= 0) {
       setProducts(products.map(p => (p.id === id ? { ...p, stock: val } : p)));
-      const { error } = await supabase.from('products').update({ stock: val }).eq('id', id);
-      if (error) {
+      try {
+        await api.updateProduct(id, { stock: val });
+        toast.success('Stock updated successfully');
+      } catch (err) {
         toast.error('Failed to update stock');
         fetchProducts();
-      } else {
-        toast.success('Stock updated successfully');
       }
     }
     setEditingStockId(null);
@@ -95,36 +94,36 @@ const Products = () => {
 
   const handleDeleteProduct = async (product) => {
     if (await modal.confirm('Delete Product', `Are you sure you want to delete ${product.name}?`)) {
-      const { error } = await supabase.from('products').delete().eq('id', product.id);
-      if (error && error.message.includes('foreign key constraint')) {
-        const archivedName = `[DELETED] ${product.name}`;
-        const { error: archiveError } = await supabase
-          .from('products')
-          .update({ is_blocked: true, name: archivedName })
-          .eq('id', product.id);
-        if (archiveError) {
-          toast.error('Failed to archive product: ' + archiveError.message);
-        } else {
-          setProducts(products.filter(p => p.id !== product.id));
-          toast.success('Product was soft-deleted (It has past invoices).');
-        }
-      } else if (error) {
-        toast.error('Error deleting product: ' + error.message);
-      } else {
+      try {
+        await api.deleteProduct(product.id);
         setProducts(products.filter(p => p.id !== product.id));
         toast.success('Product deleted successfully');
+      } catch (err) {
+        if (err.message && err.message.includes('foreign key constraint')) {
+          // Soft delete: prefix name and block
+          const archivedName = `[DELETED] ${product.name}`;
+          try {
+            await api.updateProduct(product.id, { is_blocked: true, name: archivedName });
+            setProducts(products.filter(p => p.id !== product.id));
+            toast.success('Product was soft-deleted (It has past invoices).');
+          } catch (archiveErr) {
+            toast.error('Failed to archive product: ' + archiveErr.message);
+          }
+        } else {
+          toast.error('Error deleting product: ' + err.message);
+        }
       }
     }
   };
 
   const handleToggleBlock = async (id, currentStatus) => {
     const newStatus = !currentStatus;
-    const { error } = await supabase.from('products').update({ is_blocked: newStatus }).eq('id', id);
-    if (error) {
-      toast.error('Error updating status: ' + error.message);
-    } else {
+    try {
+      await api.updateProduct(id, { is_blocked: newStatus });
       setProducts(products.map(p => (p.id === id ? { ...p, is_blocked: newStatus } : p)));
       toast.success(`Product ${newStatus ? 'blocked' : 'unblocked'} successfully`);
+    } catch (err) {
+      toast.error('Error updating status: ' + err.message);
     }
   };
 

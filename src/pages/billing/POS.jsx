@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { ShoppingCart, Plus, Minus, X, FileText, Loader2, Printer, ArrowLeft, Search } from 'lucide-react';
-import { supabase } from '../../supabaseClient';
+import { api } from '../../api';
 import PremiumLoader from '../../components/PremiumLoader';
 import { useToast } from '../../components/ToastContext';
 import './POS.css';
@@ -24,12 +24,12 @@ const POS = () => {
 
   const fetchProducts = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select('*')
-      .eq('is_blocked', false)
-      .order('id', { ascending: true });
-    if (!error && data) setProducts(data);
+    try {
+      const data = await api.getProducts({ is_blocked: 'false' });
+      setProducts(data);
+    } catch (err) {
+      console.error('Failed to load products:', err.message);
+    }
     setLoading(false);
   };
 
@@ -71,48 +71,51 @@ const POS = () => {
     setSubmittingInvoice(true);
     const finalName = (overrideName && overrideName.trim()) ? overrideName : 'Walk-in Customer';
 
-    const { data: invoiceData, error: invoiceError } = await supabase
-      .from('invoices')
-      .insert([{ total_amount: cartTotal, discount: discount, customer_name: finalName }])
-      .select();
+    try {
+      // 1. Create invoice
+      const invoice = await api.createInvoice({
+        total_amount: cartTotal,
+        discount: discount,
+        customer_name: finalName,
+      });
 
-    if (invoiceError) {
-      toast.error('Error creating invoice: ' + invoiceError.message);
+      // 2. Insert invoice items
+      const itemsToInsert = cart.map(item => ({
+        invoice_id: invoice.id,
+        product_id: item.product.id,
+        quantity: item.quantity,
+        price_at_time: item.product.price,
+      }));
+      await api.createInvoiceItems(itemsToInsert);
+
+      // 3. Deduct stock for each cart item
+      for (const item of cart) {
+        const currentProduct = products.find(p => p.id === item.product.id);
+        await api.updateProduct(currentProduct.id, {
+          stock: currentProduct.stock - item.quantity,
+        });
+      }
+
+      setLastInvoice({
+        id: invoice.id,
+        items: [...cart],
+        subtotal: cartSubtotal,
+        discount: discount,
+        total: cartTotal,
+        customerName: finalName,
+        date: new Date(),
+      });
+
+      await fetchProducts();
+      setCart([]);
+      setDiscount(0);
+      setCustomerName('Walk-in Customer');
+      setShowInvoice(true);
+    } catch (err) {
+      toast.error('Error creating invoice: ' + err.message);
+    } finally {
       setSubmittingInvoice(false);
-      return;
     }
-
-    const invoiceId = invoiceData[0].id;
-    const itemsToInsert = cart.map(item => ({
-      invoice_id: invoiceId,
-      product_id: item.product.id,
-      quantity: item.quantity,
-      price_at_time: item.product.price,
-    }));
-
-    await supabase.from('invoice_items').insert(itemsToInsert);
-
-    for (const item of cart) {
-      const currentProduct = products.find(p => p.id === item.product.id);
-      await supabase.from('products').update({ stock: currentProduct.stock - item.quantity }).eq('id', currentProduct.id);
-    }
-
-    setLastInvoice({
-      id: invoiceId,
-      items: [...cart],
-      subtotal: cartSubtotal,
-      discount: discount,
-      total: cartTotal,
-      customerName: finalName,
-      date: new Date(),
-    });
-
-    await fetchProducts();
-    setCart([]);
-    setDiscount(0);
-    setCustomerName('Walk-in Customer');
-    setSubmittingInvoice(false);
-    setShowInvoice(true);
   };
 
   const handlePrintInvoice = () => window.print();

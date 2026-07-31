@@ -3,7 +3,7 @@ import {
   Printer, Search, Filter, RefreshCw, Plus, Check, AlertTriangle, 
   Terminal, ArrowLeft, ArrowRight, Layers, FileText, Download, HelpCircle, Package 
 } from 'lucide-react';
-import { supabase } from '../../supabaseClient';
+import { api } from '../../api';
 import { useToast } from '../../components/ToastContext';
 import './PrintingHistory.css';
 
@@ -55,45 +55,30 @@ export default function PrintingHistory() {
 
   const fetchStocks = async () => {
     try {
-      const { data, error } = await supabase
-        .from('products')
-        .select('*')
-        .eq('is_print', true);
-
-      if (error || !data) {
+      const data = await api.getProducts({ is_print: 'true' });
+      if (!data || data.length === 0) {
         setStocks([]);
       } else {
-        // Map database products to UI badges
         const mapped = data.map(p => {
           let size = 'A4';
           if (p.name.toUpperCase().includes('A3')) size = 'A3';
           else if (p.name.toUpperCase().includes('A5')) size = 'A5';
-
           let mode = 'B&W';
           if (p.name.toUpperCase().includes('COLOR')) mode = 'Color';
-
           return { ...p, size, mode };
         });
         setStocks(mapped);
       }
     } catch (err) {
       console.error('Error fetching print stocks:', err);
+      setStocks([]);
     }
   };
 
   const fetchLogs = async () => {
     try {
-      const { data, error } = await supabase
-        .from('print_logs')
-        .select('*')
-        .order('created_at', { ascending: false });
-
-      if (error) {
-        const local = localStorage.getItem('speednet_print_logs');
-        setLogs(local ? JSON.parse(local) : []);
-      } else {
-        setLogs(data || []);
-      }
+      const data = await api.getPrintLogs();
+      setLogs(data || []);
     } catch (err) {
       const local = localStorage.getItem('speednet_print_logs');
       setLogs(local ? JSON.parse(local) : []);
@@ -125,32 +110,23 @@ export default function PrintingHistory() {
   const handleSaveCustomStocks = async () => {
     setSavingStocks(true);
     let updatedCount = 0;
-
     try {
       for (const def of DEFAULT_STOCKS) {
         const key = `${def.size}_${def.mode}`;
         const targetCount = parseInt(customStocks[key]) || 0;
         const exists = stocks.find(s => s.size === def.size && s.mode === def.mode);
-
         if (exists) {
-          await supabase
-            .from('products')
-            .update({ stock: targetCount })
-            .eq('id', exists.id);
-          updatedCount++;
+          await api.updateProduct(exists.id, { stock: targetCount });
         } else {
-          await supabase
-            .from('products')
-            .insert([{
-              name: def.name,
-              price: def.price,
-              stock: targetCount,
-              is_print: true
-            }]);
-          updatedCount++;
+          await api.createProduct({
+            name:     def.name,
+            price:    def.price,
+            stock:    targetCount,
+            is_print: true,
+          });
         }
+        updatedCount++;
       }
-
       toast.success(`Successfully set and replenished ${updatedCount} paper stock inventories!`);
       await fetchStocks();
       setRestoreModalOpen(false);
@@ -161,54 +137,44 @@ export default function PrintingHistory() {
     }
   };
 
-  // Log Print Job & Deduct Stock
   const handleLogPrint = async (e) => {
     e.preventDefault();
-    if (!jobName.trim()) {
-      toast.warning('Please enter a job or document name');
-      return;
-    }
-    if (quantity < 1) {
-      toast.warning('Quantity must be at least 1');
-      return;
-    }
+    if (!jobName.trim()) { toast.warning('Please enter a job or document name'); return; }
+    if (quantity < 1)    { toast.warning('Quantity must be at least 1'); return; }
 
     setSubmitting(true);
     try {
-      // 1. Deduct Stock from matching size + color product
+      // 1. Deduct stock
       const matchingProduct = stocks.find(s => s.size === paperSize && s.mode === colorMode);
       if (matchingProduct) {
         if (matchingProduct.stock < quantity) {
           toast.warning(`Warning: Low stock for ${paperSize} ${colorMode} (${matchingProduct.stock} left)`);
         }
-        const newStock = Math.max(0, matchingProduct.stock - quantity);
-        await supabase
-          .from('products')
-          .update({ stock: newStock })
-          .eq('id', matchingProduct.id);
+        await api.updateProduct(matchingProduct.id, {
+          stock: Math.max(0, matchingProduct.stock - quantity),
+        });
       } else {
         toast.info(`Note: No product initialized for ${paperSize} ${colorMode} yet. Click 'Restore Stock' to track inventory.`);
       }
 
-      // 2. Insert into print_logs
+      // 2. Insert log
       const newLog = {
-        job_name: jobName,
+        job_name:   jobName,
         paper_size: paperSize,
         color_mode: colorMode,
-        quantity: parseInt(quantity),
-        status: 'Completed',
-        source: 'Manual Log',
-        created_at: new Date().toISOString()
+        quantity:   parseInt(quantity),
+        status:     'Completed',
+        source:     'Manual Log',
       };
 
-      const { data, error } = await supabase.from('print_logs').insert([newLog]).select();
-
-      if (error) {
-        const updatedLocal = [newLog, ...logs];
+      try {
+        const saved = await api.createPrintLog(newLog);
+        setLogs([saved, ...logs]);
+      } catch {
+        const withTs = { ...newLog, created_at: new Date().toISOString() };
+        const updatedLocal = [withTs, ...logs];
         localStorage.setItem('speednet_print_logs', JSON.stringify(updatedLocal));
         setLogs(updatedLocal);
-      } else if (data && data[0]) {
-        setLogs([data[0], ...logs]);
       }
 
       toast.success(`Logged ${quantity}x ${paperSize} (${colorMode}) & deducted stock!`);
@@ -226,42 +192,50 @@ export default function PrintingHistory() {
   const simulateSpoolerJob = async () => {
     const randomSizes = ['A4', 'A3', 'A5'];
     const randomModes = ['Color', 'B&W'];
-    const randomDocs = ['Client_Brochure_2026.pdf', 'Annual_Financial_Report.docx', 'Architecture_Plan_Final.pdf', 'Customer_ID_Copy.png', 'Invoice_Receipt_108.pdf'];
+    const randomDocs  = [
+      'Client_Brochure_2026.pdf', 'Annual_Financial_Report.docx',
+      'Architecture_Plan_Final.pdf', 'Customer_ID_Copy.png', 'Invoice_Receipt_108.pdf',
+    ];
 
     const size = randomSizes[Math.floor(Math.random() * randomSizes.length)];
     const mode = randomModes[Math.floor(Math.random() * randomModes.length)];
-    const doc = randomDocs[Math.floor(Math.random() * randomDocs.length)];
-    const qty = Math.floor(Math.random() * 8) + 1;
+    const doc  = randomDocs[Math.floor(Math.random() * randomDocs.length)];
+    const qty  = Math.floor(Math.random() * 8) + 1;
 
-    // Deduct stock
-    const matchingProduct = stocks.find(s => s.size === size && s.mode === mode);
-    if (matchingProduct) {
-      const newStock = Math.max(0, matchingProduct.stock - qty);
-      await supabase.from('products').update({ stock: newStock }).eq('id', matchingProduct.id);
+    try {
+      // Deduct stock
+      const matchingProduct = stocks.find(s => s.size === size && s.mode === mode);
+      if (matchingProduct) {
+        await api.updateProduct(matchingProduct.id, {
+          stock: Math.max(0, matchingProduct.stock - qty),
+        });
+      }
+
+      // Insert log
+      const spoolLog = {
+        job_name:   doc,
+        paper_size: size,
+        color_mode: mode,
+        quantity:   qty,
+        status:     'Completed',
+        source:     'Windows Print Spooler',
+      };
+
+      try {
+        const saved = await api.createPrintLog(spoolLog);
+        setLogs([saved, ...logs]);
+      } catch {
+        const withTs = { ...spoolLog, created_at: new Date().toISOString() };
+        const updatedLocal = [withTs, ...logs];
+        localStorage.setItem('speednet_print_logs', JSON.stringify(updatedLocal));
+        setLogs(updatedLocal);
+      }
+
+      toast.success(`🖥️ Spooler captured: "${doc}" (${qty}x ${size} ${mode}) & updated stock!`);
+      await fetchStocks();
+    } catch (err) {
+      toast.error('Simulation failed: ' + err.message);
     }
-
-    // Insert log
-    const spoolLog = {
-      job_name: doc,
-      paper_size: size,
-      color_mode: mode,
-      quantity: qty,
-      status: 'Completed',
-      source: 'Windows Print Spooler',
-      created_at: new Date().toISOString()
-    };
-
-    const { data, error } = await supabase.from('print_logs').insert([spoolLog]).select();
-    if (error) {
-      const updatedLocal = [spoolLog, ...logs];
-      localStorage.setItem('speednet_print_logs', JSON.stringify(updatedLocal));
-      setLogs(updatedLocal);
-    } else if (data && data[0]) {
-      setLogs([data[0], ...logs]);
-    }
-
-    toast.success(`🖥️ Spooler captured: "${doc}" (${qty}x ${size} ${mode}) & updated stock!`);
-    await fetchStocks();
   };
 
   // Filtered and Sorted Logs

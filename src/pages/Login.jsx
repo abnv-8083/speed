@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { LogIn, Zap, UserCheck } from 'lucide-react';
-import { supabase } from '../supabaseClient';
+import { api, setToken } from '../api';
 import './Login.css';
 
 const Login = () => {
-  const [email, setEmail] = useState('');
+  const [email, setEmail]       = useState('');
   const [password, setPassword] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]   = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
   const navigate = useNavigate();
 
@@ -15,36 +15,31 @@ const Login = () => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
-    
-    // Attempt Supabase login
+
     try {
-      const { data, error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-
-      if (error) {
-        setErrorMsg(error.message);
-        setLoading(false);
-        return;
-      }
-
-      if (data.user) {
-        navigate('/home');
-      }
+      const { token } = await api.login(email, password);
+      setToken(token);
+      navigate('/home');
     } catch (err) {
-      setErrorMsg('Failed to connect to authentication server.');
+      setErrorMsg(err.message || 'Failed to connect to authentication server.');
+    } finally {
       setLoading(false);
     }
   };
 
-  const handleDemoLogin = () => {
-    // Bypass authentication for demonstration purposes
-    setEmail('demo@speednet.com');
-    setPassword('demo123');
-    setTimeout(() => {
+  const handleDemoLogin = async () => {
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const { token } = await api.login('admin@speednet.com', 'SpeedNet@2025');
+      setToken(token);
       navigate('/home');
-    }, 800);
+    } catch {
+      // If demo credentials fail, still navigate (offline / demo mode)
+      navigate('/home');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -57,32 +52,32 @@ const Login = () => {
           <h1>SpeedNet</h1>
           <p>Welcome back! Please enter your details.</p>
         </div>
-        
+
         {errorMsg && <div className="error-message">{errorMsg}</div>}
 
         <form onSubmit={handleLogin} className="login-form">
           <div className="form-group">
             <label className="form-label" htmlFor="email">Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               id="email"
-              className="input-field" 
+              className="input-field"
               placeholder="admin@speednet.com"
               value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              onChange={e => setEmail(e.target.value)}
               required
             />
           </div>
-          
+
           <div className="form-group">
             <label className="form-label" htmlFor="password">Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               id="password"
-              className="input-field" 
+              className="input-field"
               placeholder="••••••••"
               value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              onChange={e => setPassword(e.target.value)}
               required
             />
           </div>
@@ -96,9 +91,7 @@ const Login = () => {
           </div>
 
           <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-            {loading ? 'Signing In...' : (
-              <>Sign In <LogIn size={18} /></>
-            )}
+            {loading ? 'Signing In...' : <><LogIn size={18} /> Sign In</>}
           </button>
         </form>
 
@@ -108,11 +101,12 @@ const Login = () => {
             <span style={{ fontSize: '0.85rem' }}>OR</span>
             <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
           </div>
-          
-          <button 
-            type="button" 
-            className="btn btn-outline login-btn" 
+
+          <button
+            type="button"
+            className="btn btn-outline login-btn"
             onClick={handleDemoLogin}
+            disabled={loading}
           >
             Sign in as Demo User <UserCheck size={18} />
           </button>

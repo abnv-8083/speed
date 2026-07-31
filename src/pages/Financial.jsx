@@ -4,7 +4,7 @@ import {
   Trash2, Edit2, X, Check, AlertTriangle
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { supabase } from '../supabaseClient';
+import { api } from '../api';
 import PremiumLoader from '../components/PremiumLoader';
 import { useToast } from '../components/ToastContext';
 import { useModal } from '../components/ModalContext';
@@ -66,9 +66,12 @@ const Financial = () => {
 
   const fetchLoans = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('loans').select('*').order('created_at', { ascending: false });
-    if (!error && data) setLoans(data);
+    try {
+      const data = await api.getLoans();
+      setLoans(data);
+    } catch (err) {
+      toast.error('Failed to load loans: ' + err.message);
+    }
     setLoading(false);
   };
 
@@ -77,19 +80,21 @@ const Financial = () => {
     e.preventDefault();
     if (!form.person_name || !form.amount) return;
     setSubmitting(true);
-    const { error } = await supabase.from('loans').insert([{
-      loan_type:   form.loan_type,
-      person_name: form.person_name,
-      amount:      parseFloat(form.amount),
-      status:      'active',
-      due_date:    form.due_date || null,
-    }]);
-    if (!error) {
+    try {
+      await api.createLoan({
+        loan_type:   form.loan_type,
+        person_name: form.person_name,
+        amount:      parseFloat(form.amount),
+        status:      'active',
+        due_date:    form.due_date || null,
+      });
       setForm({ ...BLANK });
       setShowAddForm(false);
       fetchLoans();
-      toast.success("Loan record added successfully");
-    } else toast.error('Error adding loan: ' + error.message);
+      toast.success('Loan record added successfully');
+    } catch (err) {
+      toast.error('Error adding loan: ' + err.message);
+    }
     setSubmitting(false);
   };
 
@@ -109,36 +114,37 @@ const Financial = () => {
     e.preventDefault();
     if (!editForm.person_name || !editForm.amount) return;
     setEditSaving(true);
-    const newAmount = parseFloat(editForm.amount);
+    const newAmount  = parseFloat(editForm.amount);
     const amountPaid = Number(editLoan.amount_paid || 0);
-    const newStatus = amountPaid >= newAmount ? 'settled' : 'active';
-    
-    const { error } = await supabase.from('loans').update({
-      loan_type:   editForm.loan_type,
-      person_name: editForm.person_name,
-      amount:      newAmount,
-      status:      newStatus,
-      due_date:    editForm.due_date || null,
-    }).eq('id', editLoan.id);
-    if (!error) { 
-      setEditLoan(null); 
-      fetchLoans(); 
-      toast.success("Loan updated successfully");
+    const newStatus  = amountPaid >= newAmount ? 'settled' : 'active';
+    try {
+      await api.updateLoan(editLoan.id, {
+        loan_type:   editForm.loan_type,
+        person_name: editForm.person_name,
+        amount:      newAmount,
+        status:      newStatus,
+        due_date:    editForm.due_date || null,
+      });
+      setEditLoan(null);
+      fetchLoans();
+      toast.success('Loan updated successfully');
+    } catch (err) {
+      toast.error('Error updating loan: ' + err.message);
     }
-    else toast.error('Error updating loan: ' + error.message);
     setEditSaving(false);
   };
 
   // ── Delete ───────────────────────────────────────────────────
   const handleDelete = async () => {
     setDeleting(true);
-    const { error } = await supabase.from('loans').delete().eq('id', deleteId);
-    if (!error) { 
-      setDeleteId(null); 
-      fetchLoans(); 
-      toast.success("Loan deleted successfully");
+    try {
+      await api.deleteLoan(deleteId);
+      setDeleteId(null);
+      fetchLoans();
+      toast.success('Loan deleted successfully');
+    } catch (err) {
+      toast.error('Error deleting loan: ' + err.message);
     }
-    else toast.error('Error deleting loan: ' + error.message);
     setDeleting(false);
   };
 
@@ -146,39 +152,33 @@ const Financial = () => {
   const handleQuickPay = async (loan) => {
     const balance = loan.amount - (loan.amount_paid || 0);
     const paymentStr = await modal.prompt(
-      'Make Payment', 
+      'Make Payment',
       `Enter payment amount for ${loan.person_name} (Remaining balance: ₹${balance.toFixed(2)})`,
       '',
       'number'
     );
     if (!paymentStr) return;
-    
+
     const paymentAmount = parseFloat(paymentStr);
     if (isNaN(paymentAmount) || paymentAmount <= 0) {
       toast.warning('Invalid payment amount');
       return;
     }
-
     if (paymentAmount > balance) {
       toast.warning('Payment cannot exceed remaining balance');
       return;
     }
 
     const newAmountPaid = Number(loan.amount_paid || 0) + paymentAmount;
-    const newStatus = newAmountPaid >= loan.amount ? 'settled' : 'active';
+    const newStatus     = newAmountPaid >= loan.amount ? 'settled' : 'active';
 
-    // Optimistically could show loader, but fetchLoans covers it
-    await supabase.from('loan_payments').insert([{
-      loan_id: loan.id,
-      amount: paymentAmount
-    }]);
-
-    await supabase.from('loans').update({ 
-      amount_paid: newAmountPaid, 
-      status: newStatus 
-    }).eq('id', loan.id);
-    
-    fetchLoans();
+    try {
+      await api.createLoanPayment({ loan_id: loan.id, amount: paymentAmount });
+      await api.updateLoan(loan.id, { amount_paid: newAmountPaid, status: newStatus });
+      fetchLoans();
+    } catch (err) {
+      toast.error('Payment failed: ' + err.message);
+    }
   };
 
   const filteredLoans = loans.filter(l =>

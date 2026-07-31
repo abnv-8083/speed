@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { TrendingUp, Receipt, DollarSign, Package, BarChart3, Download, Calendar, ArrowRight } from 'lucide-react';
-import { supabase } from '../../supabaseClient';
+import { api } from '../../api';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import Pagination from '../../components/Pagination';
@@ -31,26 +31,16 @@ const SalesReport = () => {
   const fetchSalesData = async () => {
     setLoading(true);
     const startIso = startOfDay(new Date(startDate)).toISOString();
-    const endIso = endOfDay(new Date(endDate)).toISOString();
+    const endIso   = endOfDay(new Date(endDate)).toISOString();
 
-    const { data, error } = await supabase
-      .from('invoices')
-      .select(`
-        *,
-        invoice_items (
-          quantity,
-          price_at_time,
-          product_id,
-          products (name)
-        )
-      `)
-      .gte('created_at', startIso)
-      .lte('created_at', endIso)
-      .order('created_at', { ascending: true });
-
-    if (!error && data) {
-      setSalesData([...data].reverse());
-      calculateMetrics(data);
+    try {
+      const data = await api.getInvoices({ start: startIso, end: endIso });
+      // API returns newest-first; chart needs oldest-first so reverse a copy
+      const ascending = [...data].reverse();
+      setSalesData(data);
+      calculateMetrics(ascending);
+    } catch (err) {
+      console.error('Failed to load sales data:', err.message);
     }
     setLoading(false);
   };
