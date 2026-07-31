@@ -1,35 +1,27 @@
-import React from 'react';
-import { NavLink, Outlet } from 'react-router-dom';
+import React, { useEffect } from 'react';
+import { Outlet } from 'react-router-dom';
 import { ShoppingCart, Package, Receipt, BarChart3 } from 'lucide-react';
+import { useSubNav } from '../../components/SubNavContext';
 import './BillingLayout.css';
 
+const BILLING_TABS = [
+  { to: '/billing/pos',      icon: ShoppingCart, label: 'New Sale (POS)' },
+  { to: '/billing/products', icon: Package,      label: 'Inventory'      },
+  { to: '/billing/invoices', icon: Receipt,      label: 'Invoices'       },
+  { to: '/billing/reports',  icon: BarChart3,    label: 'Sales Report'   },
+];
+
 const BillingLayout = () => {
+  const { setTabs } = useSubNav();
+
+  // Register tabs when billing section mounts, clear on unmount
+  useEffect(() => {
+    setTabs(BILLING_TABS);
+    return () => setTabs([]);
+  }, [setTabs]);
+
   return (
     <div className="billing-module-layout">
-      {/* Top Horizontal Navigation */}
-      <nav className="billing-top-nav glass-panel">
-        <NavLink to="/billing/pos" className={({isActive}) => `nav-tab ${isActive ? 'active' : ''}`}>
-          <ShoppingCart size={18} />
-          <span>New Sale (POS)</span>
-        </NavLink>
-        
-        <NavLink to="/billing/products" className={({isActive}) => `nav-tab ${isActive ? 'active' : ''}`}>
-          <Package size={18} />
-          <span>Inventory</span>
-        </NavLink>
-        
-        <NavLink to="/billing/invoices" className={({isActive}) => `nav-tab ${isActive ? 'active' : ''}`}>
-          <Receipt size={18} />
-          <span>Invoices</span>
-        </NavLink>
-
-        <NavLink to="/billing/reports" className={({isActive}) => `nav-tab ${isActive ? 'active' : ''}`}>
-          <BarChart3 size={18} />
-          <span>Sales Report</span>
-        </NavLink>
-      </nav>
-
-      {/* Main Content Area */}
       <main className="billing-content">
         <Outlet />
       </main>
