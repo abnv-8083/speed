@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp, Receipt, DollarSign, Package, BarChart3, Download, Calendar } from 'lucide-react';
+import { TrendingUp, Receipt, DollarSign, Package, BarChart3, Download, Calendar, ArrowRight } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
@@ -10,7 +10,7 @@ import './SalesReport.css';
 const SalesReport = () => {
   const [loading, setLoading] = useState(true);
   const [salesData, setSalesData] = useState([]);
-  
+
   // Date Filters
   const [startDate, setStartDate] = useState(format(subDays(new Date(), 30), 'yyyy-MM-dd'));
   const [endDate, setEndDate] = useState(format(new Date(), 'yyyy-MM-dd'));
@@ -30,8 +30,6 @@ const SalesReport = () => {
 
   const fetchSalesData = async () => {
     setLoading(true);
-    
-    // Convert to ISO with start/end of day to capture full boundaries
     const startIso = startOfDay(new Date(startDate)).toISOString();
     const endIso = endOfDay(new Date(endDate)).toISOString();
 
@@ -48,10 +46,10 @@ const SalesReport = () => {
       `)
       .gte('created_at', startIso)
       .lte('created_at', endIso)
-      .order('created_at', { ascending: true }); // Ascending so chart goes left-to-right
+      .order('created_at', { ascending: true });
 
     if (!error && data) {
-      setSalesData([...data].reverse()); // reverse for table display
+      setSalesData([...data].reverse());
       calculateMetrics(data);
     }
     setLoading(false);
@@ -66,24 +64,17 @@ const SalesReport = () => {
     data.forEach(invoice => {
       const amount = Number(invoice.total_amount);
       rev += amount;
-      
-      // Aggregate daily sales for chart
+
       const dateStr = format(new Date(invoice.created_at), 'MMM dd');
-      if (!dailySales[dateStr]) {
-        dailySales[dateStr] = 0;
-      }
-      dailySales[dateStr] += amount;
+      dailySales[dateStr] = (dailySales[dateStr] || 0) + amount;
 
       if (invoice.invoice_items) {
         invoice.invoice_items.forEach(item => {
           itemsCount += item.quantity;
-          
           const pName = item.products?.name || 'Unknown Product';
-          if (!productSales[pName]) {
-            productSales[pName] = { qty: 0, revenue: 0 };
-          }
+          if (!productSales[pName]) productSales[pName] = { qty: 0, revenue: 0 };
           productSales[pName].qty += item.quantity;
-          productSales[pName].revenue += (item.quantity * item.price_at_time);
+          productSales[pName].revenue += item.quantity * item.price_at_time;
         });
       }
     });
@@ -91,40 +82,24 @@ const SalesReport = () => {
     setTotalRevenue(rev);
     setTotalInvoices(data.length);
     setTotalItemsSold(itemsCount);
-
-    // Format chart data
-    const chartArray = Object.keys(dailySales).map(date => ({
-      date,
-      revenue: dailySales[date]
-    }));
-    setChartData(chartArray);
-
-    // Sort products by revenue
-    const sortedProducts = Object.entries(productSales)
-      .map(([name, stats]) => ({ name, ...stats }))
-      .sort((a, b) => b.revenue - a.revenue)
-      .slice(0, 5); // Top 5
-      
-    setTopProducts(sortedProducts);
+    setChartData(Object.keys(dailySales).map(date => ({ date, revenue: dailySales[date] })));
+    setTopProducts(
+      Object.entries(productSales)
+        .map(([name, stats]) => ({ name, ...stats }))
+        .sort((a, b) => b.revenue - a.revenue)
+        .slice(0, 5)
+    );
   };
 
   const exportCSV = () => {
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += "Date,Invoice ID,Customer,Total Amount (INR),Discount (INR)\n";
-    
+    let csvContent = 'data:text/csv;charset=utf-8,';
+    csvContent += 'Date,Invoice ID,Customer,Total Amount (INR),Discount (INR)\n';
     salesData.forEach(inv => {
-      const date = new Date(inv.created_at).toLocaleDateString();
-      const id = `INV-${inv.id}`;
-      const customer = inv.customer_name || 'Walk-in';
-      const amount = inv.total_amount;
-      const discount = inv.discount || 0;
-      csvContent += `${date},${id},${customer},${amount},${discount}\n`;
+      csvContent += `${new Date(inv.created_at).toLocaleDateString()},INV-${inv.id},${inv.customer_name || 'Walk-in'},${inv.total_amount},${inv.discount || 0}\n`;
     });
-    
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `sales_report_${startDate}_to_${endDate}.csv`);
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `sales_report_${startDate}_to_${endDate}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -134,10 +109,8 @@ const SalesReport = () => {
     if (active && payload && payload.length) {
       return (
         <div className="chart-tooltip glass-panel">
-          <p className="label">{`${label}`}</p>
-          <p className="intro font-bold text-success">
-            {`₹${payload[0].value.toFixed(2)}`}
-          </p>
+          <p className="chart-tooltip-label">{label}</p>
+          <p className="chart-tooltip-value">₹{payload[0].value.toFixed(2)}</p>
         </div>
       );
     }
@@ -146,81 +119,88 @@ const SalesReport = () => {
 
   return (
     <div className="report-layout animate-fade-in">
+
+      {/* ── Sticky Header ── */}
       <header className="report-header glass-panel">
-        <div className="header-left">
-          <h2>Sales & Analytics Report</h2>
+        <div className="report-header-left">
+          <h2>Sales &amp; Analytics</h2>
+          <p className="report-subtitle">
+            {format(new Date(startDate), 'MMM d')} – {format(new Date(endDate), 'MMM d, yyyy')}
+          </p>
         </div>
-        <div className="header-actions" style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          <div className="date-filters">
-            <div className="date-input-wrap">
-              <Calendar size={16} className="text-muted" />
-              <input 
-                type="date" 
-                value={startDate} 
-                onChange={e => setStartDate(e.target.value)}
-                className="input-field date-input"
-              />
-            </div>
-            <span className="text-muted">to</span>
-            <div className="date-input-wrap">
-              <Calendar size={16} className="text-muted" />
-              <input 
-                type="date" 
-                value={endDate} 
-                onChange={e => setEndDate(e.target.value)}
-                className="input-field date-input"
-              />
-            </div>
+
+        <div className="report-header-right">
+          {/* Date filter pill */}
+          <div className="date-filter-pill">
+            <Calendar size={14} className="date-pill-icon" />
+            <input
+              type="date"
+              value={startDate}
+              onChange={e => setStartDate(e.target.value)}
+              className="date-pill-input"
+              aria-label="Start date"
+            />
+            <ArrowRight size={13} className="date-pill-sep" />
+            <input
+              type="date"
+              value={endDate}
+              onChange={e => setEndDate(e.target.value)}
+              className="date-pill-input"
+              aria-label="End date"
+            />
           </div>
+
           <button className="btn btn-primary" onClick={exportCSV}>
-            <Download size={18} /> Export CSV
+            <Download size={16} /> Export CSV
           </button>
         </div>
       </header>
 
+      {/* ── Main Content ── */}
       <main className="report-main">
         {loading ? (
-          <div style={{ padding: '3rem 0' }}>
+          <div className="report-loader">
             <PremiumLoader text="Crunching Data..." />
           </div>
         ) : (
           <>
+            {/* ── Metric Cards ── */}
             <div className="metrics-grid">
-              <div className="metric-card glass-panel">
-                <div className="metric-icon success">
-                  <DollarSign size={24} />
+              <div className="metric-card glass-panel metric-success">
+                <div className="metric-icon-wrap">
+                  <DollarSign size={20} />
                 </div>
                 <div className="metric-info">
-                  <p className="metric-label">Filtered Revenue</p>
+                  <p className="metric-label">Revenue</p>
                   <h3 className="metric-value">₹{totalRevenue.toFixed(2)}</h3>
                 </div>
               </div>
 
-              <div className="metric-card glass-panel">
-                <div className="metric-icon">
-                  <Receipt size={24} />
+              <div className="metric-card glass-panel metric-primary">
+                <div className="metric-icon-wrap">
+                  <Receipt size={20} />
                 </div>
                 <div className="metric-info">
-                  <p className="metric-label">Invoices Count</p>
+                  <p className="metric-label">Invoices</p>
                   <h3 className="metric-value">{totalInvoices}</h3>
                 </div>
               </div>
-              
-              <div className="metric-card glass-panel">
-                <div className="metric-icon warning">
-                  <TrendingUp size={24} />
+
+              <div className="metric-card glass-panel metric-warning">
+                <div className="metric-icon-wrap">
+                  <TrendingUp size={20} />
                 </div>
                 <div className="metric-info">
-                  <p className="metric-label">Average Order Value</p>
+                  <p className="metric-label">Avg. Order</p>
                   <h3 className="metric-value">
                     ₹{totalInvoices > 0 ? (totalRevenue / totalInvoices).toFixed(2) : '0.00'}
                   </h3>
                 </div>
               </div>
 
-              <div className="metric-card glass-panel">
-                <div className="metric-icon primary">
-                  <Package size={24} />
+              <div className="metric-card glass-panel metric-neutral">
+                <div className="metric-icon-wrap">
+                  <Package size={20} />
                 </div>
                 <div className="metric-info">
                   <p className="metric-label">Items Sold</p>
@@ -229,55 +209,65 @@ const SalesReport = () => {
               </div>
             </div>
 
-            {/* CHART SECTION */}
+            {/* ── Revenue Chart ── */}
             <div className="report-section glass-panel mb-4">
               <div className="section-header">
                 <h3>Revenue Over Time</h3>
               </div>
-              <div className="chart-container" style={{ width: '100%', height: '300px' }}>
+              <div style={{ width: '100%', height: '280px' }}>
                 {chartData.length === 0 ? (
-                  <div className="flex-center text-muted h-100">No data available for this date range.</div>
+                  <div className="chart-empty">No data for this date range.</div>
                 ) : (
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart data={chartData} margin={{ top: 5, right: 20, bottom: 5, left: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" vertical={false} />
-                      <XAxis dataKey="date" stroke="var(--text-muted)" tick={{fill: 'var(--text-muted)'}} />
-                      <YAxis stroke="var(--text-muted)" tick={{fill: 'var(--text-muted)'}} tickFormatter={(value) => `₹${value}`} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.07)" vertical={false} />
+                      <XAxis dataKey="date" stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} />
+                      <YAxis stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)', fontSize: 12 }} tickFormatter={v => `₹${v}`} />
                       <Tooltip content={<CustomTooltip />} />
-                      <Line type="monotone" dataKey="revenue" stroke="var(--primary)" strokeWidth={3} dot={{ r: 4, fill: 'var(--primary)' }} activeDot={{ r: 6 }} />
+                      <Line
+                        type="monotone"
+                        dataKey="revenue"
+                        stroke="var(--primary)"
+                        strokeWidth={3}
+                        dot={{ r: 4, fill: 'var(--primary)', strokeWidth: 0 }}
+                        activeDot={{ r: 6, strokeWidth: 0 }}
+                      />
                     </LineChart>
                   </ResponsiveContainer>
                 )}
               </div>
             </div>
 
+            {/* ── Bottom grid: top products + transactions table ── */}
             <div className="report-content-grid">
+
+              {/* Top Products */}
               <div className="report-section glass-panel">
                 <div className="section-header">
-                  <h3><BarChart3 size={20} /> Top Selling Products</h3>
+                  <h3><BarChart3 size={17} /> Top Products</h3>
                 </div>
                 {topProducts.length === 0 ? (
                   <p className="text-muted">No sales data yet.</p>
                 ) : (
                   <div className="top-products-list">
                     {topProducts.map((p, idx) => (
-                      <div key={idx} className="top-product-item">
+                      <div key={idx} className="tp-row">
+                        <span className="tp-rank">#{idx + 1}</span>
                         <div className="tp-info">
-                          <h4>{p.name}</h4>
-                          <p>{p.qty} units sold</p>
+                          <span className="tp-name">{p.name}</span>
+                          <span className="tp-units">{p.qty} units sold</span>
                         </div>
-                        <div className="tp-revenue">
-                          ₹{p.revenue.toFixed(2)}
-                        </div>
+                        <span className="tp-revenue">₹{p.revenue.toFixed(2)}</span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
 
+              {/* Transactions Table */}
               <div className="report-section glass-panel">
                 <div className="section-header">
-                  <h3>Filtered Sales Transactions</h3>
+                  <h3>Sales Transactions</h3>
                 </div>
                 <div className="table-responsive">
                   <table className="report-table">
@@ -292,19 +282,25 @@ const SalesReport = () => {
                     </thead>
                     <tbody>
                       {salesData.length === 0 ? (
-                        <tr><td colSpan="5" className="text-center text-muted">No transactions found</td></tr>
+                        <tr>
+                          <td colSpan="5" className="table-empty-cell">No transactions found.</td>
+                        </tr>
                       ) : (
                         salesData
                           .slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE)
-                          .map(inv => (
-                          <tr key={inv.id}>
-                            <td>{new Date(inv.created_at).toLocaleDateString()}</td>
-                            <td className="font-medium">INV-{inv.id.toString().padStart(6, '0')}</td>
-                            <td>{inv.customer_name || 'Walk-in'}</td>
-                            <td className="text-right text-error">{inv.discount > 0 ? `-₹${inv.discount.toFixed(2)}` : '-'}</td>
-                            <td className="text-right font-medium text-success">₹{Number(inv.total_amount).toFixed(2)}</td>
-                          </tr>
-                        ))
+                          .map((inv, rowIdx) => (
+                            <tr key={inv.id} className={rowIdx % 2 === 0 ? 'row-even' : 'row-odd'}>
+                              <td>{new Date(inv.created_at).toLocaleDateString()}</td>
+                              <td className="inv-id-cell">INV-{inv.id.toString().padStart(6, '0')}</td>
+                              <td>{inv.customer_name || 'Walk-in'}</td>
+                              <td className="text-right text-error">
+                                {inv.discount > 0 ? `-₹${Number(inv.discount).toFixed(2)}` : '—'}
+                              </td>
+                              <td className="text-right text-success font-bold">
+                                ₹{Number(inv.total_amount).toFixed(2)}
+                              </td>
+                            </tr>
+                          ))
                       )}
                     </tbody>
                   </table>
@@ -316,6 +312,7 @@ const SalesReport = () => {
                   />
                 </div>
               </div>
+
             </div>
           </>
         )}

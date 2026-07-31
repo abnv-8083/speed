@@ -17,8 +17,6 @@ const POS = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [discount, setDiscount] = useState(0);
   const [customerName, setCustomerName] = useState('Walk-in Customer');
-  const [quickQty, setQuickQty] = useState(1);
-  const [quickLoading, setQuickLoading] = useState(false);
 
   useEffect(() => {
     fetchProducts();
@@ -31,27 +29,17 @@ const POS = () => {
       .select('*')
       .eq('is_blocked', false)
       .order('id', { ascending: true });
-      
-    if (!error && data) {
-      setProducts(data);
-    }
+    if (!error && data) setProducts(data);
     setLoading(false);
   };
 
   const addToCart = (product) => {
-    if (product.stock <= 0) {
-      toast.warning('Out of stock!');
-      return;
-    }
-
+    if (product.stock <= 0) { toast.warning('Out of stock!'); return; }
     const existingItem = cart.find(item => item.product.id === product.id);
     if (existingItem) {
-      if (existingItem.quantity >= product.stock) {
-        toast.warning('Cannot add more than available stock!');
-        return;
-      }
-      setCart(cart.map(item => 
-        item.product.id === product.id 
+      if (existingItem.quantity >= product.stock) { toast.warning('Cannot add more than available stock!'); return; }
+      setCart(cart.map(item =>
+        item.product.id === product.id
           ? { ...item, quantity: item.quantity + 1, total: (item.quantity + 1) * product.price }
           : item
       ));
@@ -67,13 +55,9 @@ const POS = () => {
   const updateCartQuantity = (productId, newQuantity) => {
     if (newQuantity < 1) return;
     const product = products.find(p => p.id === productId);
-    if (newQuantity > product.stock) {
-      toast.warning('Cannot exceed available stock!');
-      return;
-    }
-    
-    setCart(cart.map(item => 
-      item.product.id === productId 
+    if (newQuantity > product.stock) { toast.warning('Cannot exceed available stock!'); return; }
+    setCart(cart.map(item =>
+      item.product.id === productId
         ? { ...item, quantity: newQuantity, total: newQuantity * item.product.price }
         : item
     ));
@@ -84,7 +68,6 @@ const POS = () => {
 
   const checkout = async (overrideName) => {
     if (cart.length === 0) return;
-    
     setSubmittingInvoice(true);
     const finalName = (overrideName && overrideName.trim()) ? overrideName : 'Walk-in Customer';
 
@@ -100,23 +83,18 @@ const POS = () => {
     }
 
     const invoiceId = invoiceData[0].id;
-
     const itemsToInsert = cart.map(item => ({
       invoice_id: invoiceId,
       product_id: item.product.id,
       quantity: item.quantity,
-      price_at_time: item.product.price
+      price_at_time: item.product.price,
     }));
 
     await supabase.from('invoice_items').insert(itemsToInsert);
 
     for (const item of cart) {
       const currentProduct = products.find(p => p.id === item.product.id);
-      const newStock = currentProduct.stock - item.quantity;
-      await supabase
-        .from('products')
-        .update({ stock: newStock })
-        .eq('id', currentProduct.id);
+      await supabase.from('products').update({ stock: currentProduct.stock - item.quantity }).eq('id', currentProduct.id);
     }
 
     setLastInvoice({
@@ -126,7 +104,7 @@ const POS = () => {
       discount: discount,
       total: cartTotal,
       customerName: finalName,
-      date: new Date()
+      date: new Date(),
     });
 
     await fetchProducts();
@@ -137,66 +115,9 @@ const POS = () => {
     setShowInvoice(true);
   };
 
-  const handlePrintInvoice = () => {
-    // Open the browser print dialog without deducting stock
-    window.print();
-  };
+  const handlePrintInvoice = () => window.print();
 
-  const handleQuickSale = async (printType) => {
-    if (quickQty < 1) return;
-    setQuickLoading(true);
-
-    const printProduct = products.find(p => p.is_print && p.name.includes(printType));
-    
-    if (printProduct) {
-      if (quickQty > printProduct.stock) {
-        toast.warning('Not enough stock!');
-        setQuickLoading(false);
-        return;
-      }
-
-      const totalAmount = printProduct.price * quickQty;
-
-      // 1. Create silent invoice
-      const { data: invoiceData, error: invoiceError } = await supabase
-        .from('invoices')
-        .insert([{ total_amount: totalAmount, customer_name: `Quick Print (${printType})` }])
-        .select();
-
-      if (!invoiceError) {
-        const invoiceId = invoiceData[0].id;
-        
-        // 2. Insert invoice item
-        await supabase.from('invoice_items').insert([{
-          invoice_id: invoiceId,
-          product_id: printProduct.id,
-          quantity: quickQty,
-          price_at_time: printProduct.price
-        }]);
-
-        // 3. Deduct stock
-        await supabase
-          .from('products')
-          .update({ stock: printProduct.stock - quickQty })
-          .eq('id', printProduct.id);
-
-        await fetchProducts();
-        setQuickQty(1);
-        
-        // Brief success feedback without interrupting workflow
-        const btn = document.getElementById(`quick-btn-${printType}`);
-        const originalText = btn.innerHTML;
-        btn.innerHTML = '✅ Logged!';
-        btn.classList.add('success-flash');
-        setTimeout(() => {
-          btn.innerHTML = originalText;
-          btn.classList.remove('success-flash');
-        }, 1500);
-      }
-    }
-    setQuickLoading(false);
-  };
-
+  // ── Invoice / Print View ─────────────────────────────────────────────────
   if (showInvoice && lastInvoice) {
     return (
       <div className="pos-invoice-container animate-fade-in">
@@ -211,7 +132,7 @@ const POS = () => {
             <Printer size={18} /> Print (Color)
           </button>
         </div>
-        
+
         <div className="a5-invoice-wrapper glass-panel">
           <div className="a5-invoice">
             <div className="invoice-header">
@@ -223,32 +144,21 @@ const POS = () => {
                   <p>Phone: +1 234 567 8900 | Email: contact@speednet.com</p>
                 </div>
               </div>
-              <div className="invoice-title">
-                <h1>INVOICE</h1>
-              </div>
+              <div className="invoice-title"><h1>INVOICE</h1></div>
             </div>
-            
+
             <div className="invoice-details">
               <div className="invoice-to">
                 <h3>Billed To:</h3>
                 <p>{lastInvoice.customerName}</p>
               </div>
               <div className="invoice-meta">
-                <div className="meta-row">
-                  <span className="meta-label">Invoice No:</span>
-                  <span className="meta-value">INV-{lastInvoice.id.toString().padStart(6, '0')}</span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Date:</span>
-                  <span className="meta-value">{lastInvoice.date.toLocaleDateString()}</span>
-                </div>
-                <div className="meta-row">
-                  <span className="meta-label">Time:</span>
-                  <span className="meta-value">{lastInvoice.date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                </div>
+                <div className="meta-row"><span className="meta-label">Invoice No:</span><span className="meta-value">INV-{lastInvoice.id.toString().padStart(6, '0')}</span></div>
+                <div className="meta-row"><span className="meta-label">Date:</span><span className="meta-value">{lastInvoice.date.toLocaleDateString()}</span></div>
+                <div className="meta-row"><span className="meta-label">Time:</span><span className="meta-value">{lastInvoice.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
               </div>
             </div>
-            
+
             <table className="invoice-table">
               <thead>
                 <tr>
@@ -269,28 +179,16 @@ const POS = () => {
                 ))}
               </tbody>
             </table>
-            
+
             <div className="invoice-summary-box">
-              <div className="summary-row">
-                <span>Subtotal</span>
-                <span>₹{lastInvoice.subtotal.toFixed(2)}</span>
-              </div>
+              <div className="summary-row"><span>Subtotal</span><span>₹{lastInvoice.subtotal.toFixed(2)}</span></div>
               {lastInvoice.discount > 0 && (
-                <div className="summary-row">
-                  <span>Discount</span>
-                  <span>-₹{lastInvoice.discount.toFixed(2)}</span>
-                </div>
+                <div className="summary-row"><span>Discount</span><span>-₹{lastInvoice.discount.toFixed(2)}</span></div>
               )}
-              <div className="summary-row">
-                <span>Tax (0%)</span>
-                <span>₹0.00</span>
-              </div>
-              <div className="summary-row total-row">
-                <span>Total Amount</span>
-                <span>₹{lastInvoice.total.toFixed(2)}</span>
-              </div>
+              <div className="summary-row"><span>Tax (0%)</span><span>₹0.00</span></div>
+              <div className="summary-row total-row"><span>Total Amount</span><span>₹{lastInvoice.total.toFixed(2)}</span></div>
             </div>
-            
+
             <div className="invoice-footer">
               <p className="thank-you">Thank you for your business!</p>
               <p className="terms">Terms & Conditions: Goods once sold will not be taken back. Subject to local jurisdiction.</p>
@@ -301,171 +199,233 @@ const POS = () => {
     );
   }
 
-  const filteredProducts = products.filter(product => 
+  const filteredProducts = products.filter(product =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
+  // ── Main POS View ────────────────────────────────────────────────────────
   return (
     <div className="pos-layout animate-fade-in">
+
+      {/* ── LEFT: Product List Panel ── */}
       <div className="pos-products glass-panel">
-        <div className="pos-header" style={{ marginBottom: '1rem', borderBottom: 'none', paddingBottom: 0 }}>
-          <h2>Select Products</h2>
+        {/* Header */}
+        <div className="pos-products-header">
+          <div>
+            <h2>Products</h2>
+            <p className="pos-products-subtitle">{filteredProducts.length} available</p>
+          </div>
           <div className="pos-search-box">
-            <Search size={18} className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search products..." 
+            <Search size={15} className="pos-search-icon" />
+            <input
+              type="text"
+              placeholder="Search products..."
               value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              onChange={e => setSearchTerm(e.target.value)}
               className="pos-search-input"
             />
           </div>
         </div>
 
-        
+        {/* Product list */}
         {loading ? (
-          <PremiumLoader text="Loading Products..." />
+          <div className="pos-loader-wrap">
+            <PremiumLoader text="Loading Products..." />
+          </div>
         ) : (
-          <div className="pos-grid">
-            {filteredProducts.map(product => (
-              <div 
-                key={product.id} 
-                className={`pos-card ${product.stock <= 0 ? 'out-of-stock' : ''}`}
-                onClick={() => product.stock > 0 && addToCart(product)}
-              >
-                <div className="pos-card-info">
-                  <h4>{product.name}</h4>
-                  <p className="pos-price">₹{Number(product.price).toFixed(2)}</p>
-                </div>
-                <div className="pos-card-stock">
-                  Stock: <span className={product.stock < 10 ? 'text-error' : ''}>{product.stock}</span>
-                </div>
+          <div className="pos-product-list">
+            {filteredProducts.length === 0 ? (
+              <div className="pos-empty-products">
+                <ShoppingCart size={36} className="text-muted" />
+                <p>No products found.</p>
               </div>
-            ))}
+            ) : (
+              filteredProducts.map(product => {
+                const inCart = cart.find(i => i.product.id === product.id);
+                const outOfStock = product.stock <= 0;
+                return (
+                  <div
+                    key={product.id}
+                    className={`pos-product-row ${outOfStock ? 'pos-product-oos' : ''} ${inCart ? 'pos-product-incart' : ''}`}
+                    onClick={() => !outOfStock && addToCart(product)}
+                    role="button"
+                    tabIndex={outOfStock ? -1 : 0}
+                    onKeyDown={e => e.key === 'Enter' && !outOfStock && addToCart(product)}
+                    aria-disabled={outOfStock}
+                  >
+                    {/* Name + price */}
+                    <div className="pos-product-info">
+                      <span className="pos-product-name">{product.name}</span>
+                      <span className="pos-product-price">₹{Number(product.price).toFixed(2)}</span>
+                    </div>
+
+                    {/* Right: stock badge + add button */}
+                    <div className="pos-product-right">
+                      <span className={`pos-stock-badge ${outOfStock ? 'oos' : product.stock < 10 ? 'low' : 'ok'}`}>
+                        {outOfStock ? 'Out of stock' : `${product.stock} left`}
+                      </span>
+                      {!outOfStock && (
+                        <button
+                          className="pos-add-btn"
+                          onClick={e => { e.stopPropagation(); addToCart(product); }}
+                          title={`Add ${product.name} to cart`}
+                          aria-label={`Add ${product.name}`}
+                        >
+                          <Plus size={16} />
+                        </button>
+                      )}
+                    </div>
+
+                    {/* In-cart quantity indicator */}
+                    {inCart && (
+                      <span className="pos-incart-indicator">{inCart.quantity} in order</span>
+                    )}
+                  </div>
+                );
+              })
+            )}
           </div>
         )}
       </div>
 
+      {/* ── RIGHT: Cart / Receipt Panel ── */}
       <div className="pos-cart glass-panel">
-        <div className="pos-header">
-          <h2>Current Bill</h2>
-          <span className="badge">{cart.length} Items</span>
+
+        {/* Cart header */}
+        <div className="cart-header">
+          <div className="cart-header-left">
+            <ShoppingCart size={18} />
+            <h2>Current Order</h2>
+          </div>
+          {cart.length > 0 && (
+            <span className="cart-count-badge">{cart.length} item{cart.length !== 1 ? 's' : ''}</span>
+          )}
         </div>
 
-        <div className="cart-list">
+        {/* Cart items */}
+        <div className="cart-items-list">
           {cart.length === 0 ? (
             <div className="empty-cart">
-              <ShoppingCart size={48} />
-              <p>Select items to start bill</p>
+              <ShoppingCart size={40} />
+              <p>No items yet</p>
+              <span>Tap a product to add it</span>
             </div>
           ) : (
             cart.map(item => (
               <div key={item.product.id} className="cart-item">
+                {/* Remove button */}
+                <button
+                  className="cart-item-remove"
+                  onClick={() => removeFromCart(item.product.id)}
+                  aria-label={`Remove ${item.product.name}`}
+                >
+                  <X size={14} />
+                </button>
+
+                {/* Name + unit price */}
                 <div className="cart-item-info">
-                  <h5>{item.product.name}</h5>
-                  <p>₹{Number(item.product.price).toFixed(2)} / ea</p>
+                  <span className="cart-item-name">{item.product.name}</span>
+                  <span className="cart-item-unit">₹{Number(item.product.price).toFixed(2)} / ea</span>
                 </div>
-                <div className="cart-item-actions">
-                  <div className="qty-picker">
-                    <button onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}><Minus size={14}/></button>
-                    <span>{item.quantity}</span>
-                    <button onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}><Plus size={14}/></button>
+
+                {/* Qty stepper + line total */}
+                <div className="cart-item-right">
+                  <div className="qty-stepper">
+                    <button
+                      className="qty-btn"
+                      onClick={() => updateCartQuantity(item.product.id, item.quantity - 1)}
+                      aria-label="Decrease quantity"
+                    >
+                      <Minus size={13} />
+                    </button>
+                    <span className="qty-value">{item.quantity}</span>
+                    <button
+                      className="qty-btn"
+                      onClick={() => updateCartQuantity(item.product.id, item.quantity + 1)}
+                      aria-label="Increase quantity"
+                    >
+                      <Plus size={13} />
+                    </button>
                   </div>
-                  <div className="item-total">₹{item.total.toFixed(2)}</div>
-                  <button className="remove-btn" onClick={() => removeFromCart(item.product.id)}><X size={16}/></button>
+                  <span className="cart-line-total">₹{item.total.toFixed(2)}</span>
                 </div>
               </div>
             ))
           )}
         </div>
 
+        {/* Cart footer / order summary */}
         <div className="cart-footer">
-          {/* Line 1: Subtotal & Discount side-by-side */}
-          <div className="cart-subtotal-discount-row">
-            <div className="footer-subtotal-box">
-              <span className="footer-label">Subtotal:</span>
-              <span className="footer-val">₹{cartSubtotal.toFixed(2)}</span>
-            </div>
-            <div className="footer-discount-box">
-              <span className="footer-label">Discount (₹):</span>
-              <input 
-                type="number" 
-                className="pos-discount-input compact-input" 
-                min="0" 
-                step="0.01" 
-                value={discount || ''}
-                onChange={(e) => setDiscount(parseFloat(e.target.value) || 0)}
-                placeholder="0.00"
-              />
-            </div>
+          {/* Subtotal */}
+          <div className="cart-summary-row">
+            <span className="cart-summary-label">Subtotal</span>
+            <span className="cart-summary-value">₹{cartSubtotal.toFixed(2)}</span>
           </div>
 
-          {/* Line 2: Total */}
-          <div className="cart-total-row final-total">
-            <span>Total</span>
-            <span className="total-val">₹{cartTotal.toFixed(2)}</span>
+          {/* Discount */}
+          <div className="cart-summary-row">
+            <span className="cart-summary-label">Discount (₹)</span>
+            <input
+              type="number"
+              className="cart-discount-input"
+              min="0"
+              step="0.01"
+              value={discount || ''}
+              onChange={e => setDiscount(parseFloat(e.target.value) || 0)}
+              placeholder="0.00"
+              aria-label="Discount amount"
+            />
           </div>
 
-          {/* Line 3: Checkout & Print button */}
-          <button 
-            className="btn btn-primary checkout-btn"
+          {/* Total */}
+          <div className="cart-total-row">
+            <span className="cart-total-label">Total</span>
+            <span className="cart-total-value">₹{cartTotal.toFixed(2)}</span>
+          </div>
+
+          {/* Checkout button */}
+          <button
+            className="checkout-btn"
             disabled={cart.length === 0 || submittingInvoice}
             onClick={() => setShowCustomerModal(true)}
+            aria-label="Proceed to checkout"
           >
             {submittingInvoice ? (
-              <><Loader2 className="animate-spin" size={20} /> Processing...</>
+              <><Loader2 className="spin" size={18} /> Processing...</>
             ) : (
-              <><FileText size={20} /> Checkout & Print</>
+              <><FileText size={18} /> Checkout &amp; Print</>
             )}
           </button>
         </div>
       </div>
 
-      {/* Customer Modal Overlay */}
+      {/* ── Customer Name Modal ── */}
       {showCustomerModal && (
         <div className="pos-modal-overlay animate-fade-in">
           <div className="pos-modal-content">
-            <h3 style={{ marginBottom: '1rem', fontSize: '1.25rem' }}>Customer Details</h3>
-            <p className="text-muted" style={{ marginBottom: '1.5rem', fontSize: '0.9rem' }}>
-              Enter customer details for the invoice. (Optional)
-            </p>
-            <div style={{ marginBottom: '2rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', color: 'var(--text-muted)', fontSize: '0.9rem', fontWeight: 500 }}>
-                Customer Name
-              </label>
-              <input 
-                type="text" 
-                style={{ 
-                  width: '100%', 
-                  padding: '0.75rem', 
-                  borderRadius: '8px', 
-                  border: '1px solid var(--border)', 
-                  background: 'var(--background)', 
-                  color: 'var(--text)',
-                  fontSize: '1rem'
-                }}
+            <h3>Customer Details</h3>
+            <p className="text-muted">Enter a name for the invoice. (Optional)</p>
+            <div className="pos-modal-field">
+              <label>Customer Name</label>
+              <input
+                type="text"
+                className="input-field"
                 value={customerName === 'Walk-in Customer' ? '' : customerName}
-                onChange={(e) => setCustomerName(e.target.value)}
+                onChange={e => setCustomerName(e.target.value)}
                 placeholder="Walk-in Customer"
                 autoFocus
               />
             </div>
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem' }}>
-              <button 
-                className="btn btn-secondary" 
-                onClick={() => {
-                  setShowCustomerModal(false);
-                  setCustomerName('Walk-in Customer');
-                }}
+            <div className="pos-modal-actions">
+              <button
+                className="btn btn-secondary"
+                onClick={() => { setShowCustomerModal(false); setCustomerName('Walk-in Customer'); }}
               >
                 Cancel
               </button>
-              <button 
-                className="btn btn-primary" 
-                onClick={() => {
-                  setShowCustomerModal(false);
-                  checkout(customerName);
-                }}
+              <button
+                className="btn btn-primary"
+                onClick={() => { setShowCustomerModal(false); checkout(customerName); }}
                 disabled={submittingInvoice}
               >
                 {submittingInvoice ? 'Processing...' : 'Complete Checkout'}

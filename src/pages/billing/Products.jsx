@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Check, X, Loader2, Trash2, Ban, Unlock } from 'lucide-react';
+import { Plus, Edit2, Check, X, Trash2, Ban, Unlock, Search, Package } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
@@ -12,20 +12,20 @@ const Products = () => {
   const modal = useModal();
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
-  
+
   const [showAddForm, setShowAddForm] = useState(false);
   const [newProdName, setNewProdName] = useState('');
   const [newProdPrice, setNewProdPrice] = useState('');
   const [newProdStock, setNewProdStock] = useState('');
-  
+
   const [editingStockId, setEditingStockId] = useState(null);
   const [newStockValue, setNewStockValue] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
+  const ITEMS_PER_PAGE = 12;
 
-  const filteredProducts = products.filter(p => 
-    p.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredProducts = products.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     p.id.toString().includes(searchTerm)
   );
 
@@ -45,10 +45,8 @@ const Products = () => {
       .select('*')
       .not('name', 'ilike', '[DELETED]%')
       .order('id', { ascending: true });
-      
-    if (!error && data) {
-      setProducts(data);
-    }
+
+    if (!error && data) setProducts(data);
     setLoading(false);
   };
 
@@ -59,21 +57,16 @@ const Products = () => {
         name: newProdName,
         price: parseFloat(newProdPrice),
         stock: parseInt(newProdStock),
-        is_print: false
+        is_print: false,
       };
-      
-      const { data, error } = await supabase
-        .from('products')
-        .insert([newProduct])
-        .select();
-        
+      const { data, error } = await supabase.from('products').insert([newProduct]).select();
       if (!error && data) {
         setProducts([...products, data[0]]);
         setNewProdName('');
         setNewProdPrice('');
         setNewProdStock('');
         setShowAddForm(false);
-        toast.success("Product added successfully");
+        toast.success('Product added successfully');
       } else {
         toast.error('Error adding product: ' + error.message);
       }
@@ -88,46 +81,38 @@ const Products = () => {
   const saveStockEdit = async (id) => {
     const val = parseInt(newStockValue);
     if (!isNaN(val) && val >= 0) {
-      setProducts(products.map(p => p.id === id ? { ...p, stock: val } : p));
-      
-      const { error } = await supabase
-        .from('products')
-        .update({ stock: val })
-        .eq('id', id);
-        
+      setProducts(products.map(p => (p.id === id ? { ...p, stock: val } : p)));
+      const { error } = await supabase.from('products').update({ stock: val }).eq('id', id);
       if (error) {
         toast.error('Failed to update stock');
         fetchProducts();
       } else {
-        toast.success("Stock updated successfully");
+        toast.success('Stock updated successfully');
       }
     }
     setEditingStockId(null);
   };
 
   const handleDeleteProduct = async (product) => {
-    if (await modal.confirm("Delete Product", `Are you sure you want to delete ${product.name}?`)) {
+    if (await modal.confirm('Delete Product', `Are you sure you want to delete ${product.name}?`)) {
       const { error } = await supabase.from('products').delete().eq('id', product.id);
-      
       if (error && error.message.includes('foreign key constraint')) {
-        // Soft delete workaround: rename and block so it hides from UI but keeps invoice history
         const archivedName = `[DELETED] ${product.name}`;
         const { error: archiveError } = await supabase
           .from('products')
           .update({ is_blocked: true, name: archivedName })
           .eq('id', product.id);
-          
         if (archiveError) {
           toast.error('Failed to archive product: ' + archiveError.message);
         } else {
           setProducts(products.filter(p => p.id !== product.id));
-          toast.success("Product was soft-deleted (It has past invoices).");
+          toast.success('Product was soft-deleted (It has past invoices).');
         }
       } else if (error) {
         toast.error('Error deleting product: ' + error.message);
       } else {
         setProducts(products.filter(p => p.id !== product.id));
-        toast.success("Product deleted successfully");
+        toast.success('Product deleted successfully');
       }
     }
   };
@@ -138,33 +123,46 @@ const Products = () => {
     if (error) {
       toast.error('Error updating status: ' + error.message);
     } else {
-      setProducts(products.map(p => p.id === id ? { ...p, is_blocked: newStatus } : p));
+      setProducts(products.map(p => (p.id === id ? { ...p, is_blocked: newStatus } : p)));
       toast.success(`Product ${newStatus ? 'blocked' : 'unblocked'} successfully`);
     }
+  };
+
+  const getStatusBadge = (product) => {
+    if (product.is_blocked) return <span className="status-badge status-error">Blocked</span>;
+    if (product.stock > 10)  return <span className="status-badge status-good">In Stock</span>;
+    if (product.stock > 0)   return <span className="status-badge status-warning">Low Stock</span>;
+    return <span className="status-badge status-error">Out of Stock</span>;
   };
 
   return (
     <div className="products-layout animate-fade-in">
       <div className="glass-panel products-container">
+
+        {/* ── Header ── */}
         <div className="products-header">
           <div>
             <h2>Inventory Management</h2>
             <p className="text-muted">Manage your store products and stock levels.</p>
           </div>
           <div className="products-header-actions">
-            <input 
-              type="text" 
-              placeholder="🔍 Search products..." 
-              value={searchTerm} 
-              onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-              className="inventory-search-input"
-            />
+            <div className="prod-search-box">
+              <Search size={16} className="prod-search-icon" />
+              <input
+                type="text"
+                placeholder="Search products..."
+                value={searchTerm}
+                onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }}
+                className="prod-search-input"
+              />
+            </div>
             <button className="btn btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
-              <Plus size={18} /> Add New Product
+              <Plus size={18} /> Add Product
             </button>
           </div>
         </div>
 
+        {/* ── Add Product Form ── */}
         {showAddForm && (
           <div className="add-product-card animate-fade-in">
             <h3>Create Product</h3>
@@ -189,89 +187,108 @@ const Products = () => {
           </div>
         )}
 
+        {/* ── Column labels ── */}
+        {!loading && filteredProducts.length > 0 && (
+          <div className="prod-list-header">
+            <span className="prod-col-identity">Product</span>
+            <span className="prod-col-price">Price</span>
+            <span className="prod-col-stock">Stock</span>
+            <span className="prod-col-status">Status</span>
+            <span className="prod-col-actions">Actions</span>
+          </div>
+        )}
+
+        {/* ── List ── */}
         {loading ? (
           <div style={{ padding: '3rem 0' }}>
             <PremiumLoader text="Loading Inventory..." />
           </div>
         ) : (
           <>
-            <div className="inventory-cards-grid">
+            <div className="inventory-list">
               {filteredProducts.length === 0 ? (
-                <div className="empty-inventory-cards">
+                <div className="empty-inventory">
+                  <Package size={40} className="text-muted" />
                   <p className="text-muted">No products found matching your search.</p>
                 </div>
               ) : (
                 paginatedProducts.map(product => (
-                  <div key={product.id} className={`inventory-grid-card ${product.is_blocked ? 'card-blocked' : ''}`}>
-                    {/* Top Row: ID + Status Badge on Left, Action Buttons on Right */}
-                    <div className="grid-card-top">
-                      <div className="grid-card-badges">
-                        <span className="card-prod-id">#{product.id}</span>
-                        {product.is_blocked ? (
-                          <span className="status-badge status-error">Blocked</span>
-                        ) : product.stock > 10 ? (
-                          <span className="status-badge status-good">In Stock</span>
-                        ) : product.stock > 0 ? (
-                          <span className="status-badge status-warning">Low Stock</span>
-                        ) : (
-                          <span className="status-badge status-error">Out of Stock</span>
-                        )}
-                      </div>
-                      <div className="grid-card-actions action-buttons-row">
-                        {editingStockId !== product.id && (
-                          <button className="btn-icon" title="Update Stock" onClick={() => startStockEdit(product)}>
-                            <Edit2 size={15} />
+                  <div
+                    key={product.id}
+                    className={`prod-row ${product.is_blocked ? 'prod-row-blocked' : ''}`}
+                  >
+                    {/* Identity: ID badge + name */}
+                    <div className="prod-col-identity">
+                      <span className="prod-id-badge">#{product.id}</span>
+                      <span className="prod-name" title={product.name}>{product.name}</span>
+                    </div>
+
+                    {/* Price */}
+                    <div className="prod-col-price">
+                      <span className="prod-price">₹{Number(product.price).toFixed(2)}</span>
+                    </div>
+
+                    {/* Stock — read or inline editor */}
+                    <div className="prod-col-stock">
+                      {editingStockId === product.id ? (
+                        <div className="stock-edit-inline">
+                          <input
+                            type="number"
+                            className="small-input"
+                            value={newStockValue}
+                            onChange={e => setNewStockValue(e.target.value)}
+                            autoFocus
+                          />
+                          <button className="icon-btn success" onClick={() => saveStockEdit(product.id)} title="Save">
+                            <Check size={15} />
                           </button>
-                        )}
-                        <button 
-                          className={`btn-icon ${product.is_blocked ? 'success-text' : 'warning-text'}`}
-                          title={product.is_blocked ? "Unblock Product" : "Block Product"}
-                          onClick={() => handleToggleBlock(product.id, product.is_blocked)}
-                        >
-                          {product.is_blocked ? <Unlock size={15} /> : <Ban size={15} />}
-                        </button>
-                        <button 
-                          className="btn-icon danger-text"
-                          title="Delete Product"
-                          onClick={() => handleDeleteProduct(product)}
-                        >
-                          <Trash2 size={15} />
-                        </button>
-                      </div>
+                          <button className="icon-btn danger" onClick={() => setEditingStockId(null)} title="Cancel">
+                            <X size={15} />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className={`prod-stock-val ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
+                          {product.stock} <span className="stock-unit">units</span>
+                        </span>
+                      )}
                     </div>
 
-                    {/* Middle Row: Product Title & Price */}
-                    <div className="grid-card-body">
-                      <h4 className="grid-prod-title" title={product.name}>{product.name}</h4>
-                      <div className="grid-prod-price">₹{Number(product.price).toFixed(2)}</div>
+                    {/* Status badge */}
+                    <div className="prod-col-status">
+                      {getStatusBadge(product)}
                     </div>
 
-                    {/* Bottom Row: Stock readout or editor */}
-                    <div className="grid-card-footer">
-                      <div className="card-stock-display">
-                        <span className="stock-label">Stock Level:</span>
-                        {editingStockId === product.id ? (
-                          <div className="stock-edit-inline">
-                            <input 
-                              type="number" 
-                              className="input-field small-input" 
-                              value={newStockValue} 
-                              onChange={(e) => setNewStockValue(e.target.value)}
-                            />
-                            <button className="icon-btn success" onClick={() => saveStockEdit(product.id)}><Check size={16} /></button>
-                            <button className="icon-btn danger" onClick={() => setEditingStockId(null)}><X size={16} /></button>
-                          </div>
-                        ) : (
-                          <span className={`stock-val ${product.stock < 10 ? 'text-error font-bold' : 'font-bold'}`}>
-                            {product.stock}
-                          </span>
-                        )}
-                      </div>
+                    {/* Action buttons */}
+                    <div className="prod-col-actions">
+                      {editingStockId !== product.id && (
+                        <button
+                          className="prod-action-btn"
+                          title="Edit Stock"
+                          onClick={() => startStockEdit(product)}
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                      )}
+                      <button
+                        className={`prod-action-btn ${product.is_blocked ? 'action-success' : 'action-warning'}`}
+                        title={product.is_blocked ? 'Unblock' : 'Block'}
+                        onClick={() => handleToggleBlock(product.id, product.is_blocked)}
+                      >
+                        {product.is_blocked ? <Unlock size={14} /> : <Ban size={14} />}
+                      </button>
+                      <button
+                        className="prod-action-btn action-danger"
+                        title="Delete"
+                        onClick={() => handleDeleteProduct(product)}
+                      >
+                        <Trash2 size={14} />
+                      </button>
                     </div>
                   </div>
                 ))
               )}
             </div>
+
             <Pagination
               currentPage={currentPage}
               totalItems={filteredProducts.length}

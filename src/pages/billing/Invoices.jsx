@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Receipt, Search, Printer, ArrowLeft, FileDown } from 'lucide-react';
+import { Receipt, Search, Printer, ArrowLeft, Package } from 'lucide-react';
 import { supabase } from '../../supabaseClient';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
@@ -11,7 +11,7 @@ const Invoices = () => {
   const [selectedInvoice, setSelectedInvoice] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 9;
+  const ITEMS_PER_PAGE = 12;
 
   useEffect(() => {
     fetchInvoices();
@@ -37,8 +37,8 @@ const Invoices = () => {
     setLoading(false);
   };
 
-  const filteredInvoices = invoices.filter(inv => 
-    inv.id.toString().includes(searchTerm) || 
+  const filteredInvoices = invoices.filter(inv =>
+    inv.id.toString().includes(searchTerm) ||
     (inv.customer_name && inv.customer_name.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
@@ -49,15 +49,15 @@ const Invoices = () => {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
-    setCurrentPage(1); // reset to page 1 on new search
+    setCurrentPage(1);
   };
 
   const handlePrintInvoice = () => {
     window.print();
   };
 
+  // ── Detail / Print View ──────────────────────────────────────────────────
   if (selectedInvoice) {
-    // Calculate subtotal from total + discount
     const discount = selectedInvoice.discount || 0;
     const subtotal = selectedInvoice.total_amount + discount;
 
@@ -74,7 +74,7 @@ const Invoices = () => {
             <Printer size={18} /> Print (Color)
           </button>
         </div>
-        
+
         <div className="a5-invoice-wrapper glass-panel">
           <div className="a5-invoice">
             <div className="invoice-header">
@@ -90,7 +90,7 @@ const Invoices = () => {
                 <h1>INVOICE</h1>
               </div>
             </div>
-            
+
             <div className="invoice-details">
               <div className="invoice-to">
                 <h3>Billed To:</h3>
@@ -107,11 +107,11 @@ const Invoices = () => {
                 </div>
                 <div className="meta-row">
                   <span className="meta-label">Time:</span>
-                  <span className="meta-value">{new Date(selectedInvoice.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                  <span className="meta-value">{new Date(selectedInvoice.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                 </div>
               </div>
             </div>
-            
+
             <table className="invoice-table">
               <thead>
                 <tr>
@@ -132,7 +132,7 @@ const Invoices = () => {
                 ))}
               </tbody>
             </table>
-            
+
             <div className="invoice-summary-box">
               <div className="summary-row">
                 <span>Subtotal</span>
@@ -153,7 +153,7 @@ const Invoices = () => {
                 <span>₹{Number(selectedInvoice.total_amount).toFixed(2)}</span>
               </div>
             </div>
-            
+
             <div className="invoice-footer">
               <p className="thank-you">Thank you for your business!</p>
               <p className="terms">Terms & Conditions: Goods once sold will not be taken back. Subject to local jurisdiction.</p>
@@ -164,33 +164,48 @@ const Invoices = () => {
     );
   }
 
+  // ── List View ────────────────────────────────────────────────────────────
   return (
     <div className="invoices-layout animate-fade-in">
       <div className="glass-panel invoices-container">
+
+        {/* Header */}
         <div className="invoices-header">
           <div>
             <h2>Invoice History</h2>
             <p className="text-muted">View all past transactions and receipts.</p>
           </div>
-          <div className="search-box">
-            <Search size={18} className="search-icon" />
-            <input 
-              type="text" 
-              placeholder="Search by ID or Customer..." 
-              className="input-field" 
+          <div className="inv-search-box">
+            <Search size={16} className="inv-search-icon" />
+            <input
+              type="text"
+              placeholder="Search by ID or Customer..."
+              className="inv-search-input"
               value={searchTerm}
               onChange={handleSearchChange}
             />
           </div>
         </div>
 
+        {/* Column labels */}
+        {!loading && filteredInvoices.length > 0 && (
+          <div className="inv-list-header">
+            <span className="inv-col-id">Invoice</span>
+            <span className="inv-col-items">Items</span>
+            <span className="inv-col-date">Date</span>
+            <span className="inv-col-amount">Amount</span>
+            <span className="inv-col-action"></span>
+          </div>
+        )}
+
+        {/* List */}
         {loading ? (
           <div style={{ padding: '3rem 0' }}>
             <PremiumLoader text="Loading Invoices..." />
           </div>
         ) : (
           <>
-            <div className="invoices-grid">
+            <div className="invoices-list">
               {filteredInvoices.length === 0 ? (
                 <div className="empty-invoices">
                   <Receipt size={48} className="text-muted" />
@@ -198,43 +213,60 @@ const Invoices = () => {
                 </div>
               ) : (
                 paginatedInvoices.map(invoice => (
-                  <div key={invoice.id} className="invoice-card">
-                    <div className="invoice-card-header">
-                      <div className="inv-title">
-                        <h4>INV-{invoice.id.toString().padStart(6, '0')}</h4>
-                        {invoice.customer_name && <p className="inv-customer">{invoice.customer_name}</p>}
-                      </div>
-                      <span className="date">{new Date(invoice.created_at).toLocaleDateString()}</span>
-                    </div>
-                    
-                    <div className="invoice-items-summary">
-                      <p>{invoice.invoice_items?.length || 0} items purchased</p>
-                      <ul className="items-preview">
-                        {invoice.invoice_items?.slice(0, 2).map((item, idx) => (
-                          <li key={idx}>{item.quantity}x {item.products?.name}</li>
-                        ))}
-                        {invoice.invoice_items?.length > 2 && (
-                          <li>...and {invoice.invoice_items.length - 2} more</li>
-                        )}
-                      </ul>
+                  <div key={invoice.id} className="inv-row">
+
+                    {/* Left: ID + customer */}
+                    <div className="inv-col-id">
+                      <span className="inv-id-badge">
+                        INV-{invoice.id.toString().padStart(6, '0')}
+                      </span>
+                      <span className="inv-customer-name">
+                        {invoice.customer_name || 'Walk-in Customer'}
+                      </span>
                     </div>
 
-                    <div className="invoice-card-footer">
-                      <div className="amount-col">
-                        <span className="amount-label">Total Amount</span>
-                        <span className="total-amount">₹{Number(invoice.total_amount).toFixed(2)}</span>
-                      </div>
-                      <button 
-                        className="btn btn-secondary btn-sm" 
+                    {/* Center: item count chip */}
+                    <div className="inv-col-items">
+                      <span className="inv-items-chip">
+                        <Package size={13} />
+                        {invoice.invoice_items?.length || 0} item{invoice.invoice_items?.length !== 1 ? 's' : ''}
+                      </span>
+                    </div>
+
+                    {/* Date */}
+                    <div className="inv-col-date">
+                      <span className="inv-date">
+                        {new Date(invoice.created_at).toLocaleDateString()}
+                      </span>
+                      <span className="inv-time">
+                        {new Date(invoice.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+
+                    {/* Amount */}
+                    <div className="inv-col-amount">
+                      <span className="inv-total">₹{Number(invoice.total_amount).toFixed(2)}</span>
+                      {invoice.discount > 0 && (
+                        <span className="inv-discount-badge">-₹{Number(invoice.discount).toFixed(2)} off</span>
+                      )}
+                    </div>
+
+                    {/* Action */}
+                    <div className="inv-col-action">
+                      <button
+                        className="inv-print-btn"
                         onClick={() => setSelectedInvoice(invoice)}
+                        title="View & Print"
                       >
-                        <Printer size={16} /> Print / PDF
+                        <Printer size={15} />
+                        <span>Print</span>
                       </button>
                     </div>
                   </div>
                 ))
               )}
             </div>
+
             <Pagination
               currentPage={currentPage}
               totalItems={filteredInvoices.length}
