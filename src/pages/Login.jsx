@@ -1,21 +1,21 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Zap, UserCheck } from 'lucide-react';
+import { LogIn, Zap, UserCheck, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { api, setToken } from '../api';
 import './Login.css';
 
 const Login = () => {
-  const [email, setEmail]       = useState('');
-  const [password, setPassword] = useState('');
-  const [loading, setLoading]   = useState(false);
-  const [errorMsg, setErrorMsg] = useState('');
+  const [email, setEmail]         = useState('');
+  const [password, setPassword]   = useState('');
+  const [showPass, setShowPass]   = useState(false);
+  const [loading, setLoading]     = useState(false);
+  const [errorMsg, setErrorMsg]   = useState('');
   const navigate = useNavigate();
 
   const handleLogin = async (e) => {
     e.preventDefault();
     setLoading(true);
     setErrorMsg('');
-
     try {
       const { token } = await api.login(email, password);
       setToken(token);
@@ -35,7 +35,6 @@ const Login = () => {
       setToken(token);
       navigate('/home');
     } catch {
-      // If demo credentials fail, still navigate (offline / demo mode)
       navigate('/home');
     } finally {
       setLoading(false);
@@ -43,74 +42,119 @@ const Login = () => {
   };
 
   return (
-    <div className="login-container">
-      <div className="login-card glass-panel animate-fade-in">
-        <div className="login-header">
-          <div className="logo-container">
-            <Zap className="logo-icon" size={32} />
+    <div className="login-root">
+      {/* Ambient blobs */}
+      <div className="login-blob login-blob-1" />
+      <div className="login-blob login-blob-2" />
+      <div className="login-blob login-blob-3" />
+
+      <div className="login-card animate-fade-in">
+
+        {/* Brand */}
+        <div className="login-brand">
+          <div className="login-logo">
+            <Zap size={28} />
           </div>
-          <h1>SpeedNet</h1>
-          <p>Welcome back! Please enter your details.</p>
+          <div className="login-brand-text">
+            <h1>SpeedNet</h1>
+            <p>CRM &amp; Business Portal</p>
+          </div>
         </div>
 
-        {errorMsg && <div className="error-message">{errorMsg}</div>}
+        <div className="login-divider" />
 
+        <div className="login-welcome">
+          <h2>Welcome back</h2>
+          <p>Sign in to your account to continue</p>
+        </div>
+
+        {/* Error */}
+        {errorMsg && (
+          <div className="login-error" role="alert">
+            <span>⚠</span> {errorMsg}
+          </div>
+        )}
+
+        {/* Form */}
         <form onSubmit={handleLogin} className="login-form">
-          <div className="form-group">
-            <label className="form-label" htmlFor="email">Email</label>
-            <input
-              type="email"
-              id="email"
-              className="input-field"
-              placeholder="admin@speednet.com"
-              value={email}
-              onChange={e => setEmail(e.target.value)}
-              required
-            />
+          <div className="login-field">
+            <label htmlFor="email">Email address</label>
+            <div className="login-input-wrap">
+              <Mail size={16} className="login-input-icon" />
+              <input
+                type="email"
+                id="email"
+                placeholder="admin@speednet.com"
+                value={email}
+                onChange={e => setEmail(e.target.value)}
+                required
+                autoComplete="email"
+              />
+            </div>
           </div>
 
-          <div className="form-group">
-            <label className="form-label" htmlFor="password">Password</label>
-            <input
-              type="password"
-              id="password"
-              className="input-field"
-              placeholder="••••••••"
-              value={password}
-              onChange={e => setPassword(e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="form-options">
-            <label className="remember-me">
-              <input type="checkbox" />
-              <span>Remember me</span>
-            </label>
-            <a href="#" className="forgot-password">Forgot password?</a>
-          </div>
-
-          <button type="submit" className="btn btn-primary login-btn" disabled={loading}>
-            {loading ? 'Signing In...' : <><LogIn size={18} /> Sign In</>}
-          </button>
-        </form>
-
-        <div style={{ marginTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-muted)' }}>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
-            <span style={{ fontSize: '0.85rem' }}>OR</span>
-            <div style={{ flex: 1, height: '1px', background: 'var(--border)' }}></div>
+          <div className="login-field">
+            <div className="login-field-header">
+              <label htmlFor="password">Password</label>
+              <a href="#" className="login-forgot">Forgot password?</a>
+            </div>
+            <div className="login-input-wrap">
+              <Lock size={16} className="login-input-icon" />
+              <input
+                type={showPass ? 'text' : 'password'}
+                id="password"
+                placeholder="••••••••"
+                value={password}
+                onChange={e => setPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+              />
+              <button
+                type="button"
+                className="login-eye-btn"
+                onClick={() => setShowPass(v => !v)}
+                tabIndex={-1}
+                aria-label={showPass ? 'Hide password' : 'Show password'}
+              >
+                {showPass ? <EyeOff size={15} /> : <Eye size={15} />}
+              </button>
+            </div>
           </div>
 
           <button
-            type="button"
-            className="btn btn-outline login-btn"
-            onClick={handleDemoLogin}
+            type="submit"
+            className="login-submit-btn"
             disabled={loading}
           >
-            Sign in as Demo User <UserCheck size={18} />
+            {loading ? (
+              <span className="login-spinner" />
+            ) : (
+              <><LogIn size={17} /> Sign In</>
+            )}
           </button>
+        </form>
+
+        {/* Divider */}
+        <div className="login-or">
+          <span />
+          <p>or</p>
+          <span />
         </div>
+
+        {/* Demo */}
+        <button
+          type="button"
+          className="login-demo-btn"
+          onClick={handleDemoLogin}
+          disabled={loading}
+        >
+          <UserCheck size={17} />
+          Continue as Demo User
+        </button>
+
+        <p className="login-footer-note">
+          Demo account has full read &amp; write access
+        </p>
       </div>
     </div>
   );
