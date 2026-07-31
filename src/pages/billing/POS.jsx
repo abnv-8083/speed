@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Plus, Minus, X, FileText, Loader2, Printer, ArrowLeft, Search } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, X, FileText, Loader2, Search } from 'lucide-react';
 import { api } from '../../api';
 import PremiumLoader from '../../components/PremiumLoader';
+import InvoiceTemplate from '../../components/InvoiceTemplate';
 import { useToast } from '../../components/ToastContext';
 import './POS.css';
 
@@ -123,82 +124,11 @@ const POS = () => {
   // ── Invoice / Print View ─────────────────────────────────────────────────
   if (showInvoice && lastInvoice) {
     return (
-      <div className="pos-invoice-container animate-fade-in">
-        <div className="invoice-actions no-print">
-          <button className="btn btn-secondary" onClick={() => setShowInvoice(false)}>
-            <ArrowLeft size={18} /> New Sale
-          </button>
-          <button className="btn btn-primary" onClick={handlePrintInvoice}>
-            <Printer size={18} /> Print (B&W)
-          </button>
-          <button className="btn btn-primary" style={{ background: 'var(--secondary)' }} onClick={handlePrintInvoice}>
-            <Printer size={18} /> Print (Color)
-          </button>
-        </div>
-
-        <div className="a5-invoice-wrapper glass-panel">
-          <div className="a5-invoice">
-            <div className="invoice-header">
-              <div className="invoice-branding">
-                <div className="invoice-logo">S@N</div>
-                <div className="invoice-company">
-                  <h2>Speed@net CRM</h2>
-                  <p>123 Business Avenue, Tech District</p>
-                  <p>Phone: +1 234 567 8900 | Email: contact@speednet.com</p>
-                </div>
-              </div>
-              <div className="invoice-title"><h1>INVOICE</h1></div>
-            </div>
-
-            <div className="invoice-details">
-              <div className="invoice-to">
-                <h3>Billed To:</h3>
-                <p>{lastInvoice.customerName}</p>
-              </div>
-              <div className="invoice-meta">
-                <div className="meta-row"><span className="meta-label">Invoice No:</span><span className="meta-value">INV-{lastInvoice.id.toString().padStart(6, '0')}</span></div>
-                <div className="meta-row"><span className="meta-label">Date:</span><span className="meta-value">{lastInvoice.date.toLocaleDateString()}</span></div>
-                <div className="meta-row"><span className="meta-label">Time:</span><span className="meta-value">{lastInvoice.date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span></div>
-              </div>
-            </div>
-
-            <table className="invoice-table">
-              <thead>
-                <tr>
-                  <th className="text-left">Description</th>
-                  <th className="text-center">Qty</th>
-                  <th className="text-right">Unit Price</th>
-                  <th className="text-right">Total</th>
-                </tr>
-              </thead>
-              <tbody>
-                {lastInvoice.items.map((item, idx) => (
-                  <tr key={idx}>
-                    <td className="text-left font-medium">{item.product.name}</td>
-                    <td className="text-center text-muted">{item.quantity}</td>
-                    <td className="text-right text-muted">₹{Number(item.product.price).toFixed(2)}</td>
-                    <td className="text-right font-medium">₹{item.total.toFixed(2)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            <div className="invoice-summary-box">
-              <div className="summary-row"><span>Subtotal</span><span>₹{lastInvoice.subtotal.toFixed(2)}</span></div>
-              {lastInvoice.discount > 0 && (
-                <div className="summary-row"><span>Discount</span><span>-₹{lastInvoice.discount.toFixed(2)}</span></div>
-              )}
-              <div className="summary-row"><span>Tax (0%)</span><span>₹0.00</span></div>
-              <div className="summary-row total-row"><span>Total Amount</span><span>₹{lastInvoice.total.toFixed(2)}</span></div>
-            </div>
-
-            <div className="invoice-footer">
-              <p className="thank-you">Thank you for your business!</p>
-              <p className="terms">Terms & Conditions: Goods once sold will not be taken back. Subject to local jurisdiction.</p>
-            </div>
-          </div>
-        </div>
-      </div>
+      <InvoiceTemplate
+        invoice={lastInvoice}
+        onBack={() => setShowInvoice(false)}
+        backLabel="New Sale"
+      />
     );
   }
 
