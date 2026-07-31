@@ -8,9 +8,13 @@
  * Reads MONGODB_URI from .env (one level up).
  * Reads ADMIN_EMAIL / ADMIN_PASSWORD from .env, or falls back to defaults below.
  */
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const mongoose = require('mongoose');
 const User     = require('./models/User');
+
+// Force Google DNS to resolve Atlas SRV records (bypasses ISP DNS issues)
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 
 const MONGO_URI      = process.env.MONGODB_URI;
 const ADMIN_EMAIL    = process.env.ADMIN_EMAIL    || 'admin@speednet.com';

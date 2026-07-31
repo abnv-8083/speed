@@ -1,7 +1,11 @@
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+
+// Force Google DNS to resolve Atlas SRV records (bypasses ISP DNS issues)
+const dns = require('dns');
+dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 
 const authRoutes        = require('./routes/auth');
 const productRoutes     = require('./routes/products');
