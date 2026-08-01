@@ -109,7 +109,7 @@ const Invoices = () => {
                     {/* Left: ID + customer */}
                     <div className="inv-col-id">
                       <span className="inv-id-badge">
-                        INV-{invoice.id.toString().padStart(6, '0')}
+                        INV-{String(invoice.id).slice(-6).toUpperCase()}
                       </span>
                       <span className="inv-customer-name">
                         {invoice.customer_name || 'Walk-in Customer'}
