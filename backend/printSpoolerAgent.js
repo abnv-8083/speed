@@ -80,12 +80,16 @@ function apiRequest(method, path, body = null) {
 // ── Authenticate ──────────────────────────────────────────────
 async function authenticate() {
   console.log('🔐  Authenticating with SpeedNet API…');
-  const res = await apiRequest('POST', '/api/auth/login', {
-    email: ADMIN_EMAIL, password: ADMIN_PASSWORD,
-  });
-  if (!res.token) throw new Error('No token in response: ' + JSON.stringify(res));
-  authToken = res.token;
-  console.log('✅  Authenticated\n');
+  try {
+    const res = await apiRequest('POST', '/api/auth/login', {
+      email: ADMIN_EMAIL, password: ADMIN_PASSWORD,
+    });
+    if (!res.token) throw new Error('No token in response: ' + JSON.stringify(res));
+    authToken = res.token;
+    console.log('✅  Authenticated\n');
+  } catch (err) {
+    throw new Error(`Authentication failed — ${err.message}\n\n  Check that API_URL is reachable: ${API_URL}\n  Current API_URL is set to: ${API_URL}`);
+  }
 }
 
 // ── Load printer configs ──────────────────────────────────────
