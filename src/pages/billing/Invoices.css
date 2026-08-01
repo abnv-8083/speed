@@ -85,11 +85,11 @@
 }
 
 /* ── Shared column widths ─────────────────────────────────────────────── */
-.inv-col-id     { flex: 2; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; overflow: hidden; }
-.inv-col-items  { flex: 0 0 100px; }
-.inv-col-date   { flex: 0 0 110px; display: flex; flex-direction: column; gap: 0.15rem; }
-.inv-col-amount { flex: 0 0 130px; display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-end; }
-.inv-col-action { flex: 0 0 100px; display: flex; justify-content: flex-end; }
+.inv-col-id     { flex: 2; min-width: 0; display: flex; flex-direction: column; gap: 0.2rem; }
+.inv-col-items  { flex: 1; min-width: 80px; }
+.inv-col-date   { flex: 1; min-width: 100px; display: flex; flex-direction: column; gap: 0.15rem; }
+.inv-col-amount { flex: 1; min-width: 110px; display: flex; flex-direction: column; gap: 0.15rem; align-items: flex-end; }
+.inv-col-action { width: 90px; display: flex; justify-content: flex-end; }
 
 /* Column label row overrides (flat, no flex-direction column) */
 .inv-list-header .inv-col-id,

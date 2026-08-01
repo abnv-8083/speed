@@ -42,7 +42,7 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
     };
   });
 
-  const invNumber = `INV-${String(id).slice(-6).toUpperCase()}`;
+  const invNumber = `INV-${String(id).slice(-6).padStart(6, '0')}`;
   const dateStr   = createdAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
   const timeStr   = createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
