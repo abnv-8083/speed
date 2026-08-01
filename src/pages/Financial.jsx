@@ -9,6 +9,7 @@ import { api } from '../api';
 import PremiumLoader from '../components/PremiumLoader';
 import { useToast } from '../components/ToastContext';
 import { useModal } from '../components/ModalContext';
+import AppModal from '../components/AppModal';
 import './Financial.css';
 
 const BLANK = { loan_type: 'lent', person_name: '', amount: '', due_date: '' };
@@ -70,7 +71,7 @@ const Financial = () => {
   };
 
   const handleAddLoan = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!form.person_name || !form.amount) return;
     setSubmitting(true);
     try {
@@ -206,20 +207,25 @@ const Financial = () => {
         </button>
       </div>
 
-      {/* ── Add form ── */}
+      {/* ── Add Loan Modal ── */}
       {showAddForm && (
-        <div className="fin-add-form glass-panel animate-fade-in">
-          <h3>Record New Loan</h3>
-          <form onSubmit={handleAddLoan} className="fin-form-fields">
-            <LoanFields values={form} onChange={(k, v) => setForm(f => ({ ...f, [k]: v }))} />
-            <div className="fin-form-actions">
-              <button type="button" className="btn btn-secondary" onClick={() => setShowAddForm(false)}>Cancel</button>
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
+        <AppModal
+          title="Record New Loan"
+          onClose={() => setShowAddForm(false)}
+          width="520px"
+          footer={
+            <>
+              <button className="btn btn-secondary" onClick={() => setShowAddForm(false)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleAddLoan} disabled={submitting}>
                 <Check size={15} /> {submitting ? 'Saving…' : 'Save Record'}
               </button>
-            </div>
-          </form>
-        </div>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <LoanFields values={form} onChange={(k, v) => setForm(f => ({ ...f, [k]: v }))} />
+          </div>
+        </AppModal>
       )}
 
       {/* ── Loan list ── */}
@@ -329,42 +335,44 @@ const Financial = () => {
 
       {/* ── Edit Modal ── */}
       {editLoan && (
-        <div className="fin-modal-overlay animate-fade-in" onClick={() => setEditLoan(null)}>
-          <div className="fin-modal glass-panel" onClick={e => e.stopPropagation()}>
-            <div className="fin-modal-head">
-              <h3><Edit2 size={16} /> Edit Loan</h3>
-              <button className="fin-modal-close" onClick={() => setEditLoan(null)}><X size={16} /></button>
-            </div>
-            <form onSubmit={handleEditSave}>
-              <div className="fin-modal-body">
-                <LoanFields values={editForm} onChange={(k, v) => setEditForm(f => ({ ...f, [k]: v }))} />
-              </div>
-              <div className="fin-modal-foot">
-                <button type="button" className="btn btn-secondary" onClick={() => setEditLoan(null)}>Cancel</button>
-                <button type="submit" className="btn btn-primary" disabled={editSaving}>
-                  <Check size={15} /> {editSaving ? 'Saving…' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
+        <AppModal
+          title="Edit Loan"
+          onClose={() => setEditLoan(null)}
+          width="520px"
+          footer={
+            <>
+              <button className="btn btn-secondary" onClick={() => setEditLoan(null)}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleEditSave} disabled={editSaving}>
+                <Check size={15} /> {editSaving ? 'Saving…' : 'Save Changes'}
+              </button>
+            </>
+          }
+        >
+          <form onSubmit={handleEditSave} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <LoanFields values={editForm} onChange={(k, v) => setEditForm(f => ({ ...f, [k]: v }))} />
+          </form>
+        </AppModal>
       )}
 
       {/* ── Delete Confirm ── */}
       {deleteId && (
-        <div className="fin-modal-overlay animate-fade-in" onClick={() => setDeleteId(null)}>
-          <div className="fin-confirm glass-panel animate-fade-in" onClick={e => e.stopPropagation()}>
-            <div className="fin-confirm-icon"><AlertTriangle size={28} /></div>
-            <h3>Delete this loan?</h3>
-            <p>All payment records will also be removed. This cannot be undone.</p>
-            <div className="fin-confirm-actions">
+        <AppModal
+          title="Delete Loan?"
+          onClose={() => setDeleteId(null)}
+          width="360px"
+          footer={
+            <>
               <button className="btn btn-secondary" onClick={() => setDeleteId(null)}>Cancel</button>
               <button className="fin-btn-delete" onClick={handleDelete} disabled={deleting}>
                 <Trash2 size={14} /> {deleting ? 'Deleting…' : 'Delete Loan'}
               </button>
-            </div>
-          </div>
-        </div>
+            </>
+          }
+        >
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem', lineHeight: 1.6 }}>
+            All payment records for this loan will also be removed. This cannot be undone.
+          </p>
+        </AppModal>
       )}
     </div>
   );

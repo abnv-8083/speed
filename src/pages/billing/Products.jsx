@@ -6,6 +6,7 @@ import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
 import { useToast } from '../../components/ToastContext';
 import { useModal } from '../../components/ModalContext';
+import AppModal from '../../components/AppModal';
 import './Products.css';
 
 const Products = () => {
@@ -47,7 +48,7 @@ const Products = () => {
   };
 
   const handleAddProduct = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
     if (!newProdName || !newProdPrice || !newProdStock) return;
     try {
       const data = await api.createProduct({
@@ -137,32 +138,35 @@ const Products = () => {
           </div>
         </div>
 
-        {/* Add form */}
+        {/* Add Product Modal */}
         {showAddForm && (
-          <div className="add-product-card animate-fade-in">
-            <h3>Create Product</h3>
-            <form onSubmit={handleAddProduct} className="add-form">
-              <div className="form-group">
-                <label>Name</label>
-                <input type="text" className="input-field" value={newProdName}
-                  onChange={e => setNewProdName(e.target.value)} required placeholder="e.g. A4 Paper Bundle" />
-              </div>
-              <div className="form-group">
-                <label>Price (₹)</label>
-                <input type="number" className="input-field" value={newProdPrice}
-                  onChange={e => setNewProdPrice(e.target.value)} required min="0" step="0.01" placeholder="0.00" />
-              </div>
-              <div className="form-group">
-                <label>Initial Stock</label>
-                <input type="number" className="input-field" value={newProdStock}
-                  onChange={e => setNewProdStock(e.target.value)} required min="0" placeholder="0" />
-              </div>
-              <div className="form-actions">
+          <AppModal
+            title="Add New Product"
+            onClose={() => setShowAddForm(false)}
+            width="460px"
+            footer={
+              <>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAddForm(false)}>Cancel</button>
-                <button type="submit" className="btn btn-primary">Save</button>
-              </div>
-            </form>
-          </div>
+                <button type="button" className="btn btn-primary" onClick={handleAddProduct}>Save Product</button>
+              </>
+            }
+          >
+            <div className="form-group">
+              <label>Name</label>
+              <input type="text" className="input-field" value={newProdName}
+                onChange={e => setNewProdName(e.target.value)} required placeholder="e.g. A4 Paper Bundle" autoFocus />
+            </div>
+            <div className="form-group">
+              <label>Price (₹)</label>
+              <input type="number" className="input-field" value={newProdPrice}
+                onChange={e => setNewProdPrice(e.target.value)} required min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div className="form-group">
+              <label>Initial Stock</label>
+              <input type="number" className="input-field" value={newProdStock}
+                onChange={e => setNewProdStock(e.target.value)} required min="0" placeholder="0" />
+            </div>
+          </AppModal>
         )}
 
         {/* Column labels */}

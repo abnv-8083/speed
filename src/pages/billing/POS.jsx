@@ -4,6 +4,7 @@ import { api } from '../../api';
 import PremiumLoader from '../../components/PremiumLoader';
 import InvoiceTemplate from '../../components/InvoiceTemplate';
 import { useToast } from '../../components/ToastContext';
+import AppModal from '../../components/AppModal';
 import './POS.css';
 
 const POS = () => {
@@ -334,38 +335,36 @@ const POS = () => {
 
       {/* ── Customer Name Modal ── */}
       {showCustomerModal && (
-        <div className="pos-modal-overlay animate-fade-in">
-          <div className="pos-modal-content">
-            <h3>Customer Details</h3>
-            <p className="text-muted">Enter a name for the invoice. (Optional)</p>
-            <div className="pos-modal-field">
-              <label>Customer Name</label>
-              <input
-                type="text"
-                className="input-field"
-                value={customerName === 'Walk-in Customer' ? '' : customerName}
-                onChange={e => setCustomerName(e.target.value)}
-                placeholder="Walk-in Customer"
-                autoFocus
-              />
-            </div>
-            <div className="pos-modal-actions">
-              <button
-                className="btn btn-secondary"
-                onClick={() => { setShowCustomerModal(false); setCustomerName('Walk-in Customer'); }}
-              >
+        <AppModal
+          title="Customer Details"
+          onClose={() => { setShowCustomerModal(false); setCustomerName('Walk-in Customer'); }}
+          width="400px"
+          footer={
+            <>
+              <button className="btn btn-secondary" onClick={() => { setShowCustomerModal(false); setCustomerName('Walk-in Customer'); }}>
                 Cancel
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => { setShowCustomerModal(false); checkout(customerName); }}
-                disabled={submittingInvoice}
-              >
+              <button className="btn btn-primary" onClick={() => { setShowCustomerModal(false); checkout(customerName); }} disabled={submittingInvoice}>
                 {submittingInvoice ? 'Processing...' : 'Complete Checkout'}
               </button>
-            </div>
+            </>
+          }
+        >
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '0.25rem' }}>
+            Enter a name for the invoice (optional).
+          </p>
+          <div className="pos-modal-field">
+            <label>Customer Name</label>
+            <input
+              type="text"
+              className="input-field"
+              value={customerName === 'Walk-in Customer' ? '' : customerName}
+              onChange={e => setCustomerName(e.target.value)}
+              placeholder="Walk-in Customer"
+              autoFocus
+            />
           </div>
-        </div>
+        </AppModal>
       )}
     </div>
   );

@@ -7,6 +7,7 @@ import {
 } from 'lucide-react';
 import { saveVault, generatePassword, passwordStrength } from './crypto';
 import { useToast } from '../../components/ToastContext';
+import AppModal from '../../components/AppModal';
 
 const CATEGORIES = [
   { id: 'all',       label: 'All',        icon: Shield    },
@@ -107,84 +108,80 @@ function EntryModal({ entry, onSave, onClose }) {
   const handleSave = () => { if (!form.title.trim()) return; onSave({ ...form, id: form.id || crypto.randomUUID() }); };
 
   return (
-    <div className="pm-modal-backdrop" onClick={e => e.target === e.currentTarget && onClose()}>
-      <div className="pm-modal glass-panel animate-fade-in">
-        <div className="pm-modal-header">
-          <h2>{entry?.id ? 'Edit Entry' : 'New Entry'}</h2>
-          <button className="pm-modal-close" onClick={onClose}><X size={16}/></button>
-        </div>
-
-        <div className="pm-modal-body">
-          <div className="form-group">
-            <label className="form-label">Title *</label>
-            <input className="input-field" value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Gmail, Netflix…" autoFocus />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Category</label>
-            <div className="pm-cat-picker">
-              {CATEGORIES.filter(c => c.id !== 'all' && c.id !== 'favourite').map(cat => (
-                <button key={cat.id}
-                  className={`pm-cat-btn ${form.category === cat.id ? 'active' : ''}`}
-                  style={form.category === cat.id ? { borderColor: CAT_COLORS[cat.id], color: CAT_COLORS[cat.id], background: `${CAT_COLORS[cat.id]}15` } : {}}
-                  onClick={() => set('category', cat.id)}
-                >
-                  <cat.icon size={12}/> {cat.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Username / Email</label>
-            <input className="input-field" value={form.username} onChange={e => set('username', e.target.value)} placeholder="user@example.com" />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Password</label>
-            <div className="pm-input-wrap">
-              <Lock size={14} className="pm-input-icon" />
-              <input type={showPwd ? 'text' : 'password'} className="input-field pm-input"
-                value={form.password} onChange={e => set('password', e.target.value)} placeholder="Enter password" />
-              <button type="button" className="pm-eye-btn" onClick={() => setShowPwd(v => !v)}>
-                {showPwd ? <EyeOff size={14}/> : <Eye size={14}/>}
-              </button>
-              <button type="button" className="pm-eye-btn" onClick={copyPwd}>
-                {copied ? <Check size={14} color="#10b981"/> : <Copy size={14}/>}
-              </button>
-            </div>
-            <StrengthBar pwd={form.password} />
-            <button className="pm-gen-toggle-btn" onClick={() => setShowGen(v => !v)}>
-              <Sliders size={12}/> {showGen ? 'Hide' : 'Use'} generator {showGen ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
-            </button>
-            {showGen && <GeneratorPanel onUse={pwd => { set('password', pwd); setShowGen(false); }} />}
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Website URL</label>
-            <input className="input-field" value={form.url} onChange={e => set('url', e.target.value)} placeholder="https://example.com" />
-          </div>
-
-          <div className="form-group">
-            <label className="form-label">Notes</label>
-            <textarea className="input-field" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional notes…" />
-          </div>
-
-          <label className="pm-fav-toggle">
-            <input type="checkbox" checked={form.favourite} onChange={e => set('favourite', e.target.checked)} />
-            <Star size={14} fill={form.favourite ? '#ec4899' : 'none'} color={form.favourite ? '#ec4899' : 'var(--text-muted)'} />
-            Mark as favourite
-          </label>
-        </div>
-
-        <div className="pm-modal-footer">
+    <AppModal
+      title={entry?.id ? 'Edit Entry' : 'New Entry'}
+      onClose={onClose}
+      width="540px"
+      footer={
+        <>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
           <button className="btn btn-primary" onClick={handleSave} disabled={!form.title.trim()}>
             <Check size={14}/> Save Entry
           </button>
+        </>
+      }
+    >
+      <div className="form-group">
+        <label className="form-label">Title *</label>
+        <input className="input-field" value={form.title} onChange={e => set('title', e.target.value)} placeholder="e.g. Gmail, Netflix…" autoFocus />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Category</label>
+        <div className="pm-cat-picker">
+          {CATEGORIES.filter(c => c.id !== 'all' && c.id !== 'favourite').map(cat => (
+            <button key={cat.id}
+              className={`pm-cat-btn ${form.category === cat.id ? 'active' : ''}`}
+              style={form.category === cat.id ? { borderColor: CAT_COLORS[cat.id], color: CAT_COLORS[cat.id], background: `${CAT_COLORS[cat.id]}15` } : {}}
+              onClick={() => set('category', cat.id)}
+            >
+              <cat.icon size={12}/> {cat.label}
+            </button>
+          ))}
         </div>
       </div>
-    </div>
+
+      <div className="form-group">
+        <label className="form-label">Username / Email</label>
+        <input className="input-field" value={form.username} onChange={e => set('username', e.target.value)} placeholder="user@example.com" />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Password</label>
+        <div className="pm-input-wrap">
+          <Lock size={14} className="pm-input-icon" />
+          <input type={showPwd ? 'text' : 'password'} className="input-field pm-input"
+            value={form.password} onChange={e => set('password', e.target.value)} placeholder="Enter password" />
+          <button type="button" className="pm-eye-btn" onClick={() => setShowPwd(v => !v)}>
+            {showPwd ? <EyeOff size={14}/> : <Eye size={14}/>}
+          </button>
+          <button type="button" className="pm-eye-btn" onClick={copyPwd}>
+            {copied ? <Check size={14} color="#10b981"/> : <Copy size={14}/>}
+          </button>
+        </div>
+        <StrengthBar pwd={form.password} />
+        <button className="pm-gen-toggle-btn" onClick={() => setShowGen(v => !v)}>
+          <Sliders size={12}/> {showGen ? 'Hide' : 'Use'} generator {showGen ? <ChevronUp size={12}/> : <ChevronDown size={12}/>}
+        </button>
+        {showGen && <GeneratorPanel onUse={pwd => { set('password', pwd); setShowGen(false); }} />}
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Website URL</label>
+        <input className="input-field" value={form.url} onChange={e => set('url', e.target.value)} placeholder="https://example.com" />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Notes</label>
+        <textarea className="input-field" rows={2} value={form.notes} onChange={e => set('notes', e.target.value)} placeholder="Optional notes…" />
+      </div>
+
+      <label className="pm-fav-toggle">
+        <input type="checkbox" checked={form.favourite} onChange={e => set('favourite', e.target.checked)} />
+        <Star size={14} fill={form.favourite ? '#ec4899' : 'none'} color={form.favourite ? '#ec4899' : 'var(--text-muted)'} />
+        Mark as favourite
+      </label>
+    </AppModal>
   );
 }
 
@@ -427,17 +424,23 @@ export default function Vault({ masterPwd, initialEntries, onLock }) {
 
       {/* Delete confirm */}
       {deleteId && (
-        <div className="pm-modal-backdrop" onClick={() => setDeleteId(null)}>
-          <div className="pm-confirm-dialog glass-panel animate-fade-in" onClick={e => e.stopPropagation()}>
-            <div className="pm-confirm-icon"><Trash2 size={26}/></div>
-            <h3>Delete this entry?</h3>
-            <p>This cannot be undone.</p>
-            <div className="pm-confirm-actions">
+        <AppModal
+          title="Delete Entry?"
+          onClose={() => setDeleteId(null)}
+          width="360px"
+          footer={
+            <>
               <button className="btn btn-secondary" onClick={() => setDeleteId(null)}>Cancel</button>
-              <button className="pm-btn-delete" onClick={() => handleDelete(deleteId)}>Delete</button>
-            </div>
-          </div>
-        </div>
+              <button className="pm-btn-delete" onClick={() => handleDelete(deleteId)}>
+                <Trash2 size={14}/> Delete
+              </button>
+            </>
+          }
+        >
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+            This password entry will be permanently removed from your vault. This cannot be undone.
+          </p>
+        </AppModal>
       )}
     </div>
   );

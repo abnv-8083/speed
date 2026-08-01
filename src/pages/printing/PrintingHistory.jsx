@@ -8,6 +8,7 @@ import {
 import { api } from '../../api';
 import { useToast } from '../../components/ToastContext';
 import PremiumLoader from '../../components/PremiumLoader';
+import AppModal from '../../components/AppModal';
 import './PrintingHistory.css';
 
 // ── Paper variant definitions ─────────────────────────────────
@@ -310,8 +311,7 @@ export default function PrintingHistory() {
       {replenishOpen && <ReplenishModal variants={VARIANTS} values={replenishValues} setValues={setReplenishValues} saving={replenishing} onSave={handleReplenish} onClose={() => setReplenishOpen(false)} />}
 
       {/* ── Resolve modal ── */}
-      {resolveLog && <ResolveModal log={resolveLog} resolveSize={resolveSize} setResolveSize={setResolveSize} resolveMode={resolveMode} setResolveMode={setResolveMode} resolving={resolving} onResolve={handleResolve} onClose={() => setResolveLog(null)} />}
-    </div>
+      {resolveLog && <ResolveModal log={resolveLog} resolveSize={resolveSize} setResolveSize={setResolveSize} resolveMode={resolveMode} setResolveMode={setResolveMode} resolving={resolving} onResolve={handleResolve} onClose={() => setResolveLog(null)} />}    </div>
   );
 }
 
@@ -633,74 +633,76 @@ function PrinterSetup({ configs, printerName, setPrinterName, printerSize, setPr
 // ── Replenish Modal ───────────────────────────────────────────
 function ReplenishModal({ variants, values, setValues, saving, onSave, onClose }) {
   return (
-    <div className="ph-modal-overlay" onClick={() => !saving && onClose()}>
-      <div className="ph-modal glass-panel" onClick={e => e.stopPropagation()}>
-        <div className="ph-modal-header">
-          <h3><Package size={17} /> Replenish Paper Stock</h3>
-          <button className="ph-modal-close" onClick={onClose} disabled={saving}><X size={16} /></button>
-        </div>
-        <p className="ph-modal-sub">Set the exact number of sheets currently in stock for each variant.</p>
-        <div className="ph-replenish-grid">
-          {variants.map(v => (
-            <div key={v.key} className="ph-replenish-row">
-              <div className="ph-replenish-label">
-                <span className={`ph-size-badge ph-size-${v.size.toLowerCase()}`}>{v.size}</span>
-                <span className={`ph-mode-badge ${v.mode === 'Color' ? 'ph-mode-color' : 'ph-mode-bw'}`}>{v.mode}</span>
-                <span className="ph-replenish-name">{v.label}</span>
-              </div>
-              <input type="number" className="input-field ph-replenish-input" min="0" value={values[v.key] ?? 0}
-                onChange={e => setValues(prev => ({ ...prev, [v.key]: parseInt(e.target.value) || 0 }))} />
-            </div>
-          ))}
-        </div>
-        <div className="ph-modal-actions">
+    <AppModal
+      title="Replenish Paper Stock"
+      onClose={() => !saving && onClose()}
+      width="440px"
+      footer={
+        <>
           <button className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
           <button className="btn btn-primary" onClick={onSave} disabled={saving}>
             <Check size={15} /> {saving ? 'Saving…' : 'Save Stock Levels'}
           </button>
-        </div>
+        </>
+      }
+    >
+      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '0.25rem' }}>
+        Set the exact number of sheets currently in stock for each variant.
+      </p>
+      <div className="ph-replenish-grid">
+        {variants.map(v => (
+          <div key={v.key} className="ph-replenish-row">
+            <div className="ph-replenish-label">
+              <span className={`ph-size-badge ph-size-${v.size.toLowerCase()}`}>{v.size}</span>
+              <span className={`ph-mode-badge ${v.mode === 'Color' ? 'ph-mode-color' : 'ph-mode-bw'}`}>{v.mode}</span>
+              <span className="ph-replenish-name">{v.label}</span>
+            </div>
+            <input type="number" className="input-field ph-replenish-input" min="0" value={values[v.key] ?? 0}
+              onChange={e => setValues(prev => ({ ...prev, [v.key]: parseInt(e.target.value) || 0 }))} />
+          </div>
+        ))}
       </div>
-    </div>
+    </AppModal>
   );
 }
 
 // ── Resolve Modal ─────────────────────────────────────────────
 function ResolveModal({ log, resolveSize, setResolveSize, resolveMode, setResolveMode, resolving, onResolve, onClose }) {
   return (
-    <div className="ph-modal-overlay" onClick={() => !resolving && onClose()}>
-      <div className="ph-modal glass-panel" onClick={e => e.stopPropagation()}>
-        <div className="ph-modal-header">
-          <h3><AlertTriangle size={17} /> Resolve Print Job</h3>
-          <button className="ph-modal-close" onClick={onClose} disabled={resolving}><X size={16} /></button>
-        </div>
-        <p className="ph-modal-sub">
-          The spooler could not determine the variant for <strong>{log.job_name}</strong>.<br />
-          {log.review_note && <span className="ph-resolve-note">{log.review_note}</span>}
-        </p>
-        <div className="ph-resolve-fields">
-          <div className="ph-setup-field">
-            <label>Correct Paper Size</label>
-            <select className="input-field" value={resolveSize} onChange={e => setResolveSize(e.target.value)}>
-              <option value="A4">A4</option>
-              <option value="A3">A3</option>
-              <option value="A5">A5</option>
-            </select>
-          </div>
-          <div className="ph-setup-field">
-            <label>Correct Color Mode</label>
-            <select className="input-field" value={resolveMode} onChange={e => setResolveMode(e.target.value)}>
-              <option value="B&W">B&amp;W</option>
-              <option value="Color">Color</option>
-            </select>
-          </div>
-        </div>
-        <div className="ph-modal-actions">
+    <AppModal
+      title="Resolve Print Job"
+      onClose={() => !resolving && onClose()}
+      width="380px"
+      footer={
+        <>
           <button className="btn btn-secondary" onClick={onClose} disabled={resolving}>Cancel</button>
           <button className="btn btn-primary" onClick={onResolve} disabled={resolving}>
             <Check size={15} /> {resolving ? 'Resolving…' : 'Confirm & Fix Stock'}
           </button>
+        </>
+      }
+    >
+      <p style={{ fontSize: '0.875rem', color: 'var(--text-muted)' }}>
+        The spooler could not determine the variant for <strong style={{ color: 'var(--text)' }}>{log.job_name}</strong>.
+        {log.review_note && <span className="ph-resolve-note">{log.review_note}</span>}
+      </p>
+      <div className="ph-resolve-fields">
+        <div className="ph-setup-field">
+          <label>Correct Paper Size</label>
+          <select className="input-field" value={resolveSize} onChange={e => setResolveSize(e.target.value)}>
+            <option value="A4">A4</option>
+            <option value="A3">A3</option>
+            <option value="A5">A5</option>
+          </select>
+        </div>
+        <div className="ph-setup-field">
+          <label>Correct Color Mode</label>
+          <select className="input-field" value={resolveMode} onChange={e => setResolveMode(e.target.value)}>
+            <option value="B&W">B&amp;W</option>
+            <option value="Color">Color</option>
+          </select>
         </div>
       </div>
-    </div>
+    </AppModal>
   );
 }

@@ -8,6 +8,7 @@ import { api } from '../../api';
 import PremiumLoader from '../../components/PremiumLoader';
 import { useToast } from '../../components/ToastContext';
 import { useModal } from '../../components/ModalContext';
+import AppModal from '../../components/AppModal';
 import './ProductDetail.css';
 
 const ProductDetail = () => {
@@ -222,91 +223,56 @@ const ProductDetail = () => {
 
       {/* ── Edit Product Modal ── */}
       {showEditModal && (
-        <div className="pd-modal-overlay animate-fade-in" onClick={() => !editSaving && setShowEditModal(false)}>
-          <div className="pd-modal glass-panel" onClick={e => e.stopPropagation()}>
-            <div className="pd-modal-header">
-              <h3><Edit2 size={17} /> Edit Product</h3>
-              <button className="pd-modal-close" onClick={() => setShowEditModal(false)} disabled={editSaving}>
-                <X size={16} />
+        <AppModal
+          title="Edit Product"
+          onClose={() => !editSaving && setShowEditModal(false)}
+          width="420px"
+          footer={
+            <>
+              <button className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={editSaving}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSaveEdit} disabled={editSaving}>
+                <Save size={15} /> {editSaving ? 'Saving…' : 'Save Changes'}
               </button>
-            </div>
-            <form onSubmit={handleSaveEdit} className="pd-modal-form">
-              <div className="pd-form-field">
-                <label>Product Name</label>
-                <input
-                  type="text"
-                  className="input-field"
-                  value={editName}
-                  onChange={e => setEditName(e.target.value)}
-                  required
-                  autoFocus
-                  disabled={editSaving}
-                />
-              </div>
-              <div className="pd-form-field">
-                <label>Price (₹)</label>
-                <input
-                  type="number"
-                  className="input-field"
-                  value={editPrice}
-                  onChange={e => setEditPrice(e.target.value)}
-                  required
-                  min="0"
-                  step="0.01"
-                  disabled={editSaving}
-                />
-              </div>
-              <div className="pd-modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowEditModal(false)} disabled={editSaving}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={editSaving}>
-                  <Save size={15} /> {editSaving ? 'Saving…' : 'Save Changes'}
-                </button>
-              </div>
-            </form>
+            </>
+          }
+        >
+          <div className="pd-form-field">
+            <label>Product Name</label>
+            <input type="text" className="input-field" value={editName}
+              onChange={e => setEditName(e.target.value)} required autoFocus disabled={editSaving} />
           </div>
-        </div>
+          <div className="pd-form-field">
+            <label>Price (₹)</label>
+            <input type="number" className="input-field" value={editPrice}
+              onChange={e => setEditPrice(e.target.value)} required min="0" step="0.01" disabled={editSaving} />
+          </div>
+        </AppModal>
       )}
 
       {/* ── Update Stock Modal ── */}
       {showStockModal && (
-        <div className="pd-modal-overlay animate-fade-in" onClick={() => !stockSaving && setShowStockModal(false)}>
-          <div className="pd-modal glass-panel" onClick={e => e.stopPropagation()}>
-            <div className="pd-modal-header">
-              <h3><Layers size={17} /> Update Stock</h3>
-              <button className="pd-modal-close" onClick={() => setShowStockModal(false)} disabled={stockSaving}>
-                <X size={16} />
+        <AppModal
+          title="Update Stock"
+          onClose={() => !stockSaving && setShowStockModal(false)}
+          width="380px"
+          footer={
+            <>
+              <button className="btn btn-secondary" onClick={() => setShowStockModal(false)} disabled={stockSaving}>Cancel</button>
+              <button className="btn btn-primary" onClick={handleSaveStock} disabled={stockSaving}>
+                <Check size={15} /> {stockSaving ? 'Saving…' : 'Update Stock'}
               </button>
-            </div>
-            <form onSubmit={handleSaveStock} className="pd-modal-form">
-              <div className="pd-stock-current">
-                Current stock: <strong>{product.stock} units</strong>
-              </div>
-              <div className="pd-form-field">
-                <label>New Stock Level</label>
-                <input
-                  type="number"
-                  className="input-field"
-                  value={newStock}
-                  onChange={e => setNewStock(e.target.value)}
-                  required
-                  min="0"
-                  autoFocus
-                  disabled={stockSaving}
-                />
-              </div>
-              <div className="pd-modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={() => setShowStockModal(false)} disabled={stockSaving}>
-                  Cancel
-                </button>
-                <button type="submit" className="btn btn-primary" disabled={stockSaving}>
-                  <Check size={15} /> {stockSaving ? 'Saving…' : 'Update Stock'}
-                </button>
-              </div>
-            </form>
+            </>
+          }
+        >
+          <div className="pd-stock-current">
+            Current stock: <strong>{product.stock} units</strong>
           </div>
-        </div>
+          <div className="pd-form-field">
+            <label>New Stock Level</label>
+            <input type="number" className="input-field" value={newStock}
+              onChange={e => setNewStock(e.target.value)} required min="0" autoFocus disabled={stockSaving} />
+          </div>
+        </AppModal>
       )}
 
     </div>
