@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Check, X, Trash2, Ban, Unlock, Search, Package } from 'lucide-react';
+import { Plus, Edit2, Trash2, Ban, Unlock, Search, Package, ChevronRight, Layers } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
@@ -8,20 +9,18 @@ import { useModal } from '../../components/ModalContext';
 import './Products.css';
 
 const Products = () => {
-  const toast = useToast();
-  const modal = useModal();
-  const [products, setProducts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const toast    = useToast();
+  const modal    = useModal();
+  const navigate = useNavigate();
 
-  const [showAddForm, setShowAddForm] = useState(false);
-  const [newProdName, setNewProdName] = useState('');
-  const [newProdPrice, setNewProdPrice] = useState('');
-  const [newProdStock, setNewProdStock] = useState('');
-
-  const [editingStockId, setEditingStockId] = useState(null);
-  const [newStockValue, setNewStockValue] = useState('');
-  const [searchTerm, setSearchTerm] = useState('');
-  const [currentPage, setCurrentPage] = useState(1);
+  const [products, setProducts]           = useState([]);
+  const [loading, setLoading]             = useState(true);
+  const [showAddForm, setShowAddForm]     = useState(false);
+  const [newProdName, setNewProdName]     = useState('');
+  const [newProdPrice, setNewProdPrice]   = useState('');
+  const [newProdStock, setNewProdStock]   = useState('');
+  const [searchTerm, setSearchTerm]       = useState('');
+  const [currentPage, setCurrentPage]     = useState(1);
   const ITEMS_PER_PAGE = 12;
 
   const filteredProducts = products.filter(p =>
@@ -34,9 +33,7 @@ const Products = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  useEffect(() => {
-    fetchProducts();
-  }, []);
+  useEffect(() => { fetchProducts(); }, []);
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -51,59 +48,34 @@ const Products = () => {
 
   const handleAddProduct = async (e) => {
     e.preventDefault();
-    if (newProdName && newProdPrice && newProdStock) {
-      const newProduct = {
-        name: newProdName,
-        price: parseFloat(newProdPrice),
-        stock: parseInt(newProdStock),
+    if (!newProdName || !newProdPrice || !newProdStock) return;
+    try {
+      const data = await api.createProduct({
+        name:     newProdName,
+        price:    parseFloat(newProdPrice),
+        stock:    parseInt(newProdStock),
         is_print: false,
-      };
-      try {
-        const data = await api.createProduct(newProduct);
-        setProducts([...products, data]);
-        setNewProdName('');
-        setNewProdPrice('');
-        setNewProdStock('');
-        setShowAddForm(false);
-        toast.success('Product added successfully');
-      } catch (err) {
-        toast.error('Error adding product: ' + err.message);
-      }
+      });
+      setProducts([...products, data]);
+      setNewProdName(''); setNewProdPrice(''); setNewProdStock('');
+      setShowAddForm(false);
+      toast.success('Product added successfully');
+    } catch (err) {
+      toast.error('Error adding product: ' + err.message);
     }
   };
 
-  const startStockEdit = (product) => {
-    setEditingStockId(product.id);
-    setNewStockValue(product.stock.toString());
-  };
-
-  const saveStockEdit = async (id) => {
-    const val = parseInt(newStockValue);
-    if (!isNaN(val) && val >= 0) {
-      setProducts(products.map(p => (p.id === id ? { ...p, stock: val } : p)));
-      try {
-        await api.updateProduct(id, { stock: val });
-        toast.success('Stock updated successfully');
-      } catch (err) {
-        toast.error('Failed to update stock');
-        fetchProducts();
-      }
-    }
-    setEditingStockId(null);
-  };
-
-  const handleDeleteProduct = async (product) => {
+  const handleDeleteProduct = async (e, product) => {
+    e.stopPropagation();
     if (await modal.confirm('Delete Product', `Are you sure you want to delete ${product.name}?`)) {
       try {
         await api.deleteProduct(product.id);
         setProducts(products.filter(p => p.id !== product.id));
         toast.success('Product deleted successfully');
       } catch (err) {
-        if (err.message && err.message.includes('foreign key constraint')) {
-          // Soft delete: prefix name and block
-          const archivedName = `[DELETED] ${product.name}`;
+        if (err.message?.includes('foreign key constraint')) {
           try {
-            await api.updateProduct(product.id, { is_blocked: true, name: archivedName });
+            await api.updateProduct(product.id, { is_blocked: true, name: `[DELETED] ${product.name}` });
             setProducts(products.filter(p => p.id !== product.id));
             toast.success('Product was soft-deleted (It has past invoices).');
           } catch (archiveErr) {
@@ -116,11 +88,12 @@ const Products = () => {
     }
   };
 
-  const handleToggleBlock = async (id, currentStatus) => {
+  const handleToggleBlock = async (e, id, currentStatus) => {
+    e.stopPropagation();
     const newStatus = !currentStatus;
     try {
       await api.updateProduct(id, { is_blocked: newStatus });
-      setProducts(products.map(p => (p.id === id ? { ...p, is_blocked: newStatus } : p)));
+      setProducts(products.map(p => p.id === id ? { ...p, is_blocked: newStatus } : p));
       toast.success(`Product ${newStatus ? 'blocked' : 'unblocked'} successfully`);
     } catch (err) {
       toast.error('Error updating status: ' + err.message);
@@ -134,11 +107,14 @@ const Products = () => {
     return <span className="status-badge status-error">Out of Stock</span>;
   };
 
+  // Truncate MongoDB ObjectId to last 6 chars for display
+  const shortId = (id) => `…${String(id).slice(-6)}`;
+
   return (
     <div className="products-layout animate-fade-in">
       <div className="glass-panel products-container">
 
-        {/* ── Header ── */}
+        {/* Header */}
         <div className="products-header">
           <div>
             <h2>Inventory Management</h2>
@@ -161,22 +137,25 @@ const Products = () => {
           </div>
         </div>
 
-        {/* ── Add Product Form ── */}
+        {/* Add form */}
         {showAddForm && (
           <div className="add-product-card animate-fade-in">
             <h3>Create Product</h3>
             <form onSubmit={handleAddProduct} className="add-form">
               <div className="form-group">
                 <label>Name</label>
-                <input type="text" className="input-field" value={newProdName} onChange={e => setNewProdName(e.target.value)} required placeholder="e.g. A4 Paper Bundle" />
+                <input type="text" className="input-field" value={newProdName}
+                  onChange={e => setNewProdName(e.target.value)} required placeholder="e.g. A4 Paper Bundle" />
               </div>
               <div className="form-group">
                 <label>Price (₹)</label>
-                <input type="number" className="input-field" value={newProdPrice} onChange={e => setNewProdPrice(e.target.value)} required min="0" step="0.01" placeholder="0.00" />
+                <input type="number" className="input-field" value={newProdPrice}
+                  onChange={e => setNewProdPrice(e.target.value)} required min="0" step="0.01" placeholder="0.00" />
               </div>
               <div className="form-group">
                 <label>Initial Stock</label>
-                <input type="number" className="input-field" value={newProdStock} onChange={e => setNewProdStock(e.target.value)} required min="0" placeholder="0" />
+                <input type="number" className="input-field" value={newProdStock}
+                  onChange={e => setNewProdStock(e.target.value)} required min="0" placeholder="0" />
               </div>
               <div className="form-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAddForm(false)}>Cancel</button>
@@ -186,7 +165,7 @@ const Products = () => {
           </div>
         )}
 
-        {/* ── Column labels ── */}
+        {/* Column labels */}
         {!loading && filteredProducts.length > 0 && (
           <div className="prod-list-header">
             <span className="prod-col-identity">Product</span>
@@ -197,7 +176,7 @@ const Products = () => {
           </div>
         )}
 
-        {/* ── List ── */}
+        {/* List */}
         {loading ? (
           <div style={{ padding: '3rem 0' }}>
             <PremiumLoader text="Loading Inventory..." />
@@ -215,10 +194,15 @@ const Products = () => {
                   <div
                     key={product.id}
                     className={`prod-row ${product.is_blocked ? 'prod-row-blocked' : ''}`}
+                    onClick={() => navigate(`/billing/products/${product.id}`)}
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={e => e.key === 'Enter' && navigate(`/billing/products/${product.id}`)}
+                    title="View product details"
                   >
-                    {/* Identity: ID badge + name */}
+                    {/* Identity: short ID + name */}
                     <div className="prod-col-identity">
-                      <span className="prod-id-badge">#{product.id}</span>
+                      <span className="prod-id-badge" title={product.id}>{shortId(product.id)}</span>
                       <span className="prod-name" title={product.name}>{product.name}</span>
                     </div>
 
@@ -227,60 +211,40 @@ const Products = () => {
                       <span className="prod-price">₹{Number(product.price).toFixed(2)}</span>
                     </div>
 
-                    {/* Stock — read or inline editor */}
+                    {/* Stock */}
                     <div className="prod-col-stock">
-                      {editingStockId === product.id ? (
-                        <div className="stock-edit-inline">
-                          <input
-                            type="number"
-                            className="small-input"
-                            value={newStockValue}
-                            onChange={e => setNewStockValue(e.target.value)}
-                            autoFocus
-                          />
-                          <button className="icon-btn success" onClick={() => saveStockEdit(product.id)} title="Save">
-                            <Check size={15} />
-                          </button>
-                          <button className="icon-btn danger" onClick={() => setEditingStockId(null)} title="Cancel">
-                            <X size={15} />
-                          </button>
-                        </div>
-                      ) : (
-                        <span className={`prod-stock-val ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
-                          {product.stock} <span className="stock-unit">units</span>
-                        </span>
-                      )}
+                      <span className={`prod-stock-val ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
+                        {product.stock} <span className="stock-unit">units</span>
+                      </span>
                     </div>
 
-                    {/* Status badge */}
+                    {/* Status */}
                     <div className="prod-col-status">
                       {getStatusBadge(product)}
                     </div>
 
-                    {/* Action buttons */}
-                    <div className="prod-col-actions">
-                      {editingStockId !== product.id && (
-                        <button
-                          className="prod-action-btn"
-                          title="Edit Stock"
-                          onClick={() => startStockEdit(product)}
-                        >
-                          <Edit2 size={14} />
-                        </button>
-                      )}
+                    {/* Actions — stop propagation so row click doesn't fire */}
+                    <div className="prod-col-actions" onClick={e => e.stopPropagation()}>
                       <button
                         className={`prod-action-btn ${product.is_blocked ? 'action-success' : 'action-warning'}`}
                         title={product.is_blocked ? 'Unblock' : 'Block'}
-                        onClick={() => handleToggleBlock(product.id, product.is_blocked)}
+                        onClick={e => handleToggleBlock(e, product.id, product.is_blocked)}
                       >
                         {product.is_blocked ? <Unlock size={14} /> : <Ban size={14} />}
                       </button>
                       <button
                         className="prod-action-btn action-danger"
                         title="Delete"
-                        onClick={() => handleDeleteProduct(product)}
+                        onClick={e => handleDeleteProduct(e, product)}
                       >
                         <Trash2 size={14} />
+                      </button>
+                      <button
+                        className="prod-action-btn action-primary"
+                        title="View Details"
+                        onClick={e => { e.stopPropagation(); navigate(`/billing/products/${product.id}`); }}
+                      >
+                        <ChevronRight size={14} />
                       </button>
                     </div>
                   </div>

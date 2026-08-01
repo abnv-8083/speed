@@ -334,11 +334,15 @@
   color: #34d399 !important;
 }
 
-.action-danger { color: #f87171 !important; }
-.action-danger:hover {
-  background: rgba(248, 113, 113, 0.15) !important;
-  border-color: #f87171 !important;
-  color: #f87171 !important;
+.action-primary { color: var(--primary) !important; }
+.action-primary:hover {
+  background: rgba(139, 92, 246, 0.15) !important;
+  border-color: var(--primary) !important;
+}
+
+/* Clickable rows */
+.prod-row {
+  cursor: pointer;
 }
 
 /* ── Empty State ──────────────────────────────────────────────────────── */
@@ -408,4 +412,11 @@
   .add-form .form-group {
     min-width: 100%;
   }
+}
+
+.action-danger { color: #f87171 !important; }
+.action-danger:hover {
+  background: rgba(248, 113, 113, 0.15) !important;
+  border-color: #f87171 !important;
+  color: #f87171 !important;
 }

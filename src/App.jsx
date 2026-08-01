@@ -9,6 +9,7 @@ import LoanDetails from './pages/LoanDetails';
 import BillingLayout from './pages/billing/BillingLayout';
 import POS from './pages/billing/POS';
 import Products from './pages/billing/Products';
+import ProductDetail from './pages/billing/ProductDetail';
 import Invoices from './pages/billing/Invoices';
 import SalesReport from './pages/billing/SalesReport';
 import CVGenerator from './pages/cv/CVGenerator';
@@ -35,6 +36,7 @@ function App() {
                 <Route index element={<Navigate to="pos" replace />} />
                 <Route path="pos" element={<POS />} />
                 <Route path="products" element={<Products />} />
+                <Route path="products/:id" element={<ProductDetail />} />
                 <Route path="invoices" element={<Invoices />} />
                 <Route path="reports" element={<SalesReport />} />
               </Route>
