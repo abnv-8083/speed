@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { LogIn, Zap, UserCheck, Mail, Lock, Eye, EyeOff } from 'lucide-react';
+import { LogIn, Zap, Mail, Lock, Eye, EyeOff } from 'lucide-react';
 import { api, setToken } from '../api';
 import './Login.css';
 
@@ -134,26 +134,9 @@ const Login = () => {
           </button>
         </form>
 
-        {/* Divider */}
-        <div className="login-or">
-          <span />
-          <p>or</p>
-          <span />
-        </div>
-
-        {/* Demo */}
-        <button
-          type="button"
-          className="login-demo-btn"
-          onClick={handleDemoLogin}
-          disabled={loading}
-        >
-          <UserCheck size={17} />
-          Continue as Demo User
-        </button>
 
         <p className="login-footer-note">
-          Demo account has full read &amp; write access
+          Contact your administrator if you don&apos;t have access.
         </p>
       </div>
     </div>
