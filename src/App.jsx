@@ -16,6 +16,7 @@ import CVGenerator from './pages/cv/CVGenerator';
 import SavedCVs from './pages/cv/SavedCVs';
 import CVLayout from './pages/cv/CVLayout';
 import ToolsPortal from './pages/tools/ToolsPortal';
+import ToolsLayout from './pages/tools/ToolsLayout';
 import PasswordManager from './pages/passwords/PasswordManager';
 import PrintingHistory from './pages/printing/PrintingHistory';
 import PrintingLayout from './pages/printing/PrintingLayout';
@@ -49,7 +50,12 @@ function App() {
                 <Route index element={<CVGenerator />} />
                 <Route path="saved" element={<SavedCVs />} />
               </Route>
-              <Route path="/tools" element={<ToolsPortal />} />
+              <Route path="/tools" element={<ToolsLayout />}>
+                <Route index element={<ToolsPortal />} />
+                <Route path="convert" element={<ToolsPortal />} />
+                <Route path="size"    element={<ToolsPortal />} />
+                <Route path="image"   element={<ToolsPortal />} />
+              </Route>
               <Route path="/passwords" element={<PasswordManager />} />
               <Route path="/printing" element={<PrintingLayout />}>
                 <Route index element={<Navigate to="stock" replace />} />
