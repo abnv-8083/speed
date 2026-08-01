@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   ArrowLeft, Download, Eye, Edit3, ChevronRight,
   Save, FolderOpen, Trash2, Check, X, Clock, FileText, Loader
@@ -8,6 +9,7 @@ import CVEditor from './CVEditor';
 import CVPreview from './CVPreview';
 import TemplateSelector from './TemplateSelector';
 import { fetchSaves, upsertSave, deleteSave } from './cvStorage';
+import { useToast } from '../../components/ToastContext';
 import './CVGenerator.css';
 
 const defaultData = {
