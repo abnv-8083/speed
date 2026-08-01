@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import {
   Printer, Search, RefreshCw, Plus, AlertTriangle, Check,
-  Terminal, Package, Settings, X, Trash2, Download,
+  Terminal, Package, X, Trash2, Download,
   Wifi, WifiOff, Clock,
 } from 'lucide-react';
 import { api } from '../../api';
@@ -28,12 +29,19 @@ const DEFAULT_STOCKS = {
         Color: { name: 'A5 Print (Color)', price: 5   } },
 };
 
-const TABS = ['Stock Overview', 'Log a Job', 'Print History', 'Printer Setup'];
-
 export default function PrintingHistory() {
-  const toast = useToast();
+  const toast    = useToast();
+  const location = useLocation();
 
-  const [activeTab, setActiveTab]       = useState('Stock Overview');
+  // Derive active tab from URL path
+  const getActiveTab = () => {
+    if (location.pathname.includes('/log'))     return 'Log a Job';
+    if (location.pathname.includes('/history')) return 'Print History';
+    if (location.pathname.includes('/setup'))   return 'Printer Setup';
+    return 'Stock Overview';
+  };
+  const activeTab = getActiveTab();
+
   const [stocks, setStocks]             = useState([]);
   const [logs, setLogs]                 = useState([]);
   const [printerConfigs, setPrinterConfigs] = useState([]);
@@ -269,24 +277,18 @@ export default function PrintingHistory() {
 
   return (
     <div className="ph-root animate-fade-in">
-      {/* ── Header ── */}
-      <div className="ph-header glass-panel">
-        <div className="ph-header-left">
-          <Printer size={22} className="ph-header-icon" />
-          <div>
-            <h2>Printing Hub</h2>
-            <p>Paper stock tracking · Print job logging · OS Spooler bridge</p>
-          </div>
-        </div>
-        <div className="ph-header-right">
-          {/* Agent connection status */}
-          <AgentStatusPill status={agentStatus} />
 
+      {/* ── Top action bar (agent status + replenish + refresh) ── */}
+      <div className="ph-action-bar glass-panel">
+        <div className="ph-action-bar-left">
+          <AgentStatusPill status={agentStatus} />
           {reviewCount > 0 && (
-            <button className="ph-review-alert" onClick={() => { setActiveTab('Print History'); setShowReviewOnly(true); }}>
+            <a href="/printing/history" className="ph-review-alert">
               <AlertTriangle size={15} /> {reviewCount} job{reviewCount !== 1 ? 's' : ''} need review
-            </button>
+            </a>
           )}
+        </div>
+        <div className="ph-action-bar-right">
           <button className="ph-btn ph-btn-replenish" onClick={openReplenish}>
             <Package size={15} /> Replenish Stock
           </button>
@@ -294,22 +296,6 @@ export default function PrintingHistory() {
             <RefreshCw size={15} />
           </button>
         </div>
-      </div>
-
-      {/* ── Tabs ── */}
-      <div className="ph-tabs">
-        {TABS.map(tab => (
-          <button
-            key={tab}
-            className={`ph-tab ${activeTab === tab ? 'ph-tab--active' : ''}`}
-            onClick={() => setActiveTab(tab)}
-          >
-            {tab}
-            {tab === 'Print History' && reviewCount > 0 && (
-              <span className="ph-tab-badge">{reviewCount}</span>
-            )}
-          </button>
-        ))}
       </div>
 
       {/* ── Tab content ── */}

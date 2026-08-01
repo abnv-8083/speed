@@ -53,7 +53,25 @@
   flex-wrap: wrap;
 }
 
-/* ── Header buttons ───────────────────────────────────────────── */
+/* ── Action bar (replaces internal header+tabs) ───────────────── */
+.ph-action-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.6rem 1rem;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  flex-shrink: 0;
+}
+
+.ph-action-bar-left  { display: flex; align-items: center; gap: 0.6rem; flex-wrap: wrap; }
+.ph-action-bar-right { display: flex; align-items: center; gap: 0.5rem; }
+
+/* ── Header (legacy — hidden, kept for safety) ────────────────── */
+.ph-header { display: none; }
+
+/* ── Tabs (legacy — hidden, now in global header) ─────────────── */
+.ph-tabs { display: none; }
 .ph-btn {
   display: inline-flex;
   align-items: center;

@@ -17,6 +17,7 @@ import SavedCVs from './pages/cv/SavedCVs';
 import ToolsPortal from './pages/tools/ToolsPortal';
 import PasswordManager from './pages/passwords/PasswordManager';
 import PrintingHistory from './pages/printing/PrintingHistory';
+import PrintingLayout from './pages/printing/PrintingLayout';
 import Layout from './components/Layout';
 
 function App() {
@@ -47,7 +48,13 @@ function App() {
               <Route path="/cv/saved" element={<SavedCVs />} />
               <Route path="/tools" element={<ToolsPortal />} />
               <Route path="/passwords" element={<PasswordManager />} />
-              <Route path="/printing" element={<PrintingHistory />} />
+              <Route path="/printing" element={<PrintingLayout />}>
+                <Route index element={<Navigate to="stock" replace />} />
+                <Route path="stock"   element={<PrintingHistory />} />
+                <Route path="log"     element={<PrintingHistory />} />
+                <Route path="history" element={<PrintingHistory />} />
+                <Route path="setup"   element={<PrintingHistory />} />
+              </Route>
             </Route>
 
             <Route path="/" element={<Navigate to="/login" replace />} />
