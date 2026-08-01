@@ -27,19 +27,6 @@ const Login = () => {
     }
   };
 
-  const handleDemoLogin = async () => {
-    setLoading(true);
-    setErrorMsg('');
-    try {
-      const { token } = await api.login('admin@speednet.com', 'SpeedNet@2025');
-      setToken(token);
-      navigate('/home');
-    } catch {
-      navigate('/home');
-    } finally {
-      setLoading(false);
-    }
-  };
 
   return (
     <div className="login-root">
@@ -134,9 +121,8 @@ const Login = () => {
           </button>
         </form>
 
-
         <p className="login-footer-note">
-          Contact your administrator if you don&apos;t have access.
+          Sign in with your credentials to access the portal
         </p>
       </div>
     </div>
