@@ -7,14 +7,15 @@ const mongoose = require('mongoose');
 const dns = require('dns');
 dns.setServers(['8.8.8.8', '8.8.4.4', '1.1.1.1']);
 
-const authRoutes        = require('./routes/auth');
-const productRoutes     = require('./routes/products');
-const invoiceRoutes     = require('./routes/invoices');
-const loanRoutes        = require('./routes/loans');
-const loanPaymentRoutes = require('./routes/loanPayments');
-const printLogRoutes    = require('./routes/printLogs');
-const vaultRoutes       = require('./routes/vault');
-const cvSaveRoutes      = require('./routes/cvSaves');
+const authRoutes          = require('./routes/auth');
+const productRoutes       = require('./routes/products');
+const invoiceRoutes       = require('./routes/invoices');
+const loanRoutes          = require('./routes/loans');
+const loanPaymentRoutes   = require('./routes/loanPayments');
+const printLogRoutes      = require('./routes/printLogs');
+const printerConfigRoutes = require('./routes/printerConfigs');
+const vaultRoutes         = require('./routes/vault');
+const cvSaveRoutes        = require('./routes/cvSaves');
 
 const app = express();
 
@@ -26,12 +27,13 @@ app.use(cors({
 app.use(express.json());
 
 // ── Routes ────────────────────────────────────────────────────
-app.use('/api/auth',          authRoutes);
+app.use('/api/auth',           authRoutes);
 app.use('/api/products',      productRoutes);
 app.use('/api/invoices',      invoiceRoutes);
 app.use('/api/loans',         loanRoutes);
 app.use('/api/loan-payments', loanPaymentRoutes);
 app.use('/api/print-logs',    printLogRoutes);
+app.use('/api/printer-configs', printerConfigRoutes);
 app.use('/api/vault',         vaultRoutes);
 app.use('/api/cv-saves',      cvSaveRoutes);
 

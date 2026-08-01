@@ -87,8 +87,17 @@ export const api = {
   createLoanPayment: (body)    => request('POST', '/api/loan-payments', body),
 
   // ── Print Logs ──────────────────────────────────────────────
-  getPrintLogs:    ()          => request('GET',  '/api/print-logs'),
-  createPrintLog:  (body)      => request('POST', '/api/print-logs', body),
+  getPrintLogs:        (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request('GET', `/api/print-logs${qs ? `?${qs}` : ''}`);
+  },
+  createPrintLog:      (body)  => request('POST',  '/api/print-logs',      body),
+  resolvePrintLog:     (id, body) => request('PATCH', `/api/print-logs/${id}`, body),
+
+  // ── Printer Configs ─────────────────────────────────────────
+  getPrinterConfigs:   ()      => request('GET',    '/api/printer-configs'),
+  upsertPrinterConfig: (body)  => request('POST',   '/api/printer-configs', body),
+  deletePrinterConfig: (id)    => request('DELETE', `/api/printer-configs/${id}`),
 
   // ── Vault (Password Manager) ─────────────────────────────────
   getVault:    (device_id)     => request('GET',  `/api/vault?device_id=${encodeURIComponent(device_id)}`),

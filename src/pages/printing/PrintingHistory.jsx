@@ -1,630 +1,619 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { 
-  Printer, Search, Filter, RefreshCw, Plus, Check, AlertTriangle, 
-  Terminal, ArrowLeft, ArrowRight, Layers, FileText, Download, HelpCircle, Package 
+import {
+  Printer, Search, RefreshCw, Plus, AlertTriangle, Check,
+  Terminal, Package, Settings, ChevronDown, X, Trash2,
 } from 'lucide-react';
 import { api } from '../../api';
 import { useToast } from '../../components/ToastContext';
+import PremiumLoader from '../../components/PremiumLoader';
 import './PrintingHistory.css';
 
-const DEFAULT_STOCKS = [
-  { name: 'A4 Print (B&W)', price: 2.00, stock: 5000, is_print: true, size: 'A4', mode: 'B&W' },
-  { name: 'A4 Print (Color)', price: 10.00, stock: 2000, is_print: true, size: 'A4', mode: 'Color' },
-  { name: 'A3 Print (B&W)', price: 5.00, stock: 1000, is_print: true, size: 'A3', mode: 'B&W' },
-  { name: 'A3 Print (Color)', price: 20.00, stock: 500, is_print: true, size: 'A3', mode: 'Color' },
-  { name: 'A5 Print (B&W)', price: 1.00, stock: 3000, is_print: true, size: 'A5', mode: 'B&W' },
-  { name: 'A5 Print (Color)', price: 5.00, stock: 1500, is_print: true, size: 'A5', mode: 'Color' }
+// ── Paper variant definitions ─────────────────────────────────
+const VARIANTS = [
+  { size: 'A4', mode: 'B&W',   label: 'A4 Black & White', key: 'A4_BW',    colorClass: 'v-a4-bw'    },
+  { size: 'A4', mode: 'Color', label: 'A4 Color',          key: 'A4_Color', colorClass: 'v-a4-color' },
+  { size: 'A3', mode: 'B&W',   label: 'A3 Black & White', key: 'A3_BW',    colorClass: 'v-a3-bw'    },
+  { size: 'A3', mode: 'Color', label: 'A3 Color',          key: 'A3_Color', colorClass: 'v-a3-color' },
+  { size: 'A5', mode: 'B&W',   label: 'A5 Black & White', key: 'A5_BW',    colorClass: 'v-a5-bw'    },
+  { size: 'A5', mode: 'Color', label: 'A5 Color',          key: 'A5_Color', colorClass: 'v-a5-color' },
 ];
+
+const DEFAULT_STOCKS = {
+  A4: { BW: { name: 'A4 Print (B&W)',    price: 2   },
+        Color: { name: 'A4 Print (Color)', price: 10  } },
+  A3: { BW: { name: 'A3 Print (B&W)',    price: 5   },
+        Color: { name: 'A3 Print (Color)', price: 20  } },
+  A5: { BW: { name: 'A5 Print (B&W)',    price: 1   },
+        Color: { name: 'A5 Print (Color)', price: 5   } },
+};
+
+const TABS = ['Stock Overview', 'Log a Job', 'Print History', 'Printer Setup'];
 
 export default function PrintingHistory() {
   const toast = useToast();
-  const [stocks, setStocks] = useState([]);
-  const [logs, setLogs] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [spoolerModalOpen, setSpoolerModalOpen] = useState(false);
-  const [restoreModalOpen, setRestoreModalOpen] = useState(false);
 
-  // Custom stock quantities for the restore / replenish modal
-  const [customStocks, setCustomStocks] = useState({});
-  const [savingStocks, setSavingStocks] = useState(false);
+  const [activeTab, setActiveTab]       = useState('Stock Overview');
+  const [stocks, setStocks]             = useState([]);
+  const [logs, setLogs]                 = useState([]);
+  const [printerConfigs, setPrinterConfigs] = useState([]);
+  const [loading, setLoading]           = useState(true);
 
-  // Form State for Manual Logging
-  const [jobName, setJobName] = useState('');
-  const [paperSize, setPaperSize] = useState('A4');
-  const [colorMode, setColorMode] = useState('Color');
-  const [quantity, setQuantity] = useState(1);
-  const [submitting, setSubmitting] = useState(false);
+  // Log-a-Job state
+  const [selectedVariant, setSelectedVariant] = useState(null);
+  const [jobName, setJobName]           = useState('');
+  const [quantity, setQuantity]         = useState(1);
+  const [submitting, setSubmitting]     = useState(false);
 
-  // Filter, Sort, & Pagination State
-  const [searchTerm, setSearchTerm] = useState('');
-  const [filterSize, setFilterSize] = useState('All');
-  const [filterColor, setFilterColor] = useState('All');
-  const [sortBy, setSortBy] = useState('date_desc');
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 10;
+  // History filters
+  const [searchTerm, setSearchTerm]     = useState('');
+  const [filterSize, setFilterSize]     = useState('All');
+  const [filterColor, setFilterColor]   = useState('All');
+  const [showReviewOnly, setShowReviewOnly] = useState(false);
+  const [currentPage, setCurrentPage]   = useState(1);
+  const PER_PAGE = 12;
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+  // Resolve modal
+  const [resolveLog, setResolveLog]     = useState(null);
+  const [resolveSize, setResolveSize]   = useState('A4');
+  const [resolveMode, setResolveMode]   = useState('B&W');
+  const [resolving, setResolving]       = useState(false);
 
-  const fetchData = async () => {
+  // Replenish modal
+  const [replenishOpen, setReplenishOpen]   = useState(false);
+  const [replenishValues, setReplenishValues] = useState({});
+  const [replenishing, setReplenishing]     = useState(false);
+
+  // Printer setup
+  const [printerName, setPrinterName]   = useState('');
+  const [printerSize, setPrinterSize]   = useState('A4');
+  const [printerMode, setPrinterMode]   = useState('B&W');
+  const [printerNotes, setPrinterNotes] = useState('');
+  const [savingPrinter, setSavingPrinter] = useState(false);
+
+  useEffect(() => { fetchAll(); }, []);
+
+  const fetchAll = async () => {
     setLoading(true);
-    await Promise.all([fetchStocks(), fetchLogs()]);
+    await Promise.all([fetchStocks(), fetchLogs(), fetchPrinterConfigs()]);
     setLoading(false);
   };
 
   const fetchStocks = async () => {
     try {
       const data = await api.getProducts({ is_print: 'true' });
-      if (!data || data.length === 0) {
-        setStocks([]);
-      } else {
-        const mapped = data.map(p => {
-          let size = 'A4';
-          if (p.name.toUpperCase().includes('A3')) size = 'A3';
-          else if (p.name.toUpperCase().includes('A5')) size = 'A5';
-          let mode = 'B&W';
-          if (p.name.toUpperCase().includes('COLOR')) mode = 'Color';
-          return { ...p, size, mode };
-        });
-        setStocks(mapped);
-      }
-    } catch (err) {
-      console.error('Error fetching print stocks:', err);
-      setStocks([]);
-    }
+      const mapped = (data || []).map(p => {
+        let size = 'A4';
+        if (p.name.toUpperCase().includes('A3')) size = 'A3';
+        else if (p.name.toUpperCase().includes('A5')) size = 'A5';
+        const mode = p.name.toUpperCase().includes('COLOR') ? 'Color' : 'B&W';
+        return { ...p, size, mode };
+      });
+      setStocks(mapped);
+    } catch { setStocks([]); }
   };
 
   const fetchLogs = async () => {
     try {
       const data = await api.getPrintLogs();
       setLogs(data || []);
-    } catch (err) {
+    } catch {
       const local = localStorage.getItem('speednet_print_logs');
       setLogs(local ? JSON.parse(local) : []);
     }
   };
 
-  // Open Restore / Replenish modal and pre-fill current values
-  const openRestoreModal = () => {
-    const initialValues = {};
-    DEFAULT_STOCKS.forEach(def => {
-      const found = stocks.find(s => s.size === def.size && s.mode === def.mode);
-      const key = `${def.size}_${def.mode}`;
-      initialValues[key] = found ? found.stock : def.stock;
-    });
-    setCustomStocks(initialValues);
-    setRestoreModalOpen(true);
-  };
-
-  // Quick adjust sheet count in modal
-  const adjustCustomStock = (key, delta, isAbsolute = false) => {
-    setCustomStocks(prev => {
-      const current = prev[key] || 0;
-      const nextVal = isAbsolute ? delta : Math.max(0, current + delta);
-      return { ...prev, [key]: nextVal };
-    });
-  };
-
-  // Save exact requested stock counts to Supabase
-  const handleSaveCustomStocks = async () => {
-    setSavingStocks(true);
-    let updatedCount = 0;
+  const fetchPrinterConfigs = async () => {
     try {
-      for (const def of DEFAULT_STOCKS) {
-        const key = `${def.size}_${def.mode}`;
-        const targetCount = parseInt(customStocks[key]) || 0;
-        const exists = stocks.find(s => s.size === def.size && s.mode === def.mode);
-        if (exists) {
-          await api.updateProduct(exists.id, { stock: targetCount });
-        } else {
-          await api.createProduct({
-            name:     def.name,
-            price:    def.price,
-            stock:    targetCount,
-            is_print: true,
-          });
-        }
-        updatedCount++;
-      }
-      toast.success(`Successfully set and replenished ${updatedCount} paper stock inventories!`);
-      await fetchStocks();
-      setRestoreModalOpen(false);
-    } catch (err) {
-      toast.error('Error saving custom stock counts');
-    } finally {
-      setSavingStocks(false);
-    }
+      const data = await api.getPrinterConfigs();
+      setPrinterConfigs(data || []);
+    } catch { setPrinterConfigs([]); }
   };
 
-  const handleLogPrint = async (e) => {
-    e.preventDefault();
-    if (!jobName.trim()) { toast.warning('Please enter a job or document name'); return; }
-    if (quantity < 1)    { toast.warning('Quantity must be at least 1'); return; }
-
-    setSubmitting(true);
-    try {
-      // 1. Deduct stock
-      const matchingProduct = stocks.find(s => s.size === paperSize && s.mode === colorMode);
-      if (matchingProduct) {
-        if (matchingProduct.stock < quantity) {
-          toast.warning(`Warning: Low stock for ${paperSize} ${colorMode} (${matchingProduct.stock} left)`);
-        }
-        await api.updateProduct(matchingProduct.id, {
-          stock: Math.max(0, matchingProduct.stock - quantity),
-        });
-      } else {
-        toast.info(`Note: No product initialized for ${paperSize} ${colorMode} yet. Click 'Restore Stock' to track inventory.`);
-      }
-
-      // 2. Insert log
-      const newLog = {
-        job_name:   jobName,
-        paper_size: paperSize,
-        color_mode: colorMode,
-        quantity:   parseInt(quantity),
-        status:     'Completed',
-        source:     'Manual Log',
-      };
-
-      try {
-        const saved = await api.createPrintLog(newLog);
-        setLogs([saved, ...logs]);
-      } catch {
-        const withTs = { ...newLog, created_at: new Date().toISOString() };
-        const updatedLocal = [withTs, ...logs];
-        localStorage.setItem('speednet_print_logs', JSON.stringify(updatedLocal));
-        setLogs(updatedLocal);
-      }
-
-      toast.success(`Logged ${quantity}x ${paperSize} (${colorMode}) & deducted stock!`);
-      setJobName('');
-      setQuantity(1);
-      await fetchStocks();
-    } catch (err) {
-      toast.error('Failed to log print job');
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  // Simulate an OS Print Spooler job from backend daemon
-  const simulateSpoolerJob = async () => {
-    const randomSizes = ['A4', 'A3', 'A5'];
-    const randomModes = ['Color', 'B&W'];
-    const randomDocs  = [
-      'Client_Brochure_2026.pdf', 'Annual_Financial_Report.docx',
-      'Architecture_Plan_Final.pdf', 'Customer_ID_Copy.png', 'Invoice_Receipt_108.pdf',
-    ];
-
-    const size = randomSizes[Math.floor(Math.random() * randomSizes.length)];
-    const mode = randomModes[Math.floor(Math.random() * randomModes.length)];
-    const doc  = randomDocs[Math.floor(Math.random() * randomDocs.length)];
-    const qty  = Math.floor(Math.random() * 8) + 1;
-
-    try {
-      // Deduct stock
-      const matchingProduct = stocks.find(s => s.size === size && s.mode === mode);
-      if (matchingProduct) {
-        await api.updateProduct(matchingProduct.id, {
-          stock: Math.max(0, matchingProduct.stock - qty),
-        });
-      }
-
-      // Insert log
-      const spoolLog = {
-        job_name:   doc,
-        paper_size: size,
-        color_mode: mode,
-        quantity:   qty,
-        status:     'Completed',
-        source:     'Windows Print Spooler',
-      };
-
-      try {
-        const saved = await api.createPrintLog(spoolLog);
-        setLogs([saved, ...logs]);
-      } catch {
-        const withTs = { ...spoolLog, created_at: new Date().toISOString() };
-        const updatedLocal = [withTs, ...logs];
-        localStorage.setItem('speednet_print_logs', JSON.stringify(updatedLocal));
-        setLogs(updatedLocal);
-      }
-
-      toast.success(`🖥️ Spooler captured: "${doc}" (${qty}x ${size} ${mode}) & updated stock!`);
-      await fetchStocks();
-    } catch (err) {
-      toast.error('Simulation failed: ' + err.message);
-    }
-  };
-
-  // Filtered and Sorted Logs
-  const filteredAndSortedLogs = useMemo(() => {
-    let result = [...logs];
-
-    // Filter by Search Term
-    if (searchTerm.trim()) {
-      const lower = searchTerm.toLowerCase();
-      result = result.filter(l => 
-        l.job_name?.toLowerCase().includes(lower) || 
-        l.source?.toLowerCase().includes(lower)
-      );
-    }
-
-    // Filter by Size
-    if (filterSize !== 'All') {
-      result = result.filter(l => l.paper_size === filterSize);
-    }
-
-    // Filter by Color
-    if (filterColor !== 'All') {
-      result = result.filter(l => l.color_mode === filterColor);
-    }
-
-    // Sort
-    result.sort((a, b) => {
-      if (sortBy === 'date_desc') return new Date(b.created_at) - new Date(a.created_at);
-      if (sortBy === 'date_asc') return new Date(a.created_at) - new Date(b.created_at);
-      if (sortBy === 'qty_desc') return b.quantity - a.quantity;
-      if (sortBy === 'qty_asc') return a.quantity - b.quantity;
-      return 0;
-    });
-
-    return result;
-  }, [logs, searchTerm, filterSize, filterColor, sortBy]);
-
-  // Pagination Calculation
-  const totalPages = Math.max(1, Math.ceil(filteredAndSortedLogs.length / itemsPerPage));
-  const paginatedLogs = useMemo(() => {
-    const start = (currentPage - 1) * itemsPerPage;
-    return filteredAndSortedLogs.slice(start, start + itemsPerPage);
-  }, [filteredAndSortedLogs, currentPage, itemsPerPage]);
-
-  const getStockCount = (size, mode) => {
+  const getStock = (size, mode) => {
     const found = stocks.find(s => s.size === size && s.mode === mode);
     return found ? found.stock : 0;
   };
 
+  // ── Log a Job ─────────────────────────────────────────────────
+  const handleLogJob = async (e) => {
+    e.preventDefault();
+    if (!selectedVariant) { toast.warning('Select a paper type first'); return; }
+    if (!jobName.trim())  { toast.warning('Enter a job or document name'); return; }
+    if (quantity < 1)     { toast.warning('Quantity must be at least 1'); return; }
+
+    setSubmitting(true);
+    try {
+      const { size, mode } = selectedVariant;
+      const product = stocks.find(s => s.size === size && s.mode === mode);
+      if (product) {
+        if (product.stock < quantity)
+          toast.warning(`Low stock: only ${product.stock} sheets of ${size} ${mode} left`);
+        await api.updateProduct(product.id, { stock: Math.max(0, product.stock - quantity) });
+      } else {
+        toast.info(`No stock product found for ${size} ${mode}. Use Replenish to initialise.`);
+      }
+      const saved = await api.createPrintLog({
+        job_name: jobName, paper_size: size, color_mode: mode,
+        quantity: parseInt(quantity), status: 'Completed', source: 'Manual Log',
+      });
+      setLogs(prev => [saved, ...prev]);
+      toast.success(`Logged ${quantity}× ${size} ${mode} — stock deducted`);
+      setJobName(''); setQuantity(1); setSelectedVariant(null);
+      await fetchStocks();
+    } catch (err) {
+      toast.error('Failed to log job: ' + err.message);
+    } finally { setSubmitting(false); }
+  };
+
+  // ── Resolve needs_review log ──────────────────────────────────
+  const openResolve = (log) => {
+    setResolveLog(log);
+    setResolveSize(log.paper_size);
+    setResolveMode(log.color_mode);
+  };
+
+  const handleResolve = async () => {
+    if (!resolveLog) return;
+    setResolving(true);
+    try {
+      // Adjust stock: remove old deduction, apply corrected one
+      const oldProduct = stocks.find(s => s.size === resolveLog.paper_size && s.mode === resolveLog.color_mode);
+      const newProduct = stocks.find(s => s.size === resolveSize && s.mode === resolveMode);
+      if (oldProduct) await api.updateProduct(oldProduct.id, { stock: oldProduct.stock + resolveLog.quantity });
+      if (newProduct) await api.updateProduct(newProduct.id, { stock: Math.max(0, newProduct.stock - resolveLog.quantity) });
+      const updated = await api.resolvePrintLog(resolveLog.id, { paper_size: resolveSize, color_mode: resolveMode });
+      setLogs(prev => prev.map(l => l.id === updated.id ? updated : l));
+      toast.success('Job resolved and stock corrected');
+      setResolveLog(null);
+      await fetchStocks();
+    } catch (err) {
+      toast.error('Failed to resolve: ' + err.message);
+    } finally { setResolving(false); }
+  };
+
+  // ── Replenish modal ───────────────────────────────────────────
+  const openReplenish = () => {
+    const vals = {};
+    VARIANTS.forEach(v => { vals[v.key] = getStock(v.size, v.mode); });
+    setReplenishValues(vals);
+    setReplenishOpen(true);
+  };
+
+  const handleReplenish = async () => {
+    setReplenishing(true);
+    try {
+      for (const v of VARIANTS) {
+        const newQty = parseInt(replenishValues[v.key]) || 0;
+        const modeKey = v.mode === 'B&W' ? 'BW' : 'Color';
+        const def = DEFAULT_STOCKS[v.size][modeKey];
+        const existing = stocks.find(s => s.size === v.size && s.mode === v.mode);
+        if (existing) {
+          await api.updateProduct(existing.id, { stock: newQty });
+        } else {
+          await api.createProduct({ name: def.name, price: def.price, stock: newQty, is_print: true });
+        }
+      }
+      toast.success('Stock levels updated');
+      await fetchStocks();
+      setReplenishOpen(false);
+    } catch (err) {
+      toast.error('Failed to update stock: ' + err.message);
+    } finally { setReplenishing(false); }
+  };
+
+  // ── Printer config save ───────────────────────────────────────
+  const handleSavePrinter = async (e) => {
+    e.preventDefault();
+    if (!printerName.trim()) return;
+    setSavingPrinter(true);
+    try {
+      const saved = await api.upsertPrinterConfig({ printer_name: printerName, paper_size: printerSize, color_mode: printerMode, notes: printerNotes });
+      setPrinterConfigs(prev => {
+        const exists = prev.find(p => p.id === saved.id);
+        return exists ? prev.map(p => p.id === saved.id ? saved : p) : [saved, ...prev];
+      });
+      toast.success('Printer mapping saved');
+      setPrinterName(''); setPrinterNotes('');
+    } catch (err) {
+      toast.error('Failed to save: ' + err.message);
+    } finally { setSavingPrinter(false); }
+  };
+
+  const handleDeletePrinter = async (id) => {
+    try {
+      await api.deletePrinterConfig(id);
+      setPrinterConfigs(prev => prev.filter(p => p.id !== id));
+      toast.success('Printer mapping removed');
+    } catch (err) {
+      toast.error('Failed to delete: ' + err.message);
+    }
+  };
+
+  // ── Filtered logs ────────────────────────────────────────────
+  const filteredLogs = useMemo(() => {
+    let r = [...logs];
+    if (showReviewOnly) r = r.filter(l => l.needs_review);
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      r = r.filter(l => l.job_name?.toLowerCase().includes(q) || l.source?.toLowerCase().includes(q) || l.printer_name?.toLowerCase().includes(q));
+    }
+    if (filterSize !== 'All')  r = r.filter(l => l.paper_size === filterSize);
+    if (filterColor !== 'All') r = r.filter(l => l.color_mode === filterColor);
+    return r;
+  }, [logs, searchTerm, filterSize, filterColor, showReviewOnly]);
+
+  const totalPages    = Math.max(1, Math.ceil(filteredLogs.length / PER_PAGE));
+  const paginatedLogs = filteredLogs.slice((currentPage - 1) * PER_PAGE, currentPage * PER_PAGE);
+  const reviewCount   = logs.filter(l => l.needs_review).length;
+
+  if (loading) return <div className="ph-loading"><PremiumLoader text="Loading Printing Hub..." /></div>;
+
   return (
-    <div className="printing-hub-container animate-fade-in">
-      {/* Header */}
-      <div className="printing-header">
-        <div className="printing-header-title">
-          <h1><Printer size={28} className="text-primary" /> A4 / A3 / A5 Printing & Stock Hub</h1>
-          <p>Real-time inventory tracking and comprehensive printing history with OS Print Spooler bridge</p>
+    <div className="ph-root animate-fade-in">
+      {/* ── Header ── */}
+      <div className="ph-header glass-panel">
+        <div className="ph-header-left">
+          <Printer size={22} className="ph-header-icon" />
+          <div>
+            <h2>Printing Hub</h2>
+            <p>Paper stock tracking · Print job logging · OS Spooler bridge</p>
+          </div>
         </div>
-        <div className="printing-header-actions">
-          <button 
-            className="btn" 
-            onClick={openRestoreModal} 
-            title="Set exact sheet quantity for each paper size"
-            style={{ 
-              background: '#10b981', 
-              color: '#ffffff', 
-              fontWeight: 700, 
-              border: 'none', 
-              padding: '10px 18px', 
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              boxShadow: '0 4px 12px rgba(16, 185, 129, 0.4)'
-            }}
-          >
-            <Package size={18} /> Replenish / Set Stock Levels
+        <div className="ph-header-right">
+          {reviewCount > 0 && (
+            <button className="ph-review-alert" onClick={() => { setActiveTab('Print History'); setShowReviewOnly(true); }}>
+              <AlertTriangle size={15} /> {reviewCount} job{reviewCount !== 1 ? 's' : ''} need review
+            </button>
+          )}
+          <button className="ph-btn ph-btn-replenish" onClick={openReplenish}>
+            <Package size={15} /> Replenish Stock
           </button>
-          <button 
-            className="btn btn-primary" 
-            onClick={() => setSpoolerModalOpen(true)} 
-            style={{ 
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', 
-              color: '#ffffff',
-              fontWeight: 700,
-              padding: '10px 18px',
-              borderRadius: '8px',
-              cursor: 'pointer',
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '8px',
-              border: 'none',
-              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)'
-            }}
-          >
-            <Terminal size={18} /> 🖥️ OS Print Spooler Bridge
+          <button className="ph-btn ph-btn-refresh" onClick={fetchAll} title="Refresh">
+            <RefreshCw size={15} />
           </button>
         </div>
       </div>
 
-      {/* Stock Overview Cards with Solid Rich Backgrounds */}
-      <div className="print-stocks-grid">
-        {DEFAULT_STOCKS.map((def, idx) => {
-          const count = getStockCount(def.size, def.mode);
-          const isLow = count < 100;
-          const cardClass = `card-${def.size.toLowerCase()}-${def.mode === 'Color' ? 'color' : 'bw'}`;
-          return (
-            <div key={idx} className={`stock-card ${cardClass}`}>
-              <div className="stock-card-top">
-                <span className="stock-card-title">
-                  <span className={`paper-badge ${def.size.toLowerCase()}`}>{def.size}</span>
-                  <span className={`mode-badge ${def.mode === 'Color' ? 'color' : 'bw'}`}>{def.mode}</span>
-                </span>
-                {isLow && <AlertTriangle size={18} className="text-error" title="Low stock warning!" />}
+      {/* ── Tabs ── */}
+      <div className="ph-tabs">
+        {TABS.map(tab => (
+          <button
+            key={tab}
+            className={`ph-tab ${activeTab === tab ? 'ph-tab--active' : ''}`}
+            onClick={() => setActiveTab(tab)}
+          >
+            {tab}
+            {tab === 'Print History' && reviewCount > 0 && (
+              <span className="ph-tab-badge">{reviewCount}</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Tab content ── */}
+      <div className="ph-content">
+        {activeTab === 'Stock Overview'  && <StockOverview variants={VARIANTS} getStock={getStock} loading={loading} />}
+        {activeTab === 'Log a Job'       && <LogAJob variants={VARIANTS} selectedVariant={selectedVariant} setSelectedVariant={setSelectedVariant} jobName={jobName} setJobName={setJobName} quantity={quantity} setQuantity={setQuantity} submitting={submitting} handleLogJob={handleLogJob} getStock={getStock} />}
+        {activeTab === 'Print History'   && <PrintHistoryTab logs={paginatedLogs} allLogs={filteredLogs} searchTerm={searchTerm} setSearchTerm={setSearchTerm} filterSize={filterSize} setFilterSize={setFilterSize} filterColor={filterColor} setFilterColor={setFilterColor} showReviewOnly={showReviewOnly} setShowReviewOnly={setShowReviewOnly} reviewCount={reviewCount} currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} PER_PAGE={PER_PAGE} openResolve={openResolve} />}
+        {activeTab === 'Printer Setup'   && <PrinterSetup configs={printerConfigs} printerName={printerName} setPrinterName={setPrinterName} printerSize={printerSize} setPrinterSize={setPrinterSize} printerMode={printerMode} setPrinterMode={setPrinterMode} printerNotes={printerNotes} setPrinterNotes={setPrinterNotes} saving={savingPrinter} onSave={handleSavePrinter} onDelete={handleDeletePrinter} />}
+      </div>
+
+      {/* ── Replenish modal ── */}
+      {replenishOpen && <ReplenishModal variants={VARIANTS} values={replenishValues} setValues={setReplenishValues} saving={replenishing} onSave={handleReplenish} onClose={() => setReplenishOpen(false)} />}
+
+      {/* ── Resolve modal ── */}
+      {resolveLog && <ResolveModal log={resolveLog} resolveSize={resolveSize} setResolveSize={setResolveSize} resolveMode={resolveMode} setResolveMode={setResolveMode} resolving={resolving} onResolve={handleResolve} onClose={() => setResolveLog(null)} />}
+    </div>
+  );
+}
+
+// ── Stock Overview Tab ────────────────────────────────────────
+function StockOverview({ variants, getStock }) {
+  return (
+    <div className="ph-stock-grid">
+      {variants.map(v => {
+        const count = getStock(v.size, v.mode);
+        const isLow = count < 100;
+        return (
+          <div key={v.key} className={`ph-stock-card ${v.colorClass}`}>
+            <div className="ph-stock-card-top">
+              <div className="ph-stock-badges">
+                <span className={`ph-size-badge ph-size-${v.size.toLowerCase()}`}>{v.size}</span>
+                <span className={`ph-mode-badge ${v.mode === 'Color' ? 'ph-mode-color' : 'ph-mode-bw'}`}>{v.mode}</span>
               </div>
-              <div className={`stock-card-count ${isLow ? 'low' : ''}`} style={{ color: '#ffffff', textShadow: '0 2px 4px rgba(0,0,0,0.5)' }}>
-                {loading ? '...' : count.toLocaleString()}
-              </div>
-              <div className="stock-card-sub" style={{ color: 'rgba(255,255,255,0.75)', fontWeight: 500 }}>Available sheets in inventory</div>
+              {isLow && <AlertTriangle size={16} className="ph-low-icon" />}
             </div>
+            <div className={`ph-stock-count ${isLow ? 'ph-stock-low' : ''}`}>
+              {count.toLocaleString()}
+            </div>
+            <div className="ph-stock-label">sheets available</div>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+// ── Log a Job Tab ────────────────────────────────────────────
+function LogAJob({ variants, selectedVariant, setSelectedVariant, jobName, setJobName, quantity, setQuantity, submitting, handleLogJob, getStock }) {
+  return (
+    <div className="ph-log-root">
+      <p className="ph-log-hint">Select the paper type you printed on, then fill in the job details.</p>
+      <div className="ph-variant-grid">
+        {variants.map(v => {
+          const stock = getStock(v.size, v.mode);
+          const isSelected = selectedVariant?.key === v.key;
+          return (
+            <button
+              key={v.key}
+              type="button"
+              className={`ph-variant-card ${v.colorClass} ${isSelected ? 'ph-variant-selected' : ''}`}
+              onClick={() => setSelectedVariant(isSelected ? null : v)}
+            >
+              <div className="ph-variant-badges">
+                <span className={`ph-size-badge ph-size-${v.size.toLowerCase()}`}>{v.size}</span>
+                <span className={`ph-mode-badge ${v.mode === 'Color' ? 'ph-mode-color' : 'ph-mode-bw'}`}>{v.mode}</span>
+              </div>
+              <div className="ph-variant-label">{v.label}</div>
+              <div className={`ph-variant-stock ${stock < 100 ? 'ph-stock-low' : ''}`}>{stock.toLocaleString()} sheets</div>
+              {isSelected && <div className="ph-variant-check"><Check size={18} /></div>}
+            </button>
           );
         })}
       </div>
 
-      {/* Manual Print Logger & Stock Deductor Form */}
-      <div className="print-logger-panel">
-        <h3 className="print-logger-title">
-          <Plus size={20} className="text-primary" /> Log Print Job & Deduct Paper Stock
-        </h3>
-        <form className="print-logger-form" onSubmit={handleLogPrint}>
-          <div className="form-group-col">
-            <label>Job / Document Name</label>
-            <input 
-              type="text" 
-              placeholder="e.g. Resume.pdf or Customer Copy" 
-              value={jobName}
-              onChange={(e) => setJobName(e.target.value)}
-              required
-            />
+      {selectedVariant && (
+        <form className="ph-job-form glass-panel animate-fade-in" onSubmit={handleLogJob}>
+          <h3 className="ph-job-form-title">
+            Log job on <span className="ph-job-variant-label">{selectedVariant.label}</span>
+          </h3>
+          <div className="ph-job-fields">
+            <div className="ph-job-field">
+              <label>Job / Document Name</label>
+              <input type="text" className="input-field" placeholder="e.g. Resume.pdf, Customer Invoice" value={jobName} onChange={e => setJobName(e.target.value)} required />
+            </div>
+            <div className="ph-job-field ph-job-field--sm">
+              <label>Sheets / Pages</label>
+              <input type="number" className="input-field" min="1" max="10000" value={quantity} onChange={e => setQuantity(parseInt(e.target.value) || 1)} required />
+            </div>
           </div>
-          <div className="form-group-col">
-            <label>Paper Size</label>
-            <select value={paperSize} onChange={(e) => setPaperSize(e.target.value)}>
-              <option value="A4">A4 (Standard)</option>
-              <option value="A3">A3 (Large Poster)</option>
-              <option value="A5">A5 (Half / Booklet)</option>
-            </select>
+          <div className="ph-job-actions">
+            <button type="button" className="btn btn-secondary" onClick={() => setSelectedVariant(null)}>Cancel</button>
+            <button type="submit" className="btn btn-primary" disabled={submitting}>
+              <Check size={15} /> {submitting ? 'Logging…' : 'Log & Deduct Stock'}
+            </button>
           </div>
-          <div className="form-group-col">
-            <label>Color Mode</label>
-            <select value={colorMode} onChange={(e) => setColorMode(e.target.value)}>
-              <option value="Color">Color</option>
-              <option value="B&W">Black & White (B&W)</option>
-            </select>
-          </div>
-          <div className="form-group-col">
-            <label>Pages / Copies</label>
-            <input 
-              type="number" 
-              min="1" 
-              max="10000"
-              value={quantity}
-              onChange={(e) => setQuantity(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className="btn btn-primary" disabled={submitting} style={{ height: '42px', padding: '0 24px', fontWeight: 700 }}>
-            <Check size={18} /> {submitting ? 'Logging...' : 'Log & Deduct Stock'}
-          </button>
         </form>
+      )}
+    </div>
+  );
+}
+
+// ── Print History Tab ─────────────────────────────────────────
+function PrintHistoryTab({ logs, allLogs, searchTerm, setSearchTerm, filterSize, setFilterSize, filterColor, setFilterColor, showReviewOnly, setShowReviewOnly, reviewCount, currentPage, setCurrentPage, totalPages, PER_PAGE, openResolve }) {
+  return (
+    <div className="ph-history-root">
+      <div className="ph-history-controls glass-panel">
+        <div className="ph-search-box">
+          <Search size={15} />
+          <input type="text" placeholder="Search job name, source…" value={searchTerm} onChange={e => { setSearchTerm(e.target.value); setCurrentPage(1); }} />
+        </div>
+        <div className="ph-history-filters">
+          <select value={filterSize} onChange={e => { setFilterSize(e.target.value); setCurrentPage(1); }}>
+            <option value="All">All Sizes</option>
+            <option value="A4">A4</option>
+            <option value="A3">A3</option>
+            <option value="A5">A5</option>
+          </select>
+          <select value={filterColor} onChange={e => { setFilterColor(e.target.value); setCurrentPage(1); }}>
+            <option value="All">All Modes</option>
+            <option value="Color">Color</option>
+            <option value="B&W">B&W</option>
+          </select>
+          <button
+            className={`ph-review-filter-btn ${showReviewOnly ? 'ph-review-filter-btn--active' : ''}`}
+            onClick={() => { setShowReviewOnly(v => !v); setCurrentPage(1); }}
+          >
+            <AlertTriangle size={14} /> Needs Review {reviewCount > 0 && `(${reviewCount})`}
+          </button>
+        </div>
       </div>
 
-      {/* History Table & Filters */}
-      <div className="history-section">
-        <div className="history-controls">
-          <div className="history-search">
-            <Search size={18} className="text-muted" />
-            <input 
-              type="text" 
-              placeholder="Search by job name or source..." 
-              value={searchTerm}
-              onChange={(e) => { setSearchTerm(e.target.value); setCurrentPage(1); }}
-            />
-          </div>
-
-          <div className="history-filters">
-            <Filter size={16} className="text-muted" />
-            <select value={filterSize} onChange={(e) => { setFilterSize(e.target.value); setCurrentPage(1); }}>
-              <option value="All">All Sizes</option>
-              <option value="A4">A4 Only</option>
-              <option value="A3">A3 Only</option>
-              <option value="A5">A5 Only</option>
-            </select>
-
-            <select value={filterColor} onChange={(e) => { setFilterColor(e.target.value); setCurrentPage(1); }}>
-              <option value="All">All Colors</option>
-              <option value="Color">Color Only</option>
-              <option value="B&W">B&W Only</option>
-            </select>
-
-            <select value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
-              <option value="date_desc">Newest First</option>
-              <option value="date_asc">Oldest First</option>
-              <option value="qty_desc">Highest Quantity</option>
-              <option value="qty_asc">Lowest Quantity</option>
-            </select>
-          </div>
-        </div>
-
-        <div className="printing-table-container">
-          <table className="printing-table">
-            <thead>
-              <tr>
-                <th>Date & Time</th>
-                <th>Job / Document</th>
-                <th>Paper Size</th>
-                <th>Mode</th>
-                <th>Pages</th>
-                <th>Source</th>
-                <th>Status</th>
+      <div className="ph-table-wrap glass-panel">
+        <table className="ph-table">
+          <thead>
+            <tr>
+              <th>Job Name</th>
+              <th>Size</th>
+              <th>Mode</th>
+              <th>Sheets</th>
+              <th>Source</th>
+              <th>Printer</th>
+              <th>Date</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            {logs.length === 0 ? (
+              <tr><td colSpan={8} className="ph-table-empty">No print jobs found.</td></tr>
+            ) : logs.map((log, i) => (
+              <tr key={log.id || i} className={log.needs_review ? 'ph-tr-review' : ''}>
+                <td className="ph-td-name">{log.job_name}</td>
+                <td><span className={`ph-size-badge ph-size-${(log.paper_size || '').toLowerCase()}`}>{log.paper_size}</span></td>
+                <td><span className={`ph-mode-badge ${log.color_mode === 'Color' ? 'ph-mode-color' : 'ph-mode-bw'}`}>{log.color_mode}</span></td>
+                <td>{log.quantity}</td>
+                <td className="ph-td-source">{log.source || '—'}</td>
+                <td className="ph-td-printer">{log.printer_name || '—'}</td>
+                <td className="ph-td-date">{log.created_at ? new Date(log.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}</td>
+                <td>
+                  {log.needs_review ? (
+                    <button className="ph-resolve-btn" onClick={() => openResolve(log)} title={log.review_note || 'Needs review'}>
+                      <AlertTriangle size={13} /> Resolve
+                    </button>
+                  ) : (
+                    <span className="ph-status-done"><Check size={13} /> Done</span>
+                  )}
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {paginatedLogs.length === 0 ? (
-                <tr>
-                  <td colSpan="7" style={{ textAlign: 'center', padding: '36px', color: 'var(--text-muted)' }}>
-                    No printing logs found matching your filters.
-                  </td>
-                </tr>
-              ) : (
-                paginatedLogs.map((log, index) => (
-                  <tr key={log.id || index}>
-                    <td>{new Date(log.created_at).toLocaleString()}</td>
-                    <td style={{ fontWeight: 500 }}>{log.job_name}</td>
-                    <td><span className={`paper-badge ${log.paper_size.toLowerCase()}`}>{log.paper_size}</span></td>
-                    <td><span className={`mode-badge ${log.color_mode === 'Color' ? 'color' : 'bw'}`}>{log.color_mode}</span></td>
-                    <td style={{ fontWeight: 700 }}>{log.quantity}</td>
-                    <td><span style={{ fontSize: '0.85rem', color: log.source === 'Windows Print Spooler' ? '#38bdf8' : 'var(--text-muted)' }}>{log.source || 'Manual Log'}</span></td>
-                    <td>
-                      <span className="status-badge status-good" style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
-                        <Check size={14} /> {log.status || 'Completed'}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-        {/* Pagination */}
-        <div className="pagination-container">
-          <div className="pagination-info">
-            Showing {filteredAndSortedLogs.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filteredAndSortedLogs.length)} of {filteredAndSortedLogs.length} entries
+      {totalPages > 1 && (
+        <div className="ph-pagination">
+          <span className="ph-page-info">
+            {Math.min((currentPage - 1) * PER_PAGE + 1, allLogs.length)}–{Math.min(currentPage * PER_PAGE, allLogs.length)} of {allLogs.length}
+          </span>
+          <div className="ph-page-btns">
+            <button onClick={() => setCurrentPage(p => p - 1)} disabled={currentPage === 1}>‹ Prev</button>
+            <span>{currentPage} / {totalPages}</span>
+            <button onClick={() => setCurrentPage(p => p + 1)} disabled={currentPage === totalPages}>Next ›</button>
           </div>
-          <div className="pagination-buttons">
-            <button 
-              onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-              disabled={currentPage === 1}
-            >
-              <ArrowLeft size={16} /> Prev
-            </button>
-            <span style={{ padding: '0 8px', fontSize: '0.9rem', color: 'var(--text-main)' }}>
-              Page {currentPage} of {totalPages}
-            </span>
-            <button 
-              onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-              disabled={currentPage === totalPages}
-            >
-              Next <ArrowRight size={16} />
-            </button>
-          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Printer Setup Tab ─────────────────────────────────────────
+function PrinterSetup({ configs, printerName, setPrinterName, printerSize, setPrinterSize, printerMode, setPrinterMode, printerNotes, setPrinterNotes, saving, onSave, onDelete }) {
+  return (
+    <div className="ph-setup-root">
+      <div className="ph-setup-explain glass-panel">
+        <Terminal size={18} />
+        <div>
+          <strong>Why set up printers?</strong>
+          <p>The OS Print Spooler agent uses this mapping to automatically assign the correct paper variant (size + color mode) to each job. Without a mapping, jobs are flagged as "Needs Review".</p>
         </div>
       </div>
 
-      {/* Restore & Replenish Stock Modal */}
-      {restoreModalOpen && (
-        <div className="modal-overlay" onClick={() => setRestoreModalOpen(false)}>
-          <div className="modal-content glass-panel animate-scale-up" onClick={e => e.stopPropagation()} style={{ maxWidth: '750px', padding: '24px' }}>
-            <div className="modal-header" style={{ marginBottom: '16px' }}>
-              <h3 style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <Package size={22} style={{ color: '#10b981' }} /> Replenish & Set Exact Sheet Stock
-              </h3>
-              <button className="btn-close" onClick={() => setRestoreModalOpen(false)}>×</button>
+      <form className="ph-setup-form glass-panel" onSubmit={onSave}>
+        <h3>Add / Update Printer Mapping</h3>
+        <div className="ph-setup-fields">
+          <div className="ph-setup-field ph-setup-field--wide">
+            <label>Printer Name (exact Windows name)</label>
+            <input type="text" className="input-field" placeholder="e.g. HP LaserJet M404dn" value={printerName} onChange={e => setPrinterName(e.target.value)} required />
+          </div>
+          <div className="ph-setup-field">
+            <label>Default Paper Size</label>
+            <select className="input-field" value={printerSize} onChange={e => setPrinterSize(e.target.value)}>
+              <option value="A4">A4</option>
+              <option value="A3">A3</option>
+              <option value="A5">A5</option>
+            </select>
+          </div>
+          <div className="ph-setup-field">
+            <label>Default Color Mode</label>
+            <select className="input-field" value={printerMode} onChange={e => setPrinterMode(e.target.value)}>
+              <option value="B&W">B&amp;W (Black &amp; White)</option>
+              <option value="Color">Color</option>
+            </select>
+          </div>
+          <div className="ph-setup-field ph-setup-field--wide">
+            <label>Notes (optional)</label>
+            <input type="text" className="input-field" placeholder="e.g. Front desk printer" value={printerNotes} onChange={e => setPrinterNotes(e.target.value)} />
+          </div>
+        </div>
+        <button type="submit" className="btn btn-primary" disabled={saving}>
+          <Check size={15} /> {saving ? 'Saving…' : 'Save Mapping'}
+        </button>
+      </form>
+
+      <div className="ph-setup-list">
+        {configs.length === 0 ? (
+          <div className="ph-setup-empty glass-panel">No printer mappings yet. Add one above.</div>
+        ) : configs.map(c => (
+          <div key={c.id} className="ph-setup-row glass-panel">
+            <div className="ph-setup-row-left">
+              <span className="ph-setup-printer-name">{c.printer_name}</span>
+              {c.notes && <span className="ph-setup-notes">{c.notes}</span>}
             </div>
-            
-            <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', marginBottom: '16px' }}>
-              Set exact quantities for each paper size and color mode in your inventory. You can type the total available sheets or use the quick buttons to replenish.
-            </p>
-
-            <div className="restore-modal-grid">
-              {DEFAULT_STOCKS.map((def, idx) => {
-                const key = `${def.size}_${def.mode}`;
-                const val = customStocks[key] !== undefined ? customStocks[key] : def.stock;
-                return (
-                  <div key={idx} className="restore-stock-item">
-                    <div className="restore-stock-header">
-                      <span style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span className={`paper-badge ${def.size.toLowerCase()}`}>{def.size}</span>
-                        <span className={`mode-badge ${def.mode === 'Color' ? 'color' : 'bw'}`}>{def.mode}</span>
-                      </span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Default: {def.stock.toLocaleString()}</span>
-                    </div>
-
-                    <div className="restore-stock-input-row">
-                      <input 
-                        type="number" 
-                        min="0" 
-                        value={val}
-                        onChange={(e) => setCustomStocks({ ...customStocks, [key]: e.target.value })}
-                      />
-                    </div>
-
-                    <div className="restore-quick-btns">
-                      <button type="button" onClick={() => adjustCustomStock(key, def.stock, true)}>Reset Default</button>
-                      <button type="button" onClick={() => adjustCustomStock(key, 500)}>+500 Sheets</button>
-                      <button type="button" onClick={() => adjustCustomStock(key, 1000)}>+1,000 Sheets</button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '12px', marginTop: '20px' }}>
-              <button className="btn btn-secondary" onClick={() => setRestoreModalOpen(false)} disabled={savingStocks}>Cancel</button>
-              <button 
-                className="btn" 
-                onClick={handleSaveCustomStocks} 
-                disabled={savingStocks}
-                style={{ background: '#10b981', color: '#fff', fontWeight: 700, padding: '10px 24px', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
-              >
-                <Check size={18} /> {savingStocks ? 'Saving...' : 'Save & Update Stock Levels'}
+            <div className="ph-setup-row-right">
+              <span className={`ph-size-badge ph-size-${c.paper_size.toLowerCase()}`}>{c.paper_size}</span>
+              <span className={`ph-mode-badge ${c.color_mode === 'Color' ? 'ph-mode-color' : 'ph-mode-bw'}`}>{c.color_mode}</span>
+              <button className="ph-delete-btn" onClick={() => onDelete(c.id)} title="Remove mapping">
+                <Trash2 size={14} />
               </button>
             </div>
           </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ── Replenish Modal ───────────────────────────────────────────
+function ReplenishModal({ variants, values, setValues, saving, onSave, onClose }) {
+  return (
+    <div className="ph-modal-overlay" onClick={() => !saving && onClose()}>
+      <div className="ph-modal glass-panel" onClick={e => e.stopPropagation()}>
+        <div className="ph-modal-header">
+          <h3><Package size={17} /> Replenish Paper Stock</h3>
+          <button className="ph-modal-close" onClick={onClose} disabled={saving}><X size={16} /></button>
         </div>
-      )}
-
-      {/* OS Spooler Bridge Modal */}
-      {spoolerModalOpen && (
-        <div className="modal-overlay" onClick={() => setSpoolerModalOpen(false)}>
-          <div className="modal-content glass-panel animate-scale-up" onClick={e => e.stopPropagation()} style={{ maxWidth: '700px' }}>
-            <div className="modal-header">
-              <h3><Terminal size={22} className="text-primary" /> Windows Print Spooler Bridge Guide</h3>
-              <button className="btn-close" onClick={() => setSpoolerModalOpen(false)}>×</button>
+        <p className="ph-modal-sub">Set the exact number of sheets currently in stock for each variant.</p>
+        <div className="ph-replenish-grid">
+          {variants.map(v => (
+            <div key={v.key} className="ph-replenish-row">
+              <div className="ph-replenish-label">
+                <span className={`ph-size-badge ph-size-${v.size.toLowerCase()}`}>{v.size}</span>
+                <span className={`ph-mode-badge ${v.mode === 'Color' ? 'ph-mode-color' : 'ph-mode-bw'}`}>{v.mode}</span>
+                <span className="ph-replenish-name">{v.label}</span>
+              </div>
+              <input type="number" className="input-field ph-replenish-input" min="0" value={values[v.key] ?? 0}
+                onChange={e => setValues(prev => ({ ...prev, [v.key]: parseInt(e.target.value) || 0 }))} />
             </div>
-            <div className="spooler-modal-content">
-              <p>
-                <strong>Why doesn't the browser read Windows Print Spooler (`C:\Windows\System32\spool`) directly?</strong><br />
-                Web browsers (Chrome, Edge) enforce strict security sandboxes that forbid JavaScript from calling native Win32 APIs (`EnumJobs`) or reading OS queues on the local computer.
-              </p>
-              <p>
-                <strong>How to connect your real OS Print Spooler to SpeedNet:</strong><br />
-                We have built a dedicated background daemon right inside your `backend/` folder (`printSpoolerAgent.js`). It queries Windows WMI (`Win32_PrintJob`), detects new documents, logs them here, and auto-deducts A4/A3/A5 stock!
-              </p>
+          ))}
+        </div>
+        <div className="ph-modal-actions">
+          <button className="btn btn-secondary" onClick={onClose} disabled={saving}>Cancel</button>
+          <button className="btn btn-primary" onClick={onSave} disabled={saving}>
+            <Check size={15} /> {saving ? 'Saving…' : 'Save Stock Levels'}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
-              <div>
-                <label style={{ fontSize: '0.85rem', fontWeight: 600, color: 'var(--text-muted)' }}>1. Open your terminal in the backend directory and run:</label>
-                <div className="spooler-code-box">
-                  <code>cd backend && node printSpoolerAgent.js</code>
-                  <button 
-                    className="copy-btn-absolute" 
-                    onClick={() => {
-                      navigator.clipboard.writeText('cd backend && node printSpoolerAgent.js');
-                      toast.success('Command copied to clipboard!');
-                    }}
-                  >
-                    Copy Command
-                  </button>
-                </div>
-              </div>
-
-              <div style={{ padding: '14px', background: 'rgba(59, 130, 246, 0.1)', borderRadius: '10px', border: '1px solid rgba(59, 130, 246, 0.2)' }}>
-                <h4 style={{ fontSize: '0.95rem', fontWeight: 600, color: '#60a5fa', marginBottom: '6px' }}>⚡ Want to test right now before running the Node daemon?</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                  Click the button below to simulate an OS print job arriving from the local Windows Spooler queue. Watch your table update and stock deduct instantly!
-                </p>
-                <button className="btn btn-primary" onClick={simulateSpoolerJob} style={{ width: '100%', fontWeight: 700 }}>
-                  <Terminal size={18} /> Simulate OS Spooler Job Arrival
-                </button>
-              </div>
-
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '10px' }}>
-                <button className="btn btn-secondary" onClick={() => setSpoolerModalOpen(false)}>Got it, Close</button>
-              </div>
-            </div>
+// ── Resolve Modal ─────────────────────────────────────────────
+function ResolveModal({ log, resolveSize, setResolveSize, resolveMode, setResolveMode, resolving, onResolve, onClose }) {
+  return (
+    <div className="ph-modal-overlay" onClick={() => !resolving && onClose()}>
+      <div className="ph-modal glass-panel" onClick={e => e.stopPropagation()}>
+        <div className="ph-modal-header">
+          <h3><AlertTriangle size={17} /> Resolve Print Job</h3>
+          <button className="ph-modal-close" onClick={onClose} disabled={resolving}><X size={16} /></button>
+        </div>
+        <p className="ph-modal-sub">
+          The spooler could not determine the variant for <strong>{log.job_name}</strong>.<br />
+          {log.review_note && <span className="ph-resolve-note">{log.review_note}</span>}
+        </p>
+        <div className="ph-resolve-fields">
+          <div className="ph-setup-field">
+            <label>Correct Paper Size</label>
+            <select className="input-field" value={resolveSize} onChange={e => setResolveSize(e.target.value)}>
+              <option value="A4">A4</option>
+              <option value="A3">A3</option>
+              <option value="A5">A5</option>
+            </select>
+          </div>
+          <div className="ph-setup-field">
+            <label>Correct Color Mode</label>
+            <select className="input-field" value={resolveMode} onChange={e => setResolveMode(e.target.value)}>
+              <option value="B&W">B&amp;W</option>
+              <option value="Color">Color</option>
+            </select>
           </div>
         </div>
-      )}
+        <div className="ph-modal-actions">
+          <button className="btn btn-secondary" onClick={onClose} disabled={resolving}>Cancel</button>
+          <button className="btn btn-primary" onClick={onResolve} disabled={resolving}>
+            <Check size={15} /> {resolving ? 'Resolving…' : 'Confirm & Fix Stock'}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
