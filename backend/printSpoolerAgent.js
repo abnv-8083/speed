@@ -219,6 +219,16 @@ async function syncJobToAPI(job) {
   }
 }
 
+// ── Send heartbeat to API ─────────────────────────────────────
+// Called every 4 s so the frontend can show "Connected" status
+async function sendHeartbeat() {
+  try {
+    await apiRequest('POST', '/api/agent/heartbeat');
+  } catch {
+    // Non-fatal — just means the API is temporarily unreachable
+  }
+}
+
 // ── Poll Windows Print Spooler via PowerShell ─────────────────
 function pollPrintQueue() {
   const ps = `Get-WmiObject -Class Win32_PrintJob | ` +
@@ -262,7 +272,9 @@ function scheduleConfigReload() {
     await loadPrinterConfigs();
     scheduleConfigReload();
     setInterval(pollPrintQueue, POLL_INTERVAL);
-    pollPrintQueue();   // run immediately on start
+    setInterval(sendHeartbeat, 4000);   // keep-alive ping every 4 s
+    pollPrintQueue();
+    sendHeartbeat();                    // ping immediately on start
     console.log(`🟢  Spooler agent running — polling every ${POLL_INTERVAL / 1000}s\n`);
   } catch (err) {
     console.error('❌  Fatal startup error:', err.message);

@@ -99,6 +99,12 @@ export const api = {
   upsertPrinterConfig: (body)  => request('POST',   '/api/printer-configs', body),
   deletePrinterConfig: (id)    => request('DELETE', `/api/printer-configs/${id}`),
 
+  // ── Agent (Spooler) ──────────────────────────────────────────
+  getAgentStatus:   ()     => request('GET',  '/api/agent/status'),
+  sendHeartbeat:    ()     => request('POST', '/api/agent/heartbeat'),
+  downloadStartBat: ()     => `${BASE_URL}/api/agent/download/start`,
+  downloadInstallBat: ()   => `${BASE_URL}/api/agent/download/install`,
+
   // ── Vault (Password Manager) ─────────────────────────────────
   getVault:    (device_id)     => request('GET',  `/api/vault?device_id=${encodeURIComponent(device_id)}`),
   upsertVault: (body)          => request('POST', '/api/vault', body),

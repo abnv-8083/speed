@@ -16,6 +16,7 @@ const printLogRoutes      = require('./routes/printLogs');
 const printerConfigRoutes = require('./routes/printerConfigs');
 const vaultRoutes         = require('./routes/vault');
 const cvSaveRoutes        = require('./routes/cvSaves');
+const agentRoutes         = require('./routes/agent');
 
 const app = express();
 
@@ -27,15 +28,16 @@ app.use(cors({
 app.use(express.json());
 
 // ── Routes ────────────────────────────────────────────────────
-app.use('/api/auth',           authRoutes);
-app.use('/api/products',      productRoutes);
-app.use('/api/invoices',      invoiceRoutes);
-app.use('/api/loans',         loanRoutes);
-app.use('/api/loan-payments', loanPaymentRoutes);
-app.use('/api/print-logs',    printLogRoutes);
+app.use('/api/auth',            authRoutes);
+app.use('/api/products',        productRoutes);
+app.use('/api/invoices',        invoiceRoutes);
+app.use('/api/loans',           loanRoutes);
+app.use('/api/loan-payments',   loanPaymentRoutes);
+app.use('/api/print-logs',      printLogRoutes);
 app.use('/api/printer-configs', printerConfigRoutes);
-app.use('/api/vault',         vaultRoutes);
-app.use('/api/cv-saves',      cvSaveRoutes);
+app.use('/api/vault',           vaultRoutes);
+app.use('/api/cv-saves',        cvSaveRoutes);
+app.use('/api/agent',           agentRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

@@ -626,3 +626,178 @@
   .ph-history-controls { flex-direction: column; align-items: flex-start; }
   .ph-search-box { width: 100%; }
 }
+
+/* ── Agent Status Pill ────────────────────────────────────────── */
+.ph-agent-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.35rem 0.85rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  border: 1px solid transparent;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.ph-agent-connected {
+  background: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+.ph-agent-disconnected {
+  background: rgba(248, 113, 113, 0.1);
+  color: #f87171;
+  border-color: rgba(248, 113, 113, 0.25);
+}
+
+.ph-agent-unknown {
+  background: rgba(100, 116, 139, 0.1);
+  color: var(--text-muted);
+  border-color: var(--border);
+}
+
+.ph-agent-age {
+  font-weight: 400;
+  opacity: 0.75;
+  font-size: 0.72rem;
+}
+
+/* ── Agent Card (Printer Setup tab) ──────────────────────────── */
+.ph-agent-card {
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+  padding: 1.25rem 1.5rem;
+}
+
+.ph-agent-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.ph-agent-card-title {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  color: var(--primary);
+}
+
+.ph-agent-card-title strong {
+  display: block;
+  color: var(--text);
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+
+.ph-agent-card-title p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin: 0;
+}
+
+/* Download rows */
+.ph-agent-downloads {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  border-top: 1px solid var(--border);
+  padding-top: 1rem;
+}
+
+.ph-agent-download-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.65rem 0.9rem;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  flex-wrap: wrap;
+}
+
+.ph-agent-dl-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.ph-agent-dl-name {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--text);
+  font-family: 'Courier New', monospace;
+}
+
+.ph-agent-dl-desc {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.ph-btn-download {
+  background: rgba(139, 92, 246, 0.1);
+  color: var(--primary);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  flex-shrink: 0;
+}
+
+.ph-btn-download:hover {
+  background: rgba(139, 92, 246, 0.2);
+  border-color: var(--primary);
+}
+
+/* Setup steps */
+.ph-agent-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  border-top: 1px solid var(--border);
+  padding-top: 0.85rem;
+}
+
+.ph-agent-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+.ph-agent-step span:first-child {
+  flex-shrink: 0;
+  width: 20px;
+  height: 20px;
+  background: rgba(139, 92, 246, 0.15);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.ph-agent-step code {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 0.05rem 0.35rem;
+  font-size: 0.75rem;
+  font-family: 'Courier New', monospace;
+  color: var(--primary);
+}
+
+@media (max-width: 600px) {
+  .ph-agent-card-header { flex-direction: column; }
+  .ph-agent-download-item { flex-direction: column; align-items: flex-start; }
+  .ph-btn-download { width: 100%; justify-content: center; }
+}

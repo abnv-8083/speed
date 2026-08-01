@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import {
   Printer, Search, RefreshCw, Plus, AlertTriangle, Check,
-  Terminal, Package, Settings, ChevronDown, X, Trash2,
+  Terminal, Package, Settings, X, Trash2, Download,
+  Wifi, WifiOff, Clock,
 } from 'lucide-react';
 import { api } from '../../api';
 import { useToast } from '../../components/ToastContext';
@@ -70,7 +71,25 @@ export default function PrintingHistory() {
   const [printerNotes, setPrinterNotes] = useState('');
   const [savingPrinter, setSavingPrinter] = useState(false);
 
+  // Agent connection status
+  const [agentStatus, setAgentStatus]   = useState(null); // null = loading, { connected, last_seen }
+
   useEffect(() => { fetchAll(); }, []);
+
+  // Poll agent status every 10 s
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const s = await api.getAgentStatus();
+        setAgentStatus(s);
+      } catch {
+        setAgentStatus({ connected: false, last_seen: null });
+      }
+    };
+    checkStatus();
+    const iv = setInterval(checkStatus, 10000);
+    return () => clearInterval(iv);
+  }, []);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -260,6 +279,9 @@ export default function PrintingHistory() {
           </div>
         </div>
         <div className="ph-header-right">
+          {/* Agent connection status */}
+          <AgentStatusPill status={agentStatus} />
+
           {reviewCount > 0 && (
             <button className="ph-review-alert" onClick={() => { setActiveTab('Print History'); setShowReviewOnly(true); }}>
               <AlertTriangle size={15} /> {reviewCount} job{reviewCount !== 1 ? 's' : ''} need review
@@ -295,7 +317,7 @@ export default function PrintingHistory() {
         {activeTab === 'Stock Overview'  && <StockOverview variants={VARIANTS} getStock={getStock} loading={loading} />}
         {activeTab === 'Log a Job'       && <LogAJob variants={VARIANTS} selectedVariant={selectedVariant} setSelectedVariant={setSelectedVariant} jobName={jobName} setJobName={setJobName} quantity={quantity} setQuantity={setQuantity} submitting={submitting} handleLogJob={handleLogJob} getStock={getStock} />}
         {activeTab === 'Print History'   && <PrintHistoryTab logs={paginatedLogs} allLogs={filteredLogs} searchTerm={searchTerm} setSearchTerm={setSearchTerm} filterSize={filterSize} setFilterSize={setFilterSize} filterColor={filterColor} setFilterColor={setFilterColor} showReviewOnly={showReviewOnly} setShowReviewOnly={setShowReviewOnly} reviewCount={reviewCount} currentPage={currentPage} setCurrentPage={setCurrentPage} totalPages={totalPages} PER_PAGE={PER_PAGE} openResolve={openResolve} />}
-        {activeTab === 'Printer Setup'   && <PrinterSetup configs={printerConfigs} printerName={printerName} setPrinterName={setPrinterName} printerSize={printerSize} setPrinterSize={setPrinterSize} printerMode={printerMode} setPrinterMode={setPrinterMode} printerNotes={printerNotes} setPrinterNotes={setPrinterNotes} saving={savingPrinter} onSave={handleSavePrinter} onDelete={handleDeletePrinter} />}
+        {activeTab === 'Printer Setup'   && <PrinterSetup configs={printerConfigs} printerName={printerName} setPrinterName={setPrinterName} printerSize={printerSize} setPrinterSize={setPrinterSize} printerMode={printerMode} setPrinterMode={setPrinterMode} printerNotes={printerNotes} setPrinterNotes={setPrinterNotes} saving={savingPrinter} onSave={handleSavePrinter} onDelete={handleDeletePrinter} agentStatus={agentStatus} />}
       </div>
 
       {/* ── Replenish modal ── */}
@@ -304,6 +326,34 @@ export default function PrintingHistory() {
       {/* ── Resolve modal ── */}
       {resolveLog && <ResolveModal log={resolveLog} resolveSize={resolveSize} setResolveSize={setResolveSize} resolveMode={resolveMode} setResolveMode={setResolveMode} resolving={resolving} onResolve={handleResolve} onClose={() => setResolveLog(null)} />}
     </div>
+  );
+}
+
+// ── Agent Status Pill ────────────────────────────────────────
+function AgentStatusPill({ status }) {
+  if (!status) return (
+    <span className="ph-agent-pill ph-agent-unknown">
+      <Clock size={13} /> Checking…
+    </span>
+  );
+
+  if (status.connected) {
+    const secs = Math.round((Date.now() - new Date(status.last_seen).getTime()) / 1000);
+    return (
+      <span className="ph-agent-pill ph-agent-connected">
+        <Wifi size={13} /> Agent Connected <span className="ph-agent-age">{secs}s ago</span>
+      </span>
+    );
+  }
+
+  const lastSeen = status.last_seen
+    ? new Date(status.last_seen).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+    : 'Never';
+
+  return (
+    <span className="ph-agent-pill ph-agent-disconnected">
+      <WifiOff size={13} /> Agent Offline <span className="ph-agent-age">last: {lastSeen}</span>
+    </span>
   );
 }
 
@@ -477,14 +527,65 @@ function PrintHistoryTab({ logs, allLogs, searchTerm, setSearchTerm, filterSize,
 }
 
 // ── Printer Setup Tab ─────────────────────────────────────────
-function PrinterSetup({ configs, printerName, setPrinterName, printerSize, setPrinterSize, printerMode, setPrinterMode, printerNotes, setPrinterNotes, saving, onSave, onDelete }) {
+function PrinterSetup({ configs, printerName, setPrinterName, printerSize, setPrinterSize, printerMode, setPrinterMode, printerNotes, setPrinterNotes, saving, onSave, onDelete, agentStatus }) {
+  const handleDownload = (url, filename) => {
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    a.click();
+  };
+
   return (
     <div className="ph-setup-root">
-      <div className="ph-setup-explain glass-panel">
-        <Terminal size={18} />
-        <div>
-          <strong>Why set up printers?</strong>
-          <p>The OS Print Spooler agent uses this mapping to automatically assign the correct paper variant (size + color mode) to each job. Without a mapping, jobs are flagged as "Needs Review".</p>
+
+      {/* ── Agent download + status card ── */}
+      <div className="ph-agent-card glass-panel">
+        <div className="ph-agent-card-header">
+          <div className="ph-agent-card-title">
+            <Terminal size={18} />
+            <div>
+              <strong>OS Print Spooler Agent</strong>
+              <p>Run this on the Windows PC connected to your printers to auto-detect print jobs.</p>
+            </div>
+          </div>
+          <div className="ph-agent-card-status">
+            <AgentStatusPill status={agentStatus} />
+          </div>
+        </div>
+
+        <div className="ph-agent-downloads">
+          <div className="ph-agent-download-item">
+            <div className="ph-agent-dl-info">
+              <span className="ph-agent-dl-name">StartSpoolerAgent.bat</span>
+              <span className="ph-agent-dl-desc">Double-click to run the agent manually. Keep the window open.</span>
+            </div>
+            <button
+              className="ph-btn ph-btn-download"
+              onClick={() => handleDownload(api.downloadStartBat(), 'StartSpoolerAgent.bat')}
+            >
+              <Download size={14} /> Download
+            </button>
+          </div>
+
+          <div className="ph-agent-download-item">
+            <div className="ph-agent-dl-info">
+              <span className="ph-agent-dl-name">InstallSpoolerAgent.bat</span>
+              <span className="ph-agent-dl-desc">Run as Administrator once — registers the agent to auto-start with Windows.</span>
+            </div>
+            <button
+              className="ph-btn ph-btn-download"
+              onClick={() => handleDownload(api.downloadInstallBat(), 'InstallSpoolerAgent.bat')}
+            >
+              <Download size={14} /> Download
+            </button>
+          </div>
+        </div>
+
+        <div className="ph-agent-steps">
+          <span className="ph-agent-step"><span>1</span> Download both files above to the Windows PC with the printer</span>
+          <span className="ph-agent-step"><span>2</span> Edit <code>.env</code> in the project folder — set <code>API_URL</code> to your backend URL</span>
+          <span className="ph-agent-step"><span>3</span> Run <code>InstallSpoolerAgent.bat</code> as Administrator (auto-starts on login)</span>
+          <span className="ph-agent-step"><span>4</span> The status pill above will turn green when the agent connects</span>
         </div>
       </div>
 
