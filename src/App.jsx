@@ -14,6 +14,7 @@ import Invoices from './pages/billing/Invoices';
 import SalesReport from './pages/billing/SalesReport';
 import CVGenerator from './pages/cv/CVGenerator';
 import SavedCVs from './pages/cv/SavedCVs';
+import CVLayout from './pages/cv/CVLayout';
 import ToolsPortal from './pages/tools/ToolsPortal';
 import PasswordManager from './pages/passwords/PasswordManager';
 import PrintingHistory from './pages/printing/PrintingHistory';
@@ -44,8 +45,10 @@ function App() {
               
               <Route path="/financial" element={<Financial />} />
               <Route path="/financial/loan/:id" element={<LoanDetails />} />
-              <Route path="/cv" element={<CVGenerator />} />
-              <Route path="/cv/saved" element={<SavedCVs />} />
+              <Route path="/cv" element={<CVLayout />}>
+                <Route index element={<CVGenerator />} />
+                <Route path="saved" element={<SavedCVs />} />
+              </Route>
               <Route path="/tools" element={<ToolsPortal />} />
               <Route path="/passwords" element={<PasswordManager />} />
               <Route path="/printing" element={<PrintingLayout />}>

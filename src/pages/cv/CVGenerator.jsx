@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  ArrowLeft, Download, Eye, Edit3, ChevronRight,
-  Save, FolderOpen, Trash2, Check, X, Clock, FileText, Loader
+  Download, Eye, Edit3, ChevronRight,
+  Save, FolderOpen, Trash2, Check, X, Clock, FileText, Loader, Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CVEditor from './CVEditor';
@@ -231,56 +231,55 @@ export default function CVGenerator() {
 
   return (
     <div className="cvgen-layout">
-      {/* ── Header ── */}
-      <header className="cvgen-header glass-panel">
-        <button className="btn-icon" onClick={() => navigate('/home')}>
-          <ArrowLeft size={20} />
-        </button>
-        <div className="cvgen-header-title">
-          <span className="cvgen-logo">CV Generator</span>
-          <div className="cvgen-breadcrumb">
-            <span className={step === 'template' ? 'active' : 'done'}>Template</span>
-            <ChevronRight size={14} />
-            <span className={step === 'edit' ? 'active' : step === 'preview' ? 'done' : ''}>Edit</span>
-            <ChevronRight size={14} />
-            <span className={step === 'preview' ? 'active' : ''}>Preview</span>
-          </div>
+
+      {/* ── Slim action bar (no back button — uses global header) ── */}
+      <div className="cvgen-action-bar glass-panel">
+        <div className="cvgen-breadcrumb">
+          <span className={step === 'template' ? 'active' : 'done'}>
+            {step !== 'template' ? <Check size={12} /> : null} Template
+          </span>
+          <ChevronRight size={13} />
+          <span className={step === 'edit' ? 'active' : step === 'preview' ? 'done' : ''}>
+            {step === 'preview' ? <Check size={12} /> : null} Edit
+          </span>
+          <ChevronRight size={13} />
+          <span className={step === 'preview' ? 'active' : ''}>Preview</span>
         </div>
-        <div className="cvgen-header-actions">
+
+        <div className="cvgen-action-bar-right">
           {step !== 'template' && (
             <>
-              <button className="btn btn-secondary" onClick={() => setStep(step === 'preview' ? 'edit' : 'template')}>
-                <Edit3 size={16} /> {step === 'preview' ? 'Edit' : 'Templates'}
+              <button className="cvgen-step-btn" onClick={() => setStep(step === 'preview' ? 'edit' : 'template')}>
+                <Edit3 size={15} /> {step === 'preview' ? 'Back to Edit' : 'Change Template'}
               </button>
-              <button className="btn btn-save-draft" onClick={() => setShowSaveModal(true)}>
-                <Save size={16} /> {currentSaveId ? 'Update Save' : 'Save Draft'}
+              <button className="btn-save-draft" onClick={() => setShowSaveModal(true)}>
+                <Save size={15} /> {currentSaveId ? 'Update' : 'Save Draft'}
               </button>
               {step === 'edit' && (
                 <button className="btn btn-primary" onClick={() => setStep('preview')}>
-                  <Eye size={16} /> Preview
+                  <Eye size={15} /> Preview
                 </button>
               )}
               {step === 'preview' && (
                 <button className="btn btn-accent" onClick={handleDownloadPDF}>
-                  <Download size={16} /> Save as PDF
+                  <Download size={15} /> Download PDF
                 </button>
               )}
             </>
           )}
+          {step === 'template' && (
+            <button className="btn btn-secondary" onClick={() => navigate('/cv/saved')}>
+              <FolderOpen size={15} /> View Saved CVs
+            </button>
+          )}
         </div>
-      </header>
+      </div>
 
       {/* ── Content ── */}
       <main className="cvgen-main">
         {step === 'template' && (
           <>
-            <Latest5Panel
-              saves={saves}
-              loading={savesLoading}
-              onLoad={handleLoad}
-              onDelete={handleDeleteSave}
-              onViewAll={() => navigate('/cv/saved')}
-            />
+            <Latest5Panel saves={saves} loading={savesLoading} onLoad={handleLoad} onDelete={handleDeleteSave} onViewAll={() => navigate('/cv/saved')} />
             <TemplateSelector selected={selectedTemplate} onSelect={(tpl) => { setSelectedTemplate(tpl); setStep('edit'); }} />
           </>
         )}
@@ -290,13 +289,15 @@ export default function CVGenerator() {
         {step === 'preview' && (
           <div className="cvgen-preview-wrapper">
             <div className="cvgen-preview-actions-bar">
-              <span className="cvgen-preview-hint">✨ Your CV is ready! Download it as a PDF or save your progress.</span>
-              <button className="btn btn-save-draft" onClick={() => setShowSaveModal(true)}>
-                <Save size={16} /> {currentSaveId ? 'Update Save' : 'Save Draft'}
-              </button>
-              <button className="btn btn-accent" onClick={handleDownloadPDF}>
-                <Download size={16} /> Download PDF
-              </button>
+              <span className="cvgen-preview-hint">✨ Your CV is ready — download it as PDF or save your progress.</span>
+              <div style={{ display: 'flex', gap: '0.75rem' }}>
+                <button className="btn-save-draft" onClick={() => setShowSaveModal(true)}>
+                  <Save size={15} /> {currentSaveId ? 'Update Save' : 'Save Draft'}
+                </button>
+                <button className="btn btn-accent" onClick={handleDownloadPDF}>
+                  <Download size={15} /> Download PDF
+                </button>
+              </div>
             </div>
             <CVPreview ref={previewRef} cvData={cvData} template={selectedTemplate} />
           </div>

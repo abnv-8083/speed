@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  ArrowLeft, FileText, Download, Trash2, Edit3,
-  Clock, Search, X, AlertTriangle, FolderOpen, Loader, RefreshCw
+  FileText, Download, Trash2, Edit3,
+  Clock, Search, X, AlertTriangle, FolderOpen, Loader, RefreshCw, Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CVPreview from './CVPreview';
@@ -93,35 +93,21 @@ export default function SavedCVs() {
 
   return (
     <div className="saved-cvs-layout">
-      {/* ── Header ── */}
-      <header className="saved-cvs-header glass-panel">
-        <button className="btn-icon" onClick={() => navigate('/cv')}>
-          <ArrowLeft size={20} />
-        </button>
-        <div className="saved-cvs-header-title">
-          <FolderOpen size={20} className="saved-cvs-header-icon" />
-          <div>
-            <h2>Saved CVs</h2>
-            <span>{loading ? 'Loading…' : `${saves.length} ${saves.length === 1 ? 'CV' : 'CVs'} saved`}</span>
-          </div>
-        </div>
-        {/* Search */}
+
+      {/* ── Toolbar (no back button — uses global header) ── */}
+      <div className="saved-cvs-toolbar glass-panel">
         <div className="saved-cvs-search">
           <Search size={15} />
-          <input
-            placeholder="Search by name or template…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-          />
+          <input placeholder="Search by name or template…" value={search} onChange={e => setSearch(e.target.value)} />
           {search && <button onClick={() => setSearch('')}><X size={13}/></button>}
         </div>
         <button className="btn-icon" onClick={loadSaves} title="Refresh" disabled={loading}>
           <RefreshCw size={16} className={loading ? 'spin' : ''} />
         </button>
         <button className="btn btn-primary" onClick={() => navigate('/cv')}>
-          + New CV
+          <Plus size={16} /> New CV
         </button>
-      </header>
+      </div>
 
       <main className="saved-cvs-main">
         {/* Loading state */}
