@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { ArrowLeft, CheckCircle2, History, CreditCard, Banknote } from 'lucide-react';
+import {
+  ArrowLeft, CheckCircle2, CreditCard, Banknote,
+  TrendingUp, TrendingDown, Clock, AlertTriangle, Calendar,
+} from 'lucide-react';
 import { api } from '../api';
 import PremiumLoader from '../components/PremiumLoader';
 import { useToast } from '../components/ToastContext';
@@ -8,164 +11,170 @@ import { useModal } from '../components/ModalContext';
 import './LoanDetails.css';
 
 const LoanDetails = () => {
-  const { id } = useParams();
+  const { id }   = useParams();
   const navigate = useNavigate();
-  const toast = useToast();
-  const modal = useModal();
-  const [loan, setLoan] = useState(null);
+  const toast    = useToast();
+  const modal    = useModal();
+
+  const [loan, setLoan]     = useState(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchLoanDetails();
-  }, [id]);
+  useEffect(() => { fetchLoanDetails(); }, [id]);
 
   const fetchLoanDetails = async () => {
     setLoading(true);
-    try {
-      const data = await api.getLoan(id);
-      setLoan(data);
-    } catch (err) {
-      console.error('Failed to load loan:', err.message);
-    }
+    try { setLoan(await api.getLoan(id)); }
+    catch (err) { toast.error('Failed to load loan: ' + err.message); }
     setLoading(false);
   };
 
   const handlePayment = async () => {
     if (!loan) return;
-    
-    const amountPaid = Number(loan.amount_paid || 0);
-    const balance = loan.amount - amountPaid;
-    
-    const paymentStr = await modal.prompt(
-      'Make Payment',
-      `Enter payment amount (Remaining balance: ₹${balance.toFixed(2)})`,
-      '',
-      'number'
-    );
+    const balance    = loan.amount - Number(loan.amount_paid || 0);
+    const paymentStr = await modal.prompt('Make Payment', `Remaining: ₹${balance.toFixed(2)}. Enter amount:`, '', 'number');
     if (!paymentStr) return;
-    
     const paymentAmount = parseFloat(paymentStr);
-    if (isNaN(paymentAmount) || paymentAmount <= 0) {
-      toast.warning('Invalid payment amount');
-      return;
-    }
-
-    if (paymentAmount > balance) {
-      toast.warning('Payment cannot exceed remaining balance');
-      return;
-    }
-
-    const newAmountPaid = amountPaid + paymentAmount;
-    const newStatus = newAmountPaid >= loan.amount ? 'settled' : 'active';
-
+    if (isNaN(paymentAmount) || paymentAmount <= 0) { toast.warning('Invalid amount'); return; }
+    if (paymentAmount > balance) { toast.warning('Exceeds remaining balance'); return; }
+    const newAmountPaid = Number(loan.amount_paid || 0) + paymentAmount;
     try {
       await api.createLoanPayment({ loan_id: loan.id, amount: paymentAmount });
-      await api.updateLoan(loan.id, { amount_paid: newAmountPaid, status: newStatus });
+      await api.updateLoan(loan.id, { amount_paid: newAmountPaid, status: newAmountPaid >= loan.amount ? 'settled' : 'active' });
       fetchLoanDetails();
-    } catch (err) {
-      toast.error('Payment failed: ' + err.message);
-    }
+      toast.success('Payment recorded');
+    } catch (err) { toast.error('Payment failed: ' + err.message); }
   };
 
-  if (loading) {
-    return (
-      <div className="flex-center" style={{ minHeight: '100vh' }}>
-        <PremiumLoader text="Loading Details..." />
-      </div>
-    );
-  }
+  if (loading) return <div className="ld-loader"><PremiumLoader text="Loading Details…" /></div>;
 
-  if (!loan) {
-    return (
-      <div className="loan-details-layout">
-        <p className="text-center text-error">Loan not found.</p>
-        <button className="btn btn-secondary" onClick={() => navigate('/financial')}>Go Back</button>
-      </div>
-    );
-  }
+  if (!loan) return (
+    <div className="ld-root">
+      <p className="ld-not-found">Loan not found.</p>
+      <button className="btn btn-secondary" onClick={() => navigate('/financial')}>Go Back</button>
+    </div>
+  );
 
-  const balance = Number(loan.amount) - Number(loan.amount_paid || 0);
+  const balance  = Number(loan.amount) - Number(loan.amount_paid || 0);
+  const pct      = Math.min(100, (Number(loan.amount_paid || 0) / Number(loan.amount)) * 100);
+  const settled  = loan.status === 'settled';
+  const overdue  = !settled && loan.due_date && new Date(loan.due_date) < new Date();
+  const payments = [...(loan.loan_payments || [])].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
 
   return (
-    <div className="loan-details-layout animate-fade-in">
-      <header className="finance-header glass-panel">
-        <div className="header-left">
-          <button className="btn-icon" onClick={() => navigate('/financial')} title="Back to Finance Portal">
-            <ArrowLeft size={24} />
-          </button>
-          <h2>{loan.person_name}'s Loan Details</h2>
-        </div>
-        <div className="header-actions">
-          {(loan.status || 'active') === 'active' ? (
+    <div className="ld-root animate-fade-in">
+
+      {/* ── Back + actions ── */}
+      <div className="ld-topbar glass-panel">
+        <button className="ld-back-btn" onClick={() => navigate('/financial')}>
+          <ArrowLeft size={16} /> Financial Portal
+        </button>
+        <div className="ld-topbar-right">
+          {overdue && (
+            <span className="ld-overdue-pill"><AlertTriangle size={13} /> Overdue</span>
+          )}
+          {!settled ? (
             <button className="btn btn-primary" onClick={handlePayment}>
-              <CreditCard size={18} /> Make Payment
+              <CreditCard size={16} /> Make Payment
             </button>
           ) : (
-            <span className="status-badge status-good text-lg"><CheckCircle2 size={18} style={{marginRight:'0.5rem'}}/> Fully Settled</span>
+            <span className="ld-settled-pill"><CheckCircle2 size={14} /> Fully Settled</span>
           )}
         </div>
-      </header>
+      </div>
 
-      <main className="finance-main">
-        <div className="details-metrics-grid">
-          <div className="metric-card glass-panel">
-            <div className="metric-info">
-              <p className="metric-label">Total Amount</p>
-              <h3 className="metric-value">₹{Number(loan.amount).toFixed(2)}</h3>
-            </div>
-            <Banknote size={32} className="text-muted opacity-50" />
-          </div>
-
-          <div className="metric-card glass-panel">
-            <div className="metric-info">
-              <p className="metric-label">Amount Paid</p>
-              <h3 className="metric-value text-success">₹{Number(loan.amount_paid || 0).toFixed(2)}</h3>
-            </div>
-            <CheckCircle2 size={32} className="text-success opacity-50" />
-          </div>
-
-          <div className="metric-card glass-panel">
-            <div className="metric-info">
-              <p className="metric-label">Remaining Balance</p>
-              <h3 className="metric-value text-error">₹{balance.toFixed(2)}</h3>
-            </div>
-            <History size={32} className="text-error opacity-50" />
+      {/* ── Person header ── */}
+      <div className="ld-person-card glass-panel">
+        <div className="ld-person-avatar">{loan.person_name.charAt(0).toUpperCase()}</div>
+        <div className="ld-person-info">
+          <h2>{loan.person_name}</h2>
+          <div className="ld-person-meta">
+            {loan.loan_type === 'lent'
+              ? <span className="fin-badge fin-badge--lent"><TrendingUp size={12} /> You lent this money</span>
+              : <span className="fin-badge fin-badge--borrowed"><TrendingDown size={12} /> You borrowed this money</span>
+            }
+            <span className="ld-meta-date">
+              <Calendar size={12} />
+              {loan.due_date
+                ? `Due: ${new Date(loan.due_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`
+                : `Created: ${new Date(loan.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'long', year: 'numeric' })}`
+              }
+            </span>
           </div>
         </div>
+        <div className={`ld-status-chip ${settled ? 'ld-status-settled' : 'ld-status-active'}`}>
+          {settled ? 'Settled' : 'Active'}
+        </div>
+      </div>
 
-        <div className="payment-history-container glass-panel">
-          <div className="section-header">
-            <h3>Payment History</h3>
-            <span className="text-muted">Tracking all installments</span>
+      {/* ── Stats ── */}
+      <div className="ld-stats">
+        <div className="ld-stat glass-panel">
+          <div className="ld-stat-icon ld-stat-total"><Banknote size={20} /></div>
+          <div>
+            <span className="ld-stat-label">Total Amount</span>
+            <span className="ld-stat-value">₹{Number(loan.amount).toFixed(2)}</span>
           </div>
-          
-          <div className="history-timeline">
-            {(!loan.loan_payments || loan.loan_payments.length === 0) ? (
-              <div className="empty-history text-center text-muted">
-                <History size={48} className="opacity-20 mx-auto mb-4" />
-                <p>No payments recorded yet.</p>
-              </div>
-            ) : (
-              <div className="timeline-list">
-                {loan.loan_payments.sort((a,b) => new Date(b.created_at) - new Date(a.created_at)).map((payment, idx) => (
-                  <div key={payment.id} className="timeline-item animate-fade-in" style={{ animationDelay: `${idx * 0.1}s` }}>
-                    <div className="timeline-marker"></div>
-                    <div className="timeline-content">
-                      <div className="timeline-date">
-                        <span className="date">{new Date(payment.created_at).toLocaleDateString()}</span>
-                        <span className="time">{new Date(payment.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                      </div>
-                      <div className="timeline-amount text-success font-bold">
-                        +₹{Number(payment.amount).toFixed(2)}
-                      </div>
-                    </div>
+        </div>
+        <div className="ld-stat glass-panel">
+          <div className="ld-stat-icon ld-stat-paid"><CheckCircle2 size={20} /></div>
+          <div>
+            <span className="ld-stat-label">Amount Paid</span>
+            <span className="ld-stat-value ld-val-paid">₹{Number(loan.amount_paid || 0).toFixed(2)}</span>
+          </div>
+        </div>
+        <div className="ld-stat glass-panel">
+          <div className="ld-stat-icon ld-stat-balance"><Clock size={20} /></div>
+          <div>
+            <span className="ld-stat-label">Remaining Balance</span>
+            <span className={`ld-stat-value ${settled ? '' : 'ld-val-balance'}`}>₹{balance.toFixed(2)}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Progress ── */}
+      <div className="ld-progress-card glass-panel">
+        <div className="ld-progress-header">
+          <span className="ld-progress-label">Repayment Progress</span>
+          <span className="ld-progress-pct">{Math.round(pct)}%</span>
+        </div>
+        <div className="ld-progress-bar">
+          <div className="ld-progress-fill" style={{ width: `${pct}%` }} />
+        </div>
+        <div className="ld-progress-sub">
+          ₹{Number(loan.amount_paid || 0).toFixed(2)} paid of ₹{Number(loan.amount).toFixed(2)}
+        </div>
+      </div>
+
+      {/* ── Payment history ── */}
+      <div className="ld-history glass-panel">
+        <div className="ld-history-header">
+          <h3>Payment History</h3>
+          <span className="ld-history-count">{payments.length} payment{payments.length !== 1 ? 's' : ''}</span>
+        </div>
+
+        {payments.length === 0 ? (
+          <div className="ld-history-empty">
+            <Clock size={36} />
+            <p>No payments recorded yet.</p>
+          </div>
+        ) : (
+          <div className="ld-timeline">
+            {payments.map((p, idx) => (
+              <div key={p.id || idx} className="ld-timeline-item animate-fade-in" style={{ animationDelay: `${idx * 0.05}s` }}>
+                <div className="ld-tl-dot" />
+                <div className="ld-tl-content">
+                  <div className="ld-tl-left">
+                    <span className="ld-tl-date">{new Date(p.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
+                    <span className="ld-tl-time">{new Date(p.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                   </div>
-                ))}
+                  <span className="ld-tl-amount">+₹{Number(p.amount).toFixed(2)}</span>
+                </div>
               </div>
-            )}
+            ))}
           </div>
-        </div>
-      </main>
+        )}
+      </div>
+
     </div>
   );
 };
