@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Edit2, Trash2, Ban, Unlock, Search, Package, ChevronRight, Layers } from 'lucide-react';
+import { Plus, Edit2, Trash2, Ban, Unlock, Search, Package, ChevronRight, LayoutGrid, LayoutList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
 import Pagination from '../../components/Pagination';
@@ -23,6 +23,7 @@ const Products = () => {
   const [newProdStock, setNewProdStock]   = useState('');
   const [searchTerm, setSearchTerm]       = useState('');
   const [currentPage, setCurrentPage]     = useState(1);
+  const [viewMode, setViewMode]           = useState('list'); // 'list' | 'card'
   const ITEMS_PER_PAGE = 12;
 
   const filteredProducts = products.filter(p =>
@@ -134,6 +135,21 @@ const Products = () => {
                 className="prod-search-input"
               />
             </div>
+            {/* View toggle */}
+            <div className="prod-view-toggle">
+              <button
+                className={`prod-view-btn ${viewMode === 'list' ? 'prod-view-btn--active' : ''}`}
+                onClick={() => setViewMode('list')} title="List view"
+              >
+                <LayoutList size={16} />
+              </button>
+              <button
+                className={`prod-view-btn ${viewMode === 'card' ? 'prod-view-btn--active' : ''}`}
+                onClick={() => setViewMode('card')} title="Card view"
+              >
+                <LayoutGrid size={16} />
+              </button>
+            </div>
             <button className="btn btn-primary" onClick={() => setShowAddForm(!showAddForm)}>
               <Plus size={18} /> Add Product
             </button>
@@ -176,8 +192,8 @@ const Products = () => {
           </AppModal>
         )}
 
-        {/* Column labels */}
-        {!loading && filteredProducts.length > 0 && (
+        {/* Column labels — list view only */}
+        {!loading && filteredProducts.length > 0 && viewMode === 'list' && (
           <div className="prod-list-header">
             <span className="prod-col-identity">Product</span>
             <span className="prod-col-price">Price</span>
@@ -187,84 +203,143 @@ const Products = () => {
           </div>
         )}
 
-        {/* List */}
+        {/* List / Card */}
         {loading ? (
           <div style={{ padding: '3rem 0' }}>
             <PremiumLoader text="Loading Inventory..." />
           </div>
         ) : (
           <>
-            <div className="inventory-list">
-              {filteredProducts.length === 0 ? (
-                <div className="empty-inventory">
-                  <Package size={40} className="text-muted" />
-                  <p className="text-muted">No products found matching your search.</p>
-                </div>
-              ) : (
-                paginatedProducts.map(product => (
-                  <div
-                    key={product.id}
-                    className={`prod-row ${product.is_blocked ? 'prod-row-blocked' : ''}`}
-                    onClick={() => navigate(`/billing/products/${product.id}`)}
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={e => e.key === 'Enter' && navigate(`/billing/products/${product.id}`)}
-                    title="View product details"
-                  >
-                    {/* Identity: short ID + name */}
-                    <div className="prod-col-identity">
-                      <span className="prod-id-badge" title={product.id}>{shortId(product.id)}</span>
-                      <span className="prod-name" title={product.name}>{product.name}</span>
-                    </div>
-
-                    {/* Price */}
-                    <div className="prod-col-price">
-                      <span className="prod-price">₹{Number(product.price).toFixed(2)}</span>
-                      {product.cost_price > 0 && (
-                        <span className="prod-cost-price">Cost: ₹{Number(product.cost_price).toFixed(2)}</span>
-                      )}
-                    </div>
-
-                    {/* Stock */}
-                    <div className="prod-col-stock">
-                      <span className={`prod-stock-val ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
-                        {product.stock} <span className="stock-unit">units</span>
-                      </span>
-                    </div>
-
-                    {/* Status */}
-                    <div className="prod-col-status">
-                      {getStatusBadge(product)}
-                    </div>
-
-                    {/* Actions — stop propagation so row click doesn't fire */}
-                    <div className="prod-col-actions" onClick={e => e.stopPropagation()}>
-                      <button
-                        className={`prod-action-btn ${product.is_blocked ? 'action-success' : 'action-warning'}`}
-                        title={product.is_blocked ? 'Unblock' : 'Block'}
-                        onClick={e => handleToggleBlock(e, product.id, product.is_blocked)}
-                      >
-                        {product.is_blocked ? <Unlock size={14} /> : <Ban size={14} />}
-                      </button>
-                      <button
-                        className="prod-action-btn action-danger"
-                        title="Delete"
-                        onClick={e => handleDeleteProduct(e, product)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                      <button
-                        className="prod-action-btn action-primary"
-                        title="View Details"
-                        onClick={e => { e.stopPropagation(); navigate(`/billing/products/${product.id}`); }}
-                      >
-                        <ChevronRight size={14} />
-                      </button>
-                    </div>
+            {/* ── LIST VIEW ── */}
+            {viewMode === 'list' && (
+              <div className="inventory-list">
+                {filteredProducts.length === 0 ? (
+                  <div className="empty-inventory">
+                    <Package size={40} className="text-muted" />
+                    <p className="text-muted">No products found.</p>
                   </div>
-                ))
-              )}
-            </div>
+                ) : (
+                  paginatedProducts.map(product => (
+                    <div
+                      key={product.id}
+                      className={`prod-row ${product.is_blocked ? 'prod-row-blocked' : ''}`}
+                      onClick={() => navigate(`/billing/products/${product.id}`)}
+                      role="button" tabIndex={0}
+                      onKeyDown={e => e.key === 'Enter' && navigate(`/billing/products/${product.id}`)}
+                    >
+                      <div className="prod-col-identity">
+                        <span className="prod-id-badge" title={product.id}>{shortId(product.id)}</span>
+                        <span className="prod-name" title={product.name}>{product.name}</span>
+                      </div>
+                      <div className="prod-col-price">
+                        <span className="prod-price">₹{Number(product.price).toFixed(2)}</span>
+                        {product.cost_price > 0 && <span className="prod-cost-price">Cost: ₹{Number(product.cost_price).toFixed(2)}</span>}
+                      </div>
+                      <div className="prod-col-stock">
+                        <span className={`prod-stock-val ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
+                          {product.stock} <span className="stock-unit">units</span>
+                        </span>
+                      </div>
+                      <div className="prod-col-status">{getStatusBadge(product)}</div>
+                      <div className="prod-col-actions" onClick={e => e.stopPropagation()}>
+                        <button className={`prod-action-btn ${product.is_blocked ? 'action-success' : 'action-warning'}`}
+                          title={product.is_blocked ? 'Unblock' : 'Block'}
+                          onClick={e => handleToggleBlock(e, product.id, product.is_blocked)}>
+                          {product.is_blocked ? <Unlock size={14} /> : <Ban size={14} />}
+                        </button>
+                        <button className="prod-action-btn action-danger" title="Delete"
+                          onClick={e => handleDeleteProduct(e, product)}>
+                          <Trash2 size={14} />
+                        </button>
+                        <button className="prod-action-btn action-primary" title="View Details"
+                          onClick={e => { e.stopPropagation(); navigate(`/billing/products/${product.id}`); }}>
+                          <ChevronRight size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
+
+            {/* ── CARD VIEW ── */}
+            {viewMode === 'card' && (
+              <div className="inventory-card-grid">
+                {filteredProducts.length === 0 ? (
+                  <div className="empty-inventory" style={{ gridColumn: '1/-1' }}>
+                    <Package size={40} className="text-muted" />
+                    <p className="text-muted">No products found.</p>
+                  </div>
+                ) : (
+                  paginatedProducts.map(product => (
+                    <div
+                      key={product.id}
+                      className={`prod-card ${product.is_blocked ? 'prod-card--blocked' : ''}`}
+                      onClick={() => navigate(`/billing/products/${product.id}`)}
+                      role="button" tabIndex={0}
+                      onKeyDown={e => e.key === 'Enter' && navigate(`/billing/products/${product.id}`)}
+                    >
+                      {/* Card top bar color */}
+                      <div className={`prod-card-bar ${product.stock === 0 ? 'prod-card-bar--oos' : product.stock < 10 ? 'prod-card-bar--low' : 'prod-card-bar--ok'}`} />
+
+                      <div className="prod-card-body">
+                        {/* Icon + status */}
+                        <div className="prod-card-head">
+                          <div className="prod-card-icon">
+                            <Package size={22} />
+                          </div>
+                          {getStatusBadge(product)}
+                        </div>
+
+                        {/* Name */}
+                        <h4 className="prod-card-name" title={product.name}>{product.name}</h4>
+                        <span className="prod-card-id" title={product.id}>{shortId(product.id)}</span>
+
+                        {/* Prices */}
+                        <div className="prod-card-prices">
+                          <div className="prod-card-price-row">
+                            <span className="prod-card-price-label">Sell</span>
+                            <span className="prod-card-sell-price">₹{Number(product.price).toFixed(2)}</span>
+                          </div>
+                          {product.cost_price > 0 && (
+                            <div className="prod-card-price-row">
+                              <span className="prod-card-price-label">Cost</span>
+                              <span className="prod-card-cost-price">₹{Number(product.cost_price).toFixed(2)}</span>
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Stock */}
+                        <div className="prod-card-stock-row">
+                          <span className={`prod-card-stock ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
+                            {product.stock}
+                          </span>
+                          <span className="prod-card-stock-label">units in stock</span>
+                        </div>
+                      </div>
+
+                      {/* Actions */}
+                      <div className="prod-card-actions" onClick={e => e.stopPropagation()}>
+                        <button className={`prod-action-btn ${product.is_blocked ? 'action-success' : 'action-warning'}`}
+                          title={product.is_blocked ? 'Unblock' : 'Block'}
+                          onClick={e => handleToggleBlock(e, product.id, product.is_blocked)}>
+                          {product.is_blocked ? <Unlock size={13} /> : <Ban size={13} />}
+                        </button>
+                        <button className="prod-action-btn action-danger" title="Delete"
+                          onClick={e => handleDeleteProduct(e, product)}>
+                          <Trash2 size={13} />
+                        </button>
+                        <button className="prod-action-btn action-primary" title="View Details"
+                          onClick={e => { e.stopPropagation(); navigate(`/billing/products/${product.id}`); }}
+                          style={{ marginLeft: 'auto' }}>
+                          <ChevronRight size={13} />
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            )}
 
             <Pagination
               currentPage={currentPage}
