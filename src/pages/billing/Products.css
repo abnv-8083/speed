@@ -266,11 +266,12 @@
   background: var(--background);
   border: 1px solid var(--border);
   border-radius: 14px;
-  overflow: hidden;
+  overflow: visible;
   display: flex;
   flex-direction: column;
   cursor: pointer;
   transition: all 0.18s ease;
+  min-height: 220px;
 }
 
 .prod-card:hover {
@@ -281,7 +282,7 @@
 
 .prod-card--blocked { opacity: 0.5; }
 
-.prod-card-bar        { height: 4px; flex-shrink: 0; }
+.prod-card-bar        { height: 4px; flex-shrink: 0; border-radius: 14px 14px 0 0; }
 .prod-card-bar--ok    { background: var(--secondary); }
 .prod-card-bar--low   { background: #f59e0b; }
 .prod-card-bar--oos   { background: #f87171; }
@@ -350,6 +351,7 @@
   padding: 0.6rem 0.75rem;
   border-top: 1px solid var(--border);
   background: rgba(0,0,0,0.03);
+  border-radius: 0 0 14px 14px;
 }
 
 /* ── Responsive ───────────────────────────────────────────────────────── */
