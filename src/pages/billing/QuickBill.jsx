@@ -20,15 +20,21 @@ function isToday(billedDate) {
 // ── Quantity Modal ─────────────────────────────────────────────
 function QuantityModal({ product, onConfirm, onCancel, index, total }) {
   const [qty, setQty] = useState(1);
-  const inputRef = useRef(null);
+  const inputRef   = useRef(null);
+  const confirmRef = useRef(null);
 
   useEffect(() => {
-    setTimeout(() => inputRef.current?.select(), 50);
+    // Select the qty input first so user can type a number
+    setTimeout(() => {
+      inputRef.current?.select();
+    }, 50);
   }, []);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter') { e.preventDefault(); if (qty >= 1) onConfirm(qty); }
+    if (e.key === 'Enter')  { e.preventDefault(); if (qty >= 1) onConfirm(qty); }
     if (e.key === 'Escape') onCancel();
+    if (e.key === 'ArrowUp')   { e.preventDefault(); setQty(q => Math.min(product.stock || 9999, q + 1)); }
+    if (e.key === 'ArrowDown') { e.preventDefault(); setQty(q => Math.max(1, q - 1)); }
   };
 
   return (
@@ -39,7 +45,12 @@ function QuantityModal({ product, onConfirm, onCancel, index, total }) {
       footer={
         <>
           <button className="btn btn-secondary" onClick={onCancel}>Skip</button>
-          <button className="btn btn-primary" onClick={() => qty >= 1 && onConfirm(qty)} disabled={qty < 1}>
+          <button
+            ref={confirmRef}
+            className="btn btn-primary"
+            onClick={() => qty >= 1 && onConfirm(qty)}
+            disabled={qty < 1}
+          >
             <Check size={14} /> {index < total - 1 ? `Next (${index + 2}/${total})` : 'Add to Bill'}
           </button>
         </>
@@ -183,7 +194,8 @@ export default function QuickBill() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showDropdown, setShowDropdown] = useState(false);
   const [dropdownResults, setDropdownResults] = useState([]);
-  const [selectedProducts, setSelectedProducts] = useState([]); // products staged for qty entry
+  const [selectedProducts, setSelectedProducts] = useState([]);
+  const [highlightedIndex, setHighlightedIndex] = useState(0); // keyboard nav
   const searchRef = useRef(null);
   const dropdownRef = useRef(null);
 
@@ -237,6 +249,7 @@ export default function QuickBill() {
       .filter(p => p.name.toLowerCase().includes(q) || p.id.toString().includes(q))
       .slice(0, 10);
     setDropdownResults(results);
+    setHighlightedIndex(0); // reset highlight on new results
     setShowDropdown(results.length > 0);
   }, [searchQuery, products]);
 
@@ -263,23 +276,37 @@ export default function QuickBill() {
 
   const isSelected = (product) => selectedProducts.some(p => p.id === product.id);
 
-  // ── Keyboard: Ctrl+Enter to add selected, Enter to confirm ────
+  // ── Keyboard: Up/Down navigate, Ctrl+Enter select, Enter confirm ──
   const handleSearchKeyDown = (e) => {
     if (e.key === 'Escape') { setShowDropdown(false); setSearchQuery(''); return; }
 
-    // Ctrl+Enter — toggle top result into selection
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    if (showDropdown && e.key === 'ArrowDown') {
       e.preventDefault();
-      if (dropdownResults.length > 0) toggleSelect(dropdownResults[0]);
+      setHighlightedIndex(i => Math.min(i + 1, dropdownResults.length - 1));
       return;
     }
 
-    // Enter alone — if there are selected products, start qty flow
-    // If nothing selected but results exist, select first then start
+    if (showDropdown && e.key === 'ArrowUp') {
+      e.preventDefault();
+      setHighlightedIndex(i => Math.max(i - 1, 0));
+      return;
+    }
+
+    // Ctrl+Enter — toggle highlighted (or top) result into selection
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+      e.preventDefault();
+      const target = dropdownResults[highlightedIndex] ?? dropdownResults[0];
+      if (target && target.stock > 0) toggleSelect(target);
+      return;
+    }
+
+    // Enter alone — start qty flow with selected products, or highlighted item
     if (e.key === 'Enter') {
       e.preventDefault();
       const toProcess = selectedProducts.length > 0
         ? selectedProducts
+        : dropdownResults[highlightedIndex]
+        ? [dropdownResults[highlightedIndex]]
         : dropdownResults.length > 0
         ? [dropdownResults[0]]
         : [];
@@ -446,13 +473,14 @@ export default function QuickBill() {
           {/* Dropdown */}
           {showDropdown && (
             <div className="qb-dropdown" ref={dropdownRef}>
-              {dropdownResults.map(product => {
+              {dropdownResults.map((product, idx) => {
                 const sel = isSelected(product);
                 const oos = product.stock <= 0;
                 return (
                   <div
                     key={product.id}
-                    className={`qb-dropdown-item ${sel ? 'qb-dropdown-item--selected' : ''} ${oos ? 'qb-dropdown-item--oos' : ''}`}
+                    className={`qb-dropdown-item ${sel ? 'qb-dropdown-item--selected' : ''} ${oos ? 'qb-dropdown-item--oos' : ''} ${idx === highlightedIndex ? 'qb-dropdown-item--highlighted' : ''}`}
+                    onMouseEnter={() => setHighlightedIndex(idx)}
                     onClick={() => !oos && toggleSelect(product)}
                   >
                     <div className="qb-drop-check">
@@ -469,7 +497,7 @@ export default function QuickBill() {
                 );
               })}
               <div className="qb-dropdown-hint">
-                <kbd>Ctrl+Enter</kbd> to multi-select · <kbd>Enter</kbd> to confirm
+                <kbd>↑↓</kbd> navigate · <kbd>Ctrl+Enter</kbd> select · <kbd>Enter</kbd> confirm
               </div>
             </div>
           )}

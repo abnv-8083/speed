@@ -79,7 +79,6 @@
   color: var(--text-muted);
   font-size: 0.875rem;
 }
-
 .qb-search-clear {
   position: absolute;
   right: 0.85rem;
@@ -181,6 +180,11 @@
 
 .qb-dropdown-item--selected {
   background: rgba(139, 92, 246, 0.08) !important;
+}
+
+.qb-dropdown-item--highlighted {
+  background: rgba(139, 92, 246, 0.1) !important;
+  outline: none;
 }
 
 .qb-dropdown-item--oos {
