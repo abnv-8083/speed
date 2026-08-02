@@ -17,6 +17,7 @@ const printerConfigRoutes = require('./routes/printerConfigs');
 const vaultRoutes         = require('./routes/vault');
 const cvSaveRoutes        = require('./routes/cvSaves');
 const agentRoutes         = require('./routes/agent');
+const quickBillRoutes     = require('./routes/quickBill');
 
 const app = express();
 
@@ -38,6 +39,7 @@ app.use('/api/printer-configs', printerConfigRoutes);
 app.use('/api/vault',           vaultRoutes);
 app.use('/api/cv-saves',        cvSaveRoutes);
 app.use('/api/agent',           agentRoutes);
+app.use('/api/quick-bill',      quickBillRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

@@ -99,6 +99,19 @@ export const api = {
   upsertPrinterConfig: (body)  => request('POST',   '/api/printer-configs', body),
   deletePrinterConfig: (id)    => request('DELETE', `/api/printer-configs/${id}`),
 
+  // ── Quick Bill ───────────────────────────────────────────────
+  getQuickBills: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request('GET', `/api/quick-bill${qs ? `?${qs}` : ''}`);
+  },
+  getQuickBillSummary: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request('GET', `/api/quick-bill/summary${qs ? `?${qs}` : ''}`);
+  },
+  createQuickBill:  (body)  => request('POST',   '/api/quick-bill',       body),
+  updateQuickBill:  (id, body) => request('PATCH', `/api/quick-bill/${id}`, body),
+  deleteQuickBill:  (id)    => request('DELETE', `/api/quick-bill/${id}`),
+
   // ── Agent (Spooler) ──────────────────────────────────────────
   getAgentStatus:   ()     => request('GET',  '/api/agent/status'),
   sendHeartbeat:    ()     => request('POST', '/api/agent/heartbeat'),
