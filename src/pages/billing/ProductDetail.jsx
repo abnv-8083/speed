@@ -23,6 +23,7 @@ const ProductDetail = () => {
   // ── Edit product modal state ─────────────────────────────────
   const [showEditModal, setShowEditModal] = useState(false);
   const [editName, setEditName]           = useState('');
+  const [editCost, setEditCost]           = useState('');
   const [editPrice, setEditPrice]         = useState('');
   const [editSaving, setEditSaving]       = useState(false);
 
@@ -51,6 +52,7 @@ const ProductDetail = () => {
   // ── Open edit modal pre-filled ───────────────────────────────
   const openEditModal = () => {
     setEditName(product.name);
+    setEditCost(String(product.cost_price || 0));
     setEditPrice(String(product.price));
     setShowEditModal(true);
   };
@@ -62,8 +64,9 @@ const ProductDetail = () => {
     setEditSaving(true);
     try {
       const updated = await api.updateProduct(id, {
-        name:  editName.trim(),
-        price: parseFloat(editPrice),
+        name:       editName.trim(),
+        cost_price: parseFloat(editCost) || 0,
+        price:      parseFloat(editPrice),
       });
       setProduct(prev => ({ ...prev, ...updated }));
       setShowEditModal(false);
@@ -191,8 +194,30 @@ const ProductDetail = () => {
 
           <div className="pd-stats-grid">
             <div className="pd-stat">
-              <span className="pd-stat-label">Price</span>
+              <span className="pd-stat-label">Selling Price</span>
               <span className="pd-stat-value pd-stat-price">₹{Number(product.price).toFixed(2)}</span>
+            </div>
+            <div className="pd-stat">
+              <span className="pd-stat-label">Cost Price</span>
+              <span className="pd-stat-value" style={{ color: product.cost_price > 0 ? '#f87171' : 'var(--text-muted)' }}>
+                {product.cost_price > 0 ? `₹${Number(product.cost_price).toFixed(2)}` : '—'}
+              </span>
+            </div>
+            <div className="pd-stat">
+              <span className="pd-stat-label">Margin</span>
+              <span className="pd-stat-value" style={{ color: '#34d399' }}>
+                {product.cost_price > 0
+                  ? `${(((product.price - product.cost_price) / product.price) * 100).toFixed(1)}%`
+                  : '—'}
+              </span>
+            </div>
+            <div className="pd-stat">
+              <span className="pd-stat-label">Profit / Unit</span>
+              <span className="pd-stat-value" style={{ color: '#34d399' }}>
+                {product.cost_price > 0
+                  ? `₹${(product.price - product.cost_price).toFixed(2)}`
+                  : '—'}
+              </span>
             </div>
             <div className="pd-stat">
               <span className="pd-stat-label">Stock Level</span>
@@ -242,7 +267,12 @@ const ProductDetail = () => {
               onChange={e => setEditName(e.target.value)} required autoFocus disabled={editSaving} />
           </div>
           <div className="pd-form-field">
-            <label>Price (₹)</label>
+            <label>Cost Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you paid</span></label>
+            <input type="number" className="input-field" value={editCost}
+              onChange={e => setEditCost(e.target.value)} min="0" step="0.01" disabled={editSaving} />
+          </div>
+          <div className="pd-form-field">
+            <label>Selling Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you charge</span></label>
             <input type="number" className="input-field" value={editPrice}
               onChange={e => setEditPrice(e.target.value)} required min="0" step="0.01" disabled={editSaving} />
           </div>

@@ -18,6 +18,7 @@ const Products = () => {
   const [loading, setLoading]             = useState(true);
   const [showAddForm, setShowAddForm]     = useState(false);
   const [newProdName, setNewProdName]     = useState('');
+  const [newProdCost, setNewProdCost]     = useState('');
   const [newProdPrice, setNewProdPrice]   = useState('');
   const [newProdStock, setNewProdStock]   = useState('');
   const [searchTerm, setSearchTerm]       = useState('');
@@ -52,13 +53,14 @@ const Products = () => {
     if (!newProdName || !newProdPrice || !newProdStock) return;
     try {
       const data = await api.createProduct({
-        name:     newProdName,
-        price:    parseFloat(newProdPrice),
-        stock:    parseInt(newProdStock),
-        is_print: false,
+        name:       newProdName,
+        cost_price: parseFloat(newProdCost) || 0,
+        price:      parseFloat(newProdPrice),
+        stock:      parseInt(newProdStock),
+        is_print:   false,
       });
       setProducts([...products, data]);
-      setNewProdName(''); setNewProdPrice(''); setNewProdStock('');
+      setNewProdName(''); setNewProdCost(''); setNewProdPrice(''); setNewProdStock('');
       setShowAddForm(false);
       toast.success('Product added successfully');
     } catch (err) {
@@ -157,7 +159,12 @@ const Products = () => {
                 onChange={e => setNewProdName(e.target.value)} required placeholder="e.g. A4 Paper Bundle" autoFocus />
             </div>
             <div className="form-group">
-              <label>Price (₹)</label>
+              <label>Cost Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you paid</span></label>
+              <input type="number" className="input-field" value={newProdCost}
+                onChange={e => setNewProdCost(e.target.value)} min="0" step="0.01" placeholder="0.00" />
+            </div>
+            <div className="form-group">
+              <label>Selling Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you charge</span></label>
               <input type="number" className="input-field" value={newProdPrice}
                 onChange={e => setNewProdPrice(e.target.value)} required min="0" step="0.01" placeholder="0.00" />
             </div>
@@ -213,6 +220,9 @@ const Products = () => {
                     {/* Price */}
                     <div className="prod-col-price">
                       <span className="prod-price">₹{Number(product.price).toFixed(2)}</span>
+                      {product.cost_price > 0 && (
+                        <span className="prod-cost-price">Cost: ₹{Number(product.cost_price).toFixed(2)}</span>
+                      )}
                     </div>
 
                     {/* Stock */}
