@@ -99,6 +99,16 @@ export const api = {
   upsertPrinterConfig: (body)  => request('POST',   '/api/printer-configs', body),
   deletePrinterConfig: (id)    => request('DELETE', `/api/printer-configs/${id}`),
 
+  // ── Expenses ─────────────────────────────────────────────────
+  getExpenses: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request('GET', `/api/expenses${qs ? `?${qs}` : ''}`);
+  },
+  getExpenseCategories: () => request('GET', '/api/expenses/categories'),
+  createExpense:  (body)       => request('POST',   '/api/expenses',       body),
+  updateExpense:  (id, body)   => request('PATCH',  `/api/expenses/${id}`, body),
+  deleteExpense:  (id)         => request('DELETE', `/api/expenses/${id}`),
+
   // ── Quick Bill ───────────────────────────────────────────────
   getQuickBills: (params = {}) => {
     const qs = new URLSearchParams(params).toString();
