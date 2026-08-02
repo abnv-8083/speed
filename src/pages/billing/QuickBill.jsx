@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Search, X, Check, Plus, Minus, Edit2, Trash2,
   ShoppingBag, Receipt, TrendingUp, Hash, Clock,
-  History, AlertTriangle, Loader2,
+  History, AlertTriangle, Loader2, FileText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -129,6 +129,112 @@ function EditItemModal({ item, onSave, onClose }) {
   );
 }
 
+// ── Generate invoice PDF for a Quick Bill ─────────────────────
+async function downloadBillPDF(bill) {
+  const html2pdf = (await import('html2pdf.js')).default;
+
+  const invNumber = `QB-${String(bill.bill_number).padStart(4, '0')}`;
+  const dateStr   = new Date(bill.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const timeStr   = new Date(bill.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  const total     = Number(bill.total).toFixed(2);
+
+  const rows = bill.items.map(item => `
+    <tr>
+      <td style="text-align:left;padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:500;color:#0f172a">${item.product_name}</td>
+      <td style="text-align:center;padding:7px 4px;border-bottom:1px solid #f1f5f9;color:#64748b">${item.quantity}</td>
+      <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#64748b">₹${Number(item.price).toFixed(2)}</td>
+      <td style="text-align:right;padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:700;color:#0f172a">₹${Number(item.line_total).toFixed(2)}</td>
+    </tr>`).join('');
+
+  const html = `
+    <div style="width:559px;min-height:794px;background:#fff;color:#111827;font-family:Inter,Arial,sans-serif;font-size:11px;box-sizing:border-box;display:flex;flex-direction:column">
+      <div style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#1e1b4b,#312e81,#4c1d95);padding:20px 28px 18px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="width:38px;height:38px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.35);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#fff">S@N</div>
+          <div>
+            <div style="font-size:15px;font-weight:800;color:#fff">Speed@net</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.55)">CRM &amp; Business Portal</div>
+          </div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:26px;font-weight:900;letter-spacing:5px;color:rgba(255,255,255,0.88)">INVOICE</div>
+          <div style="font-size:9px;color:rgba(255,255,255,0.45);letter-spacing:1.5px;margin-top:3px">${invNumber}</div>
+        </div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:16px 28px 14px;border-bottom:1px solid #e2e8f0">
+        <div>
+          <div style="font-size:7.5px;font-weight:700;letter-spacing:0.1em;color:#94a3b8;text-transform:uppercase;margin-bottom:4px">BILLED TO</div>
+          <div style="font-size:14px;font-weight:700;color:#0f172a">Walk-in Customer</div>
+        </div>
+        <div style="text-align:right">
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:3px;font-size:9px">
+            <span style="color:#94a3b8">Date</span><span style="color:#0f172a;font-weight:600">${dateStr}</span>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:3px;font-size:9px">
+            <span style="color:#94a3b8">Time</span><span style="color:#0f172a;font-weight:600">${timeStr}</span>
+          </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;font-size:9px;align-items:center">
+            <span style="color:#94a3b8">Status</span>
+            <span style="background:#dcfce7;color:#15803d;font-size:7.5px;font-weight:700;padding:1px 8px;border-radius:999px;text-transform:uppercase">Paid</span>
+          </div>
+        </div>
+      </div>
+
+      <table style="width:100%;border-collapse:collapse">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:7px 10px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">Description</th>
+            <th style="text-align:center;padding:7px 4px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:12%">Qty</th>
+            <th style="text-align:right;padding:7px 8px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:22%">Unit Price</th>
+            <th style="text-align:right;padding:7px 10px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:19%">Total</th>
+          </tr>
+        </thead>
+        <tbody>${rows}</tbody>
+      </table>
+
+      <div style="flex:1;min-height:20px"></div>
+
+      <div style="display:flex;justify-content:flex-end;padding:0 28px 16px">
+        <div style="width:196px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden">
+          <div style="display:flex;justify-content:space-between;padding:7px 10px 4px;font-size:9.5px;color:#64748b">
+            <span>Subtotal</span><span>₹${total}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;padding:4px 10px;font-size:9.5px;color:#64748b">
+            <span>Tax (0%)</span><span>₹0.00</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px 7px;background:linear-gradient(135deg,#1e1b4b,#4c1d95);font-size:11.5px;font-weight:800;color:#fff">
+            <span>Total Amount</span><span>₹${total}</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:12px 28px 16px;border-top:1px solid #f1f5f9;text-align:center">
+        <div style="font-size:10.5px;font-weight:700;color:#1e293b;margin-bottom:4px">Thank you for your business!</div>
+        <div style="font-size:7.5px;color:#94a3b8;line-height:1.5">Goods once sold will not be taken back or exchanged. Subject to local jurisdiction.</div>
+        <div style="font-size:7.5px;color:#cbd5e1;margin-top:4px">Speed@net · contact@speednet.com · +91 98765 43210</div>
+      </div>
+    </div>`;
+
+  const el = document.createElement('div');
+  el.innerHTML = html;
+  el.style.cssText = 'position:fixed;left:-9999px;top:0;width:559px';
+  document.body.appendChild(el);
+
+  await html2pdf()
+    .set({
+      margin:      0,
+      filename:    `${invNumber}.pdf`,
+      image:       { type: 'jpeg', quality: 1 },
+      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 559, windowWidth: 559 },
+      jsPDF:       { unit: 'mm', format: 'a5', orientation: 'portrait' },
+    })
+    .from(el.firstElementChild)
+    .save();
+
+  document.body.removeChild(el);
+}
+
 // ── Bill Row ───────────────────────────────────────────────────
 function BillRow({ bill, onDelete, onEditItem }) {
   return (
@@ -144,6 +250,13 @@ function BillRow({ bill, onDelete, onEditItem }) {
             <Clock size={11} /> {format(new Date(bill.created_at), 'hh:mm a')}
           </span>
           <span className="qb-bill-total">₹{Number(bill.total).toFixed(2)}</span>
+          <button
+            className="qb-bill-invoice-btn"
+            onClick={e => { e.stopPropagation(); downloadBillPDF(bill); }}
+            title="Download Invoice PDF"
+          >
+            <FileText size={13} />
+          </button>
           <button
             className="qb-bill-delete-btn"
             onClick={e => { e.stopPropagation(); onDelete(bill.id); }}
