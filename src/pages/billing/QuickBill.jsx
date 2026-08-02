@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Search, X, Check, Plus, Minus, Edit2, Trash2,
   ShoppingBag, Receipt, TrendingUp, Hash, Clock,
-  History, ChevronRight, AlertTriangle, Loader2,
+  History, AlertTriangle, Loader2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -120,21 +120,19 @@ function EditItemModal({ item, onSave, onClose }) {
 
 // ── Bill Row ───────────────────────────────────────────────────
 function BillRow({ bill, onDelete, onEditItem }) {
-  const [expanded, setExpanded] = useState(false);
-
   return (
-    <div className={`qb-bill-row ${expanded ? 'qb-bill-row--open' : ''}`}>
+    <div className="qb-bill-row qb-bill-row--open">
       {/* Header */}
-      <div className="qb-bill-row-header" onClick={() => setExpanded(v => !v)}>
+      <div className="qb-bill-row-header">
         <div className="qb-bill-row-left">
           <span className="qb-bill-num">#{bill.bill_number}</span>
           <span className="qb-bill-items-count">{bill.items.length} item{bill.items.length !== 1 ? 's' : ''}</span>
         </div>
         <div className="qb-bill-row-right">
-          <span className="qb-bill-total">₹{Number(bill.total).toFixed(2)}</span>
           <span className="qb-bill-time">
             <Clock size={11} /> {format(new Date(bill.created_at), 'hh:mm a')}
           </span>
+          <span className="qb-bill-total">₹{Number(bill.total).toFixed(2)}</span>
           <button
             className="qb-bill-delete-btn"
             onClick={e => { e.stopPropagation(); onDelete(bill.id); }}
@@ -142,30 +140,27 @@ function BillRow({ bill, onDelete, onEditItem }) {
           >
             <Trash2 size={13} />
           </button>
-          <ChevronRight size={14} className={`qb-bill-chevron ${expanded ? 'rotated' : ''}`} />
         </div>
       </div>
 
-      {/* Expanded items */}
-      {expanded && (
-        <div className="qb-bill-items animate-fade-in">
-          {bill.items.map((item, idx) => (
-            <div key={idx} className="qb-bill-item-row">
-              <span className="qb-bill-item-name">{item.product_name}</span>
-              <span className="qb-bill-item-qty">×{item.quantity}</span>
-              <span className="qb-bill-item-price">₹{Number(item.price).toFixed(2)}</span>
-              <span className="qb-bill-item-total">₹{Number(item.line_total).toFixed(2)}</span>
-              <button
-                className="qb-bill-item-edit"
-                onClick={() => onEditItem(bill, idx)}
-                title="Edit quantity"
-              >
-                <Edit2 size={12} />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
+      {/* Always-visible items */}
+      <div className="qb-bill-items">
+        {bill.items.map((item, idx) => (
+          <div key={idx} className="qb-bill-item-row">
+            <span className="qb-bill-item-name">{item.product_name}</span>
+            <span className="qb-bill-item-qty">×{item.quantity}</span>
+            <span className="qb-bill-item-price">₹{Number(item.price).toFixed(2)}</span>
+            <span className="qb-bill-item-total">₹{Number(item.line_total).toFixed(2)}</span>
+            <button
+              className="qb-bill-item-edit"
+              onClick={() => onEditItem(bill, idx)}
+              title="Edit quantity"
+            >
+              <Edit2 size={12} />
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
