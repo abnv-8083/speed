@@ -16,6 +16,17 @@
   overflow: hidden !important;
 }
 
+/* In card view the grid scrolls itself, so just make sure
+   the container doesn't double-clip it */
+.products-container:has(.inventory-card-grid) {
+  overflow: visible !important;
+}
+.products-layout:has(.inventory-card-grid) {
+  overflow-y: auto;
+  height: auto;
+  min-height: calc(100vh - 85px);
+}
+
 /* ── Header ───────────────────────────────────────────────────────────── */
 .products-header {
   display: flex;
@@ -156,6 +167,19 @@
   flex-direction: column;
   gap: 0.4rem;
   padding-right: 0.2rem;
+}
+
+/* ── Card grid ────────────────────────────────────────────────── */
+.inventory-card-grid {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 0.85rem;
+  padding-right: 0.2rem;
+  padding-bottom: 0.5rem;
+  align-content: start;
 }
 
 /* ── Product Row Card ─────────────────────────────────────────────────── */
@@ -427,8 +451,7 @@
   color: #f87171 !important;
 }
 
-/* ── View toggle ──────────────────────────────────────────────── */
-.prod-view-toggle {
+/* ── View toggle ──────────────────────────────────────────────── */.prod-view-toggle {
   display: flex;
   background: var(--background);
   border: 1px solid var(--border);
@@ -452,18 +475,6 @@
 }
 .prod-view-btn:hover { color: var(--text); background: rgba(255,255,255,0.06); }
 .prod-view-btn--active { background: var(--primary); color: #fff !important; }
-
-/* ── Card grid ────────────────────────────────────────────────── */
-.inventory-card-grid {
-  flex: 1;
-  min-height: 0;
-  overflow-y: auto;
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-  gap: 0.85rem;
-  padding-right: 0.2rem;
-  align-content: start;
-}
 
 /* ── Product card ─────────────────────────────────────────────── */
 .prod-card {
