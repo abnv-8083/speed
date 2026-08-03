@@ -3,6 +3,7 @@ import {
   TrendingUp, TrendingDown, Receipt, DollarSign, Package,
   BarChart3, Download, Calendar, ArrowRight, Plus, Trash2,
   Edit2, Check, X, AlertTriangle, Wallet, PieChart, Activity,
+  ChevronRight,
 } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import {
@@ -142,6 +143,9 @@ const SalesReport = () => {
   const [expenseModal, setExpenseModal] = useState(null); // null | {} | expense obj
   const [deleteExpenseId, setDeleteExpenseId] = useState(null);
 
+  // Profit drill-down modal
+  const [showProfitModal, setShowProfitModal] = useState(false);
+
   // Transactions pagination
   const [tablePage, setTablePage] = useState(1);
   const TABLE_PAGE_SIZE = 10;
@@ -178,11 +182,41 @@ const SalesReport = () => {
     const discounts  = salesData.reduce((s, inv) => s + Number(inv.discount || 0), 0);
     const totalExp   = expenses.reduce((s, e) => s + Number(e.amount), 0);
 
-    // COGS from invoice items (price_at_time is selling price; we don't store cost in items)
-    // Gross profit = revenue (after discounts)
-    const grossProfit = revenue;   // no COGS data at item level
+    // Gross profit = sum of (selling_price - cost_price) × qty per item across all invoices
+    let cogs = 0;
+    const billProfits = []; // per-invoice breakdown for drill-down
+
+    salesData.forEach(inv => {
+      let invRevenue = 0;
+      let invCogs    = 0;
+
+      if (inv.invoice_items) {
+        inv.invoice_items.forEach(item => {
+          const sellPrice = Number(item.price_at_time);
+          const costPrice = Number(item.products?.cost_price || 0);
+          const qty       = item.quantity;
+          invRevenue += sellPrice * qty;
+          invCogs    += costPrice * qty;
+          cogs       += costPrice * qty;
+        });
+      }
+
+      const invProfit = invRevenue - invCogs;
+      billProfits.push({
+        id:           inv.id,
+        customer:     inv.customer_name || 'Walk-in',
+        date:         inv.created_at,
+        revenue:      invRevenue,
+        cogs:         invCogs,
+        profit:       invProfit,
+        margin:       invRevenue > 0 ? (invProfit / invRevenue) * 100 : 0,
+        itemCount:    inv.invoice_items?.length || 0,
+      });
+    });
+
+    const grossProfit = revenue - cogs;
     const netProfit   = grossProfit - totalExp;
-    const profitPct   = revenue > 0 ? (netProfit / revenue) * 100 : 0;
+    const profitPct   = revenue > 0 ? (grossProfit / revenue) * 100 : 0;
 
     let itemsCount = 0;
     const productSales = {};
@@ -232,10 +266,11 @@ const SalesReport = () => {
       .slice(0, 7);
 
     return {
-      revenue, discounts, totalExp, grossProfit, netProfit, profitPct,
+      revenue, discounts, totalExp, cogs, grossProfit, netProfit, profitPct,
       itemsCount, invoiceCount: salesData.length,
       avgOrder: salesData.length > 0 ? revenue / salesData.length : 0,
       chartData, expPieData, topProducts,
+      billProfits: billProfits.sort((a, b) => new Date(b.date) - new Date(a.date)),
     };
   }, [salesData, expenses]);
 
@@ -429,7 +464,7 @@ const SalesReport = () => {
     toast.success('PDF downloaded');
   };
 
-  const isProfit = metrics.netProfit >= 0;
+  const isProfit = metrics.grossProfit >= 0;
 
   return (
     <div className="sr-root animate-fade-in">
@@ -495,15 +530,17 @@ const SalesReport = () => {
                 <MetricCard label="Revenue" value={`₹${metrics.revenue.toFixed(2)}`} accent="success" icon={<DollarSign size={18}/>} />
                 <MetricCard label="Total Expenses" value={`₹${metrics.totalExp.toFixed(2)}`} accent="danger" icon={<TrendingDown size={18}/>} />
                 <MetricCard
-                  label={isProfit ? 'Net Profit' : 'Net Loss'}
-                  value={`₹${Math.abs(metrics.netProfit).toFixed(2)}`}
+                  label={isProfit ? 'Gross Profit' : 'Gross Loss'}
+                  value={`₹${Math.abs(metrics.grossProfit).toFixed(2)}`}
                   accent={isProfit ? 'success' : 'danger'}
                   icon={isProfit ? <TrendingUp size={18}/> : <TrendingDown size={18}/>}
                   highlight
+                  clickable
+                  onClick={() => setShowProfitModal(true)}
+                  hint="Price − Cost per item · Click to see breakdown"
                 />
                 <MetricCard label="Profit Margin" value={`${metrics.profitPct.toFixed(1)}%`}
-                  accent={metrics.profitPct >= 0 ? 'success' : 'danger'} icon={<PieChart size={18}/>} />
-                <MetricCard label="Invoices" value={metrics.invoiceCount} accent="primary" icon={<Receipt size={18}/>} />
+                  accent={metrics.profitPct >= 0 ? 'success' : 'danger'} icon={<PieChart size={18}/>} />                <MetricCard label="Invoices" value={metrics.invoiceCount} accent="primary" icon={<Receipt size={18}/>} />
                 <MetricCard label="Items Sold" value={metrics.itemsCount} accent="warning" icon={<Package size={18}/>} />
                 <MetricCard label="Avg. Order" value={`₹${metrics.avgOrder.toFixed(2)}`} accent="neutral" icon={<Activity size={18}/>} />
                 <MetricCard label="Discounts Given" value={`₹${metrics.discounts.toFixed(2)}`} accent="neutral" icon={<Wallet size={18}/>} />
@@ -788,12 +825,70 @@ const SalesReport = () => {
           <p style={{ color:'var(--text-muted)', fontSize:'0.875rem' }}>This expense record will be permanently removed.</p>
         </AppModal>
       )}
+
+      {/* ── Profit drill-down modal ── */}
+      {showProfitModal && (
+        <AppModal
+          title={`Gross Profit Breakdown — ${metrics.billProfits.length} bills`}
+          onClose={() => setShowProfitModal(false)}
+          width="720px"
+          noPadding
+        >
+          <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', background: 'var(--background)' }}>
+            {[
+              { label: 'Total Revenue', value: `₹${metrics.revenue.toFixed(2)}`, color: 'var(--secondary)' },
+              { label: 'Total COGS', value: `₹${metrics.cogs.toFixed(2)}`, color: '#f87171' },
+              { label: 'Gross Profit', value: `₹${metrics.grossProfit.toFixed(2)}`, color: metrics.grossProfit >= 0 ? 'var(--secondary)' : '#f87171' },
+              { label: 'Margin', value: `${metrics.profitPct.toFixed(1)}%`, color: 'var(--primary)' },
+            ].map(s => (
+              <div key={s.label}>
+                <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-muted)', fontWeight: 700 }}>{s.label}</div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 800, color: s.color }}>{s.value}</div>
+              </div>
+            ))}
+          </div>
+          <div style={{ maxHeight: '60vh', overflowY: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
+              <thead>
+                <tr style={{ background: 'var(--background)', position: 'sticky', top: 0 }}>
+                  {['Date', 'Invoice', 'Customer', 'Revenue', 'COGS', 'Profit', 'Margin'].map(h => (
+                    <th key={h} style={{ padding: '0.55rem 0.85rem', textAlign: h === 'Date' || h === 'Invoice' || h === 'Customer' ? 'left' : 'right', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {metrics.billProfits.map((b, i) => {
+                  const isPos = b.profit >= 0;
+                  return (
+                    <tr key={b.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                      <td style={{ padding: '0.6rem 0.85rem', color: 'var(--text-muted)' }}>{format(new Date(b.date), 'dd MMM yy')}</td>
+                      <td style={{ padding: '0.6rem 0.85rem', fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 700 }}>INV-{String(b.id).slice(-6).padStart(6,'0')}</td>
+                      <td style={{ padding: '0.6rem 0.85rem', color: 'var(--text)' }}>{b.customer}</td>
+                      <td style={{ padding: '0.6rem 0.85rem', textAlign: 'right', color: 'var(--secondary)', fontWeight: 600 }}>₹{b.revenue.toFixed(2)}</td>
+                      <td style={{ padding: '0.6rem 0.85rem', textAlign: 'right', color: '#f87171' }}>₹{b.cogs.toFixed(2)}</td>
+                      <td style={{ padding: '0.6rem 0.85rem', textAlign: 'right', color: isPos ? 'var(--secondary)' : '#f87171', fontWeight: 700 }}>
+                        {isPos ? '+' : ''}₹{b.profit.toFixed(2)}
+                      </td>
+                      <td style={{ padding: '0.6rem 0.85rem', textAlign: 'right', color: isPos ? 'var(--secondary)' : '#f87171' }}>
+                        {b.margin.toFixed(1)}%
+                      </td>
+                    </tr>
+                  );
+                })}
+                {metrics.billProfits.length === 0 && (
+                  <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No invoices in this date range.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </AppModal>
+      )}
     </div>
   );
 };
 
 // ── Metric card sub-component ─────────────────────────────────
-function MetricCard({ label, value, accent, icon, highlight }) {
+function MetricCard({ label, value, accent, icon, highlight, clickable, onClick, hint }) {
   const accentColors = {
     success: 'var(--secondary)',
     danger:  '#f87171',
@@ -803,14 +898,26 @@ function MetricCard({ label, value, accent, icon, highlight }) {
   };
   const color = accentColors[accent] || accentColors.neutral;
   return (
-    <div className={`sr-metric glass-panel ${highlight ? 'sr-metric--highlight' : ''}`}
-      style={{ borderLeftColor: color }}>
+    <div
+      className={`sr-metric glass-panel ${highlight ? 'sr-metric--highlight' : ''} ${clickable ? 'sr-metric--clickable' : ''}`}
+      style={{ borderLeftColor: color, cursor: clickable ? 'pointer' : 'default' }}
+      onClick={clickable ? onClick : undefined}
+      title={hint || ''}
+      role={clickable ? 'button' : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onKeyDown={clickable ? (e => e.key === 'Enter' && onClick?.()) : undefined}
+    >
       <div className="sr-metric-icon" style={{ background: `${color}18`, color }}>
         {icon}
       </div>
       <div className="sr-metric-info">
         <span className="sr-metric-label">{label}</span>
         <span className="sr-metric-value" style={highlight ? { color } : {}}>{value}</span>
+        {hint && clickable && (
+          <span style={{ fontSize: '0.62rem', color: 'var(--text-muted)', marginTop: '0.1rem', display: 'flex', alignItems: 'center', gap: '0.2rem' }}>
+            <ChevronRight size={10} /> {hint}
+          </span>
+        )}
       </div>
     </div>
   );

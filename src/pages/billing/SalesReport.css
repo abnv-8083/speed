@@ -552,3 +552,18 @@
   .sr-metrics-grid { grid-template-columns: 1fr; }
   .sr-presets      { flex-wrap: wrap; }
 }
+
+/* ── Clickable metric card ────────────────────────────────────── */
+.sr-metric--clickable {
+  cursor: pointer;
+  transition: transform 0.18s, box-shadow 0.18s, border-color 0.18s;
+}
+.sr-metric--clickable:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.2);
+}
+.sr-metric--clickable:hover .sr-metric-value {
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 3px;
+}

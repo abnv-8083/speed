@@ -25,7 +25,7 @@ router.get('/', async (req, res) => {
     // Attach items + populated product name to each invoice
     const invoiceIds = invoices.map(i => i._id);
     const allItems = await InvoiceItem.find({ invoice_id: { $in: invoiceIds } })
-      .populate('product_id', 'name')
+      .populate('product_id', 'name cost_price')
       .lean();
 
     // Group items by invoice_id
@@ -35,10 +35,12 @@ router.get('/', async (req, res) => {
       if (!itemsByInvoice[key]) itemsByInvoice[key] = [];
       itemsByInvoice[key].push({
         ...item,
-        id: item._id,
+        id:         item._id,
         created_at: item.createdAt,
-        // Replicate Supabase join shape: products: { name }
-        products: item.product_id ? { name: item.product_id.name } : null,
+        products: item.product_id ? {
+          name:       item.product_id.name,
+          cost_price: item.product_id.cost_price || 0,
+        } : null,
       });
     });
 
