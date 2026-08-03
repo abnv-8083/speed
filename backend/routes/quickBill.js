@@ -1,5 +1,8 @@
 const express          = require('express');
 const QuickBillSession = require('../models/QuickBillSession');
+const Invoice          = require('../models/Invoice');
+const InvoiceItem      = require('../models/InvoiceItem');
+const Product          = require('../models/Product');
 const requireAuth      = require('../middleware/auth');
 
 const router = express.Router();
@@ -43,15 +46,17 @@ router.get('/', async (req, res) => {
 /**
  * POST /api/quick-bill
  * Body: { items: [{ product_id, product_name, price, quantity, line_total }], total, note }
+ * Also creates a mirrored Invoice + InvoiceItems so Sales Report picks it up.
  */
 router.post('/', async (req, res) => {
   try {
     const { items, total, note } = req.body;
     const today = todayStr();
 
-    // Auto-number bills per day (count existing today + 1)
+    // Auto-number bills per day
     const todayCount = await QuickBillSession.countDocuments({ billed_date: today });
 
+    // 1. Create the QuickBillSession
     const bill = await QuickBillSession.create({
       bill_number: todayCount + 1,
       items,
@@ -59,6 +64,32 @@ router.post('/', async (req, res) => {
       note:        note || '',
       billed_date: today,
     });
+
+    // 2. Mirror into Invoice collection so Sales Report includes it
+    try {
+      const invoice = await Invoice.create({
+        customer_name: note ? note : 'Quick Bill',
+        total_amount:  total,
+        discount:      0,
+      });
+
+      // 3. Create InvoiceItems — resolve product_id from name if needed
+      const invoiceItems = items.map(item => ({
+        invoice_id:    invoice._id,
+        product_id:    item.product_id,
+        quantity:      item.quantity,
+        price_at_time: item.price,
+      }));
+
+      await InvoiceItem.insertMany(invoiceItems);
+
+      // Store the linked invoice id on the QuickBillSession for cleanup later
+      await QuickBillSession.findByIdAndUpdate(bill._id, { linked_invoice_id: invoice._id });
+      bill.linked_invoice_id = invoice._id;
+    } catch (mirrorErr) {
+      // Non-fatal — quick bill is saved, just sales report won't reflect it
+      console.warn('⚠️  Failed to mirror quick bill to invoices:', mirrorErr.message);
+    }
 
     res.status(201).json(bill);
   } catch (err) {
@@ -68,7 +99,8 @@ router.post('/', async (req, res) => {
 
 /**
  * PATCH /api/quick-bill/:id
- * Update a bill's items, total, or note
+ * Update a bill's items, total, or note.
+ * Also keeps the mirrored Invoice in sync.
  */
 router.patch('/:id', async (req, res) => {
   try {
@@ -78,6 +110,24 @@ router.patch('/:id', async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!bill) return res.status(404).json({ error: 'Bill not found' });
+
+    // Sync the mirrored invoice total if it exists
+    if (bill.linked_invoice_id && req.body.total !== undefined) {
+      await Invoice.findByIdAndUpdate(bill.linked_invoice_id, { total_amount: req.body.total });
+    }
+
+    // Sync invoice items if items were updated
+    if (bill.linked_invoice_id && req.body.items) {
+      await InvoiceItem.deleteMany({ invoice_id: bill.linked_invoice_id });
+      const newItems = req.body.items.map(item => ({
+        invoice_id:    bill.linked_invoice_id,
+        product_id:    item.product_id,
+        quantity:      item.quantity,
+        price_at_time: item.price,
+      }));
+      await InvoiceItem.insertMany(newItems);
+    }
+
     res.json(bill);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -86,11 +136,19 @@ router.patch('/:id', async (req, res) => {
 
 /**
  * DELETE /api/quick-bill/:id
+ * Also removes the mirrored Invoice + InvoiceItems from Sales Report.
  */
 router.delete('/:id', async (req, res) => {
   try {
     const bill = await QuickBillSession.findByIdAndDelete(req.params.id);
     if (!bill) return res.status(404).json({ error: 'Bill not found' });
+
+    // Remove the mirrored invoice if one was created
+    if (bill.linked_invoice_id) {
+      await InvoiceItem.deleteMany({ invoice_id: bill.linked_invoice_id });
+      await Invoice.findByIdAndDelete(bill.linked_invoice_id);
+    }
+
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

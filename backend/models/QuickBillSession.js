@@ -22,6 +22,7 @@ const quickBillSchema = new mongoose.Schema(
     total:        { type: Number, required: true, min: 0 },
     note:         { type: String, default: '' },
     billed_date:  { type: String, required: true },          // "YYYY-MM-DD" for easy day grouping
+    linked_invoice_id: { type: mongoose.Schema.Types.ObjectId, ref: 'Invoice', default: null },
   },
   { timestamps: true }
 );
