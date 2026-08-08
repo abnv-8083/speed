@@ -55,11 +55,11 @@
   position: relative;
 }
 
-.qb-field-search { flex: 2; min-width: 160px; }
-.qb-field-price  { flex: 1; min-width: 90px; }
-.qb-field-qty    { flex: 0.7; min-width: 65px; }
-.qb-field-total  { flex: 1.1; min-width: 95px; }
-.qb-field-notes  { flex: 1.6; min-width: 130px; }
+.qb-field-search   { flex: 2; min-width: 160px; }
+.qb-field-price    { flex: 1; min-width: 90px; }
+.qb-field-qty      { flex: 0.7; min-width: 65px; }
+.qb-field-discount { flex: 1; min-width: 90px; }
+.qb-field-total    { flex: 1.1; min-width: 95px; }
 .qb-inline-action { flex: none; }
 
 .qb-inline-label {

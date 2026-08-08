@@ -70,7 +70,7 @@ router.post('/', async (req, res) => {
       const invoice = await Invoice.create({
         customer_name: note ? note : 'Quick Bill',
         total_amount:  total,
-        discount:      0,
+        discount:      items.reduce((s, i) => s + (Number(i.discount) || 0), 0),
       });
 
       // 3. Create InvoiceItems — resolve product_id from name if needed

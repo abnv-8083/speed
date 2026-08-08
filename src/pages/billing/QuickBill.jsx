@@ -19,8 +19,11 @@ function isToday(billedDate) {
 
 // ── Edit Bill Item Modal ───────────────────────────────────────
 function EditItemModal({ item, onSave, onClose }) {
-  const [qty, setQty]   = useState(item.quantity);
-  const [note, setNote] = useState(item.note || '');
+  const [qty, setQty]           = useState(item.quantity);
+  const [discount, setDiscount] = useState(item.discount || 0);
+
+  const lineTotal = Math.max(0, (qty * Number(item.price)) - (parseFloat(discount) || 0));
+
   return (
     <AppModal
       title={`Edit — ${item.product_name}`}
@@ -29,7 +32,7 @@ function EditItemModal({ item, onSave, onClose }) {
       footer={
         <>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => onSave(qty, note)} disabled={qty < 1}>
+          <button className="btn btn-primary" onClick={() => onSave(qty, parseFloat(discount) || 0)} disabled={qty < 1}>
             <Check size={14} /> Update
           </button>
         </>
@@ -50,27 +53,32 @@ function EditItemModal({ item, onSave, onClose }) {
         </div>
 
         <div className="qb-qty-note-wrap">
-          <label htmlFor="edit-note-input" className="qb-qty-note-label">
-            <FileText size={13} /> Note / Remark <span className="qb-qty-note-opt">(optional)</span>
+          <label htmlFor="edit-discount-input" className="qb-qty-note-label">
+            Discount (Optional)
           </label>
-          <input
-            id="edit-note-input"
-            type="text"
-            className="input-field qb-qty-note-input"
-            placeholder="Add note or instruction..."
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                if (qty >= 1) onSave(qty, note);
-              }
-            }}
-          />
+          <div className="qb-currency-input-wrap">
+            <span className="qb-currency-symbol">₹</span>
+            <input
+              id="edit-discount-input"
+              type="number"
+              step="0.01"
+              min="0"
+              className="input-field qb-inline-input qb-currency-input"
+              placeholder="0.00"
+              value={discount}
+              onChange={e => setDiscount(e.target.value)}
+              onKeyDown={e => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  if (qty >= 1) onSave(qty, parseFloat(discount) || 0);
+                }
+              }}
+            />
+          </div>
         </div>
 
         <div className="qb-qty-line-total">
-          Line total: <strong>₹{(qty * Number(item.price)).toFixed(2)}</strong>
+          Line total: <strong>₹{lineTotal.toFixed(2)}</strong>
         </div>
       </div>
     </AppModal>
@@ -90,7 +98,7 @@ async function downloadBillPDF(bill) {
     <tr>
       <td style="text-align:left;padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:500;color:#0f172a">
         ${item.product_name}
-        ${item.note ? `<div style="font-size:8.5px;color:#64748b;font-style:italic;margin-top:2px">Note: ${item.note}</div>` : ''}
+        ${item.discount ? `<div style="font-size:8.5px;color:#16a34a;font-style:italic;margin-top:2px">Discount: ₹${Number(item.discount).toFixed(2)}</div>` : ''}
       </td>
       <td style="text-align:center;padding:7px 4px;border-bottom:1px solid #f1f5f9;color:#64748b">${item.quantity}</td>
       <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#64748b">₹${Number(item.price).toFixed(2)}</td>
@@ -224,9 +232,9 @@ function BillRow({ bill, onDelete, onEditItem }) {
           <div key={idx} className="qb-bill-item-row">
             <div className="qb-bill-item-info">
               <span className="qb-bill-item-name">{item.product_name}</span>
-              {item.note && (
-                <span className="qb-bill-item-note-text" title={item.note}>
-                  <FileText size={10} /> {item.note}
+              {item.discount > 0 && (
+                <span className="qb-bill-item-note-text" title={`Discount: ₹${item.discount}`}>
+                  Discount: ₹{Number(item.discount).toFixed(2)}
                 </span>
               )}
             </div>
@@ -236,7 +244,7 @@ function BillRow({ bill, onDelete, onEditItem }) {
             <button
               className="qb-bill-item-edit"
               onClick={() => onEditItem(bill, idx)}
-              title="Edit quantity and note"
+              title="Edit quantity and discount"
             >
               <Edit2 size={12} />
             </button>
@@ -266,8 +274,8 @@ export default function QuickBill() {
   const [searchQuery, setSearchQuery]         = useState('');
   const [sellingPrice, setSellingPrice]       = useState('');
   const [quantity, setQuantity]               = useState(1);
+  const [discount, setDiscount]               = useState('');
   const [totalAmount, setTotalAmount]         = useState('');
-  const [note, setNote]                       = useState('');
 
   // Dropdown search state
   const [showDropdown, setShowDropdown]       = useState(false);
@@ -275,13 +283,13 @@ export default function QuickBill() {
   const [highlightedIndex, setHighlightedIndex] = useState(0);
 
   // Refs for focusing & clicking outside
-  const searchRef      = useRef(null);
-  const dropdownRef    = useRef(null);
-  const searchInputRef = useRef(null);
-  const priceInputRef  = useRef(null);
-  const qtyInputRef    = useRef(null);
-  const totalInputRef  = useRef(null);
-  const noteInputRef   = useRef(null);
+  const searchRef        = useRef(null);
+  const dropdownRef      = useRef(null);
+  const searchInputRef   = useRef(null);
+  const priceInputRef    = useRef(null);
+  const qtyInputRef      = useRef(null);
+  const discountInputRef = useRef(null);
+  const totalInputRef    = useRef(null);
 
   // Saving
   const [saving, setSaving]           = useState(false);
@@ -356,6 +364,7 @@ export default function QuickBill() {
     const p = Number(product.price) || 0;
     setSellingPrice(p);
     setQuantity(1);
+    setDiscount('');
     setTotalAmount(p);
     setTimeout(() => {
       priceInputRef.current?.focus();
@@ -368,22 +377,33 @@ export default function QuickBill() {
     setSellingPrice(val);
     const p = parseFloat(val) || 0;
     const q = parseFloat(quantity) || 0;
-    setTotalAmount((p * q).toFixed(2));
+    const d = parseFloat(discount) || 0;
+    setTotalAmount(Math.max(0, (p * q) - d).toFixed(2));
   };
 
   const handleQtyChange = (val) => {
     setQuantity(val);
     const q = parseFloat(val) || 0;
     const p = parseFloat(sellingPrice) || 0;
-    setTotalAmount((p * q).toFixed(2));
+    const d = parseFloat(discount) || 0;
+    setTotalAmount(Math.max(0, (p * q) - d).toFixed(2));
+  };
+
+  const handleDiscountChange = (val) => {
+    setDiscount(val);
+    const d = parseFloat(val) || 0;
+    const p = parseFloat(sellingPrice) || 0;
+    const q = parseFloat(quantity) || 0;
+    setTotalAmount(Math.max(0, (p * q) - d).toFixed(2));
   };
 
   const handleTotalChange = (val) => {
     setTotalAmount(val);
     const tot = parseFloat(val) || 0;
+    const d = parseFloat(discount) || 0;
     const q = parseFloat(quantity) || 1;
     if (q > 0) {
-      setSellingPrice((tot / q).toFixed(2));
+      setSellingPrice(Math.max(0, (tot + d) / q).toFixed(2));
     }
   };
 
@@ -435,7 +455,8 @@ export default function QuickBill() {
     }
 
     const priceNum = parseFloat(sellingPrice) || 0;
-    const totalNum = parseFloat(totalAmount) || (priceNum * qtyNum);
+    const discNum  = parseFloat(discount) || 0;
+    const totalNum = parseFloat(totalAmount) || Math.max(0, (priceNum * qtyNum) - discNum);
 
     const newItem = {
       product_id:   selectedProduct.id,
@@ -443,7 +464,8 @@ export default function QuickBill() {
       price:        priceNum,
       quantity:     qtyNum,
       line_total:   totalNum,
-      note:         note.trim(),
+      discount:     discNum,
+      note:         discNum > 0 ? `Discount ₹${discNum.toFixed(2)}` : '',
     };
 
     createBill([newItem]);
@@ -453,8 +475,8 @@ export default function QuickBill() {
     setSearchQuery('');
     setSellingPrice('');
     setQuantity(1);
+    setDiscount('');
     setTotalAmount('');
-    setNote('');
     setShowDropdown(false);
     setTimeout(() => {
       searchInputRef.current?.focus();
@@ -501,14 +523,22 @@ export default function QuickBill() {
     setDeleteId(null);
   };
 
-  // ── Edit item quantity / note ──────────────────────────────────
+  // ── Edit item quantity / discount ──────────────────────────────
   const openEditItem = (bill, itemIdx) => setEditTarget({ bill, itemIdx });
 
-  const handleEditItemSave = async (newQty, newNote = '') => {
+  const handleEditItemSave = async (newQty, newDiscount = 0) => {
     const { bill, itemIdx } = editTarget;
     const updatedItems = bill.items.map((item, i) => {
       if (i !== itemIdx) return item;
-      return { ...item, quantity: newQty, line_total: newQty * item.price, note: newNote.trim() };
+      const gross = newQty * item.price;
+      const net = Math.max(0, gross - newDiscount);
+      return {
+        ...item,
+        quantity: newQty,
+        discount: newDiscount,
+        line_total: net,
+        note: newDiscount > 0 ? `Discount ₹${newDiscount.toFixed(2)}` : '',
+      };
     });
     const newTotal = updatedItems.reduce((s, i) => s + i.line_total, 0);
     try {
@@ -566,6 +596,7 @@ export default function QuickBill() {
                       setSelectedProduct(null);
                       setSellingPrice('');
                       setQuantity(1);
+                      setDiscount('');
                       setTotalAmount('');
                       setShowDropdown(false);
                     }}
@@ -633,7 +664,26 @@ export default function QuickBill() {
               />
             </div>
 
-            {/* 4. Total Amount (Editable) */}
+            {/* 4. Discount (Optional) */}
+            <div className="qb-inline-field qb-field-discount">
+              <label className="qb-inline-label">Discount (Optional)</label>
+              <div className="qb-currency-input-wrap">
+                <span className="qb-currency-symbol">₹</span>
+                <input
+                  ref={discountInputRef}
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  className="input-field qb-inline-input qb-currency-input"
+                  placeholder="0.00"
+                  value={discount}
+                  onChange={e => handleDiscountChange(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
+                />
+              </div>
+            </div>
+
+            {/* 5. Total Amount (Editable) */}
             <div className="qb-inline-field qb-field-total">
               <label className="qb-inline-label">Total Amount</label>
               <div className="qb-currency-input-wrap">
@@ -649,20 +699,6 @@ export default function QuickBill() {
                   onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
                 />
               </div>
-            </div>
-
-            {/* 5. Notes (Optional) */}
-            <div className="qb-inline-field qb-field-notes">
-              <label className="qb-inline-label">Notes (Optional)</label>
-              <input
-                ref={noteInputRef}
-                type="text"
-                className="input-field qb-inline-input"
-                placeholder="e.g. Color print..."
-                value={note}
-                onChange={e => setNote(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
-              />
             </div>
 
             {/* Submit button */}
