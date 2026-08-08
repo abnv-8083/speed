@@ -19,7 +19,8 @@ function isToday(billedDate) {
 
 // ── Quantity Modal ─────────────────────────────────────────────
 function QuantityModal({ product, onConfirm, onCancel, index, total }) {
-  const [qty, setQty] = useState(1);
+  const [qty, setQty]   = useState(1);
+  const [note, setNote] = useState('');
   const inputRef   = useRef(null);
   const confirmRef = useRef(null);
 
@@ -31,10 +32,13 @@ function QuantityModal({ product, onConfirm, onCancel, index, total }) {
   }, []);
 
   const handleKeyDown = (e) => {
-    if (e.key === 'Enter')  { e.preventDefault(); if (qty >= 1) onConfirm(qty); }
+    if (e.key === 'Enter' && e.target.id !== 'qty-note-input') {
+      e.preventDefault();
+      if (qty >= 1) onConfirm(qty, note);
+    }
     if (e.key === 'Escape') onCancel();
-    if (e.key === 'ArrowUp')   { e.preventDefault(); setQty(q => Math.min(product.stock || 9999, q + 1)); }
-    if (e.key === 'ArrowDown') { e.preventDefault(); setQty(q => Math.max(1, q - 1)); }
+    if (e.key === 'ArrowUp' && e.target.tagName !== 'INPUT')   { e.preventDefault(); setQty(q => Math.min(product.stock || 9999, q + 1)); }
+    if (e.key === 'ArrowDown' && e.target.tagName !== 'INPUT') { e.preventDefault(); setQty(q => Math.max(1, q - 1)); }
   };
 
   return (
@@ -48,7 +52,7 @@ function QuantityModal({ product, onConfirm, onCancel, index, total }) {
           <button
             ref={confirmRef}
             className="btn btn-primary"
-            onClick={() => qty >= 1 && onConfirm(qty)}
+            onClick={() => qty >= 1 && onConfirm(qty, note)}
             disabled={qty < 1}
           >
             <Check size={14} /> {index < total - 1 ? `Next (${index + 2}/${total})` : 'Add to Bill'}
@@ -80,6 +84,28 @@ function QuantityModal({ product, onConfirm, onCancel, index, total }) {
           />
           <button className="qb-qty-step-btn" onClick={() => setQty(q => Math.min(product.stock, q + 1))}><Plus size={16} /></button>
         </div>
+
+        <div className="qb-qty-note-wrap">
+          <label htmlFor="qty-note-input" className="qb-qty-note-label">
+            <FileText size={13} /> Note / Remark <span className="qb-qty-note-opt">(optional)</span>
+          </label>
+          <input
+            id="qty-note-input"
+            type="text"
+            className="input-field qb-qty-note-input"
+            placeholder="e.g. Color print, page 1-5, special note..."
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (qty >= 1) onConfirm(qty, note);
+              }
+              if (e.key === 'Escape') onCancel();
+            }}
+          />
+        </div>
+
         <div className="qb-qty-line-total">
           Line total: <strong>₹{(qty * Number(product.price)).toFixed(2)}</strong>
         </div>
@@ -95,7 +121,8 @@ function QuantityModal({ product, onConfirm, onCancel, index, total }) {
 
 // ── Edit Bill Item Modal ───────────────────────────────────────
 function EditItemModal({ item, onSave, onClose }) {
-  const [qty, setQty] = useState(item.quantity);
+  const [qty, setQty]   = useState(item.quantity);
+  const [note, setNote] = useState(item.note || '');
   return (
     <AppModal
       title={`Edit — ${item.product_name}`}
@@ -104,26 +131,49 @@ function EditItemModal({ item, onSave, onClose }) {
       footer={
         <>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => onSave(qty)} disabled={qty < 1}>
+          <button className="btn btn-primary" onClick={() => onSave(qty, note)} disabled={qty < 1}>
             <Check size={14} /> Update
           </button>
         </>
       }
     >
-      <div className="qb-qty-stepper">
-        <button className="qb-qty-step-btn" onClick={() => setQty(q => Math.max(1, q - 1))}><Minus size={16} /></button>
-        <input
-          type="number"
-          className="input-field qb-qty-input"
-          value={qty}
-          min={1}
-          onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-          autoFocus
-        />
-        <button className="qb-qty-step-btn" onClick={() => setQty(q => q + 1)}><Plus size={16} /></button>
-      </div>
-      <div className="qb-qty-line-total" style={{ marginTop: '0.75rem' }}>
-        Line total: <strong>₹{(qty * Number(item.price)).toFixed(2)}</strong>
+      <div className="qb-qty-modal-body">
+        <div className="qb-qty-stepper">
+          <button className="qb-qty-step-btn" onClick={() => setQty(q => Math.max(1, q - 1))}><Minus size={16} /></button>
+          <input
+            type="number"
+            className="input-field qb-qty-input"
+            value={qty}
+            min={1}
+            onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
+            autoFocus
+          />
+          <button className="qb-qty-step-btn" onClick={() => setQty(q => q + 1)}><Plus size={16} /></button>
+        </div>
+
+        <div className="qb-qty-note-wrap">
+          <label htmlFor="edit-note-input" className="qb-qty-note-label">
+            <FileText size={13} /> Note / Remark <span className="qb-qty-note-opt">(optional)</span>
+          </label>
+          <input
+            id="edit-note-input"
+            type="text"
+            className="input-field qb-qty-note-input"
+            placeholder="Add note or instruction..."
+            value={note}
+            onChange={e => setNote(e.target.value)}
+            onKeyDown={e => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                if (qty >= 1) onSave(qty, note);
+              }
+            }}
+          />
+        </div>
+
+        <div className="qb-qty-line-total">
+          Line total: <strong>₹{(qty * Number(item.price)).toFixed(2)}</strong>
+        </div>
       </div>
     </AppModal>
   );
@@ -140,7 +190,10 @@ async function downloadBillPDF(bill) {
 
   const rows = bill.items.map(item => `
     <tr>
-      <td style="text-align:left;padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:500;color:#0f172a">${item.product_name}</td>
+      <td style="text-align:left;padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:500;color:#0f172a">
+        ${item.product_name}
+        ${item.note ? `<div style="font-size:8.5px;color:#64748b;font-style:italic;margin-top:2px">Note: ${item.note}</div>` : ''}
+      </td>
       <td style="text-align:center;padding:7px 4px;border-bottom:1px solid #f1f5f9;color:#64748b">${item.quantity}</td>
       <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#64748b">₹${Number(item.price).toFixed(2)}</td>
       <td style="text-align:right;padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:700;color:#0f172a">₹${Number(item.line_total).toFixed(2)}</td>
@@ -271,14 +324,21 @@ function BillRow({ bill, onDelete, onEditItem }) {
       <div className="qb-bill-items">
         {bill.items.map((item, idx) => (
           <div key={idx} className="qb-bill-item-row">
-            <span className="qb-bill-item-name">{item.product_name}</span>
+            <div className="qb-bill-item-info">
+              <span className="qb-bill-item-name">{item.product_name}</span>
+              {item.note && (
+                <span className="qb-bill-item-note-text" title={item.note}>
+                  <FileText size={10} /> {item.note}
+                </span>
+              )}
+            </div>
             <span className="qb-bill-item-qty">×{item.quantity}</span>
             <span className="qb-bill-item-price">₹{Number(item.price).toFixed(2)}</span>
             <span className="qb-bill-item-total">₹{Number(item.line_total).toFixed(2)}</span>
             <button
               className="qb-bill-item-edit"
               onClick={() => onEditItem(bill, idx)}
-              title="Edit quantity"
+              title="Edit quantity and note"
             >
               <Edit2 size={12} />
             </button>
@@ -437,7 +497,7 @@ export default function QuickBill() {
     setQtyQueueIdx(0);
   };
 
-  const handleQtyConfirm = useCallback((qty) => {
+  const handleQtyConfirm = useCallback((qty, note = '') => {
     const product = qtyQueue[qtyQueueIdx];
     const newItem = {
       product_id:   product.id,
@@ -445,6 +505,7 @@ export default function QuickBill() {
       price:        Number(product.price),
       quantity:     qty,
       line_total:   qty * Number(product.price),
+      note:         note.trim(),
     };
     const updatedItems = [...pendingItems, newItem];
     setPendingItems(updatedItems);
@@ -520,11 +581,11 @@ export default function QuickBill() {
   // ── Edit item quantity ────────────────────────────────────────
   const openEditItem = (bill, itemIdx) => setEditTarget({ bill, itemIdx });
 
-  const handleEditItemSave = async (newQty) => {
+  const handleEditItemSave = async (newQty, newNote = '') => {
     const { bill, itemIdx } = editTarget;
     const updatedItems = bill.items.map((item, i) => {
       if (i !== itemIdx) return item;
-      return { ...item, quantity: newQty, line_total: newQty * item.price };
+      return { ...item, quantity: newQty, line_total: newQty * item.price, note: newNote.trim() };
     });
     const newTotal = updatedItems.reduce((s, i) => s + i.line_total, 0);
     try {

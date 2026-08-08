@@ -44,7 +44,14 @@ function BillHistoryRow({ bill }) {
           </div>
           {bill.items.map((item, i) => (
             <div key={i} className="qbh-item-row">
-              <span className="qbh-item-name">{item.product_name}</span>
+              <span className="qbh-item-name">
+                {item.product_name}
+                {item.note && (
+                  <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '1px' }}>
+                    Note: {item.note}
+                  </span>
+                )}
+              </span>
               <span className="qbh-item-qty">×{item.quantity}</span>
               <span className="qbh-item-price">₹{Number(item.price).toFixed(2)}</span>
               <span className="qbh-item-total">₹{Number(item.line_total).toFixed(2)}</span>

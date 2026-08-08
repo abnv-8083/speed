@@ -13,6 +13,7 @@ const itemSchema = new mongoose.Schema({
   price:        { type: Number, required: true, min: 0 },
   quantity:     { type: Number, required: true, min: 1 },
   line_total:   { type: Number, required: true, min: 0 },
+  note:         { type: String, default: '' },
 }, { _id: true });
 
 const quickBillSchema = new mongoose.Schema(
