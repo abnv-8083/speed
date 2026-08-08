@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
-  Search, X, Check, Plus, Minus, Edit2, Trash2,
+  Search, X, Check, Plus, Edit2, Trash2,
   ShoppingBag, Receipt, TrendingUp, Hash, Clock,
-  History, AlertTriangle, Loader2, FileText,
+  History, Loader2, FileText,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -15,108 +15,6 @@ import './QuickBill.css';
 // ── Midnight reset helper ─────────────────────────────────────
 function isToday(billedDate) {
   return billedDate === format(new Date(), 'yyyy-MM-dd');
-}
-
-// ── Quantity Modal ─────────────────────────────────────────────
-function QuantityModal({ product, onConfirm, onCancel, index, total }) {
-  const [qty, setQty]   = useState(1);
-  const [note, setNote] = useState('');
-  const inputRef   = useRef(null);
-  const confirmRef = useRef(null);
-
-  useEffect(() => {
-    // Select the qty input first so user can type a number
-    setTimeout(() => {
-      inputRef.current?.select();
-    }, 50);
-  }, []);
-
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && e.target.id !== 'qty-note-input') {
-      e.preventDefault();
-      if (qty >= 1) onConfirm(qty, note);
-    }
-    if (e.key === 'Escape') onCancel();
-    if (e.key === 'ArrowUp' && e.target.tagName !== 'INPUT')   { e.preventDefault(); setQty(q => Math.min(product.stock || 9999, q + 1)); }
-    if (e.key === 'ArrowDown' && e.target.tagName !== 'INPUT') { e.preventDefault(); setQty(q => Math.max(1, q - 1)); }
-  };
-
-  return (
-    <AppModal
-      title={`Set Quantity — ${product.name}`}
-      onClose={onCancel}
-      width="360px"
-      footer={
-        <>
-          <button className="btn btn-secondary" onClick={onCancel}>Skip</button>
-          <button
-            ref={confirmRef}
-            className="btn btn-primary"
-            onClick={() => qty >= 1 && onConfirm(qty, note)}
-            disabled={qty < 1}
-          >
-            <Check size={14} /> {index < total - 1 ? `Next (${index + 2}/${total})` : 'Add to Bill'}
-          </button>
-        </>
-      }
-    >
-      <div className="qb-qty-modal-body">
-        <div className="qb-qty-product-info">
-          <span className="qb-qty-product-name">{product.name}</span>
-          <span className="qb-qty-product-price">₹{Number(product.price).toFixed(2)} / unit</span>
-        </div>
-        {index < total - 1 && (
-          <p className="qb-qty-hint">
-            <Hash size={12} /> Product {index + 1} of {total} selected
-          </p>
-        )}
-        <div className="qb-qty-stepper">
-          <button className="qb-qty-step-btn" onClick={() => setQty(q => Math.max(1, q - 1))}><Minus size={16} /></button>
-          <input
-            ref={inputRef}
-            type="number"
-            className="input-field qb-qty-input"
-            value={qty}
-            min={1}
-            max={product.stock}
-            onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
-            onKeyDown={handleKeyDown}
-          />
-          <button className="qb-qty-step-btn" onClick={() => setQty(q => Math.min(product.stock, q + 1))}><Plus size={16} /></button>
-        </div>
-
-        <div className="qb-qty-note-wrap">
-          <label htmlFor="qty-note-input" className="qb-qty-note-label">
-            <FileText size={13} /> Note / Remark <span className="qb-qty-note-opt">(optional)</span>
-          </label>
-          <input
-            id="qty-note-input"
-            type="text"
-            className="input-field qb-qty-note-input"
-            placeholder="e.g. Color print, page 1-5, special note..."
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            onKeyDown={e => {
-              if (e.key === 'Enter') {
-                e.preventDefault();
-                if (qty >= 1) onConfirm(qty, note);
-              }
-              if (e.key === 'Escape') onCancel();
-            }}
-          />
-        </div>
-
-        <div className="qb-qty-line-total">
-          Line total: <strong>₹{(qty * Number(product.price)).toFixed(2)}</strong>
-        </div>
-        {product.stock <= 10 && (
-          <div className="qb-qty-stock-warn">
-            <AlertTriangle size={12} /> Only {product.stock} in stock
-          </div>
-        )}
-      </div>
-    </AppModal>
-  );
 }
 
 // ── Edit Bill Item Modal ───────────────────────────────────────
@@ -139,7 +37,7 @@ function EditItemModal({ item, onSave, onClose }) {
     >
       <div className="qb-qty-modal-body">
         <div className="qb-qty-stepper">
-          <button className="qb-qty-step-btn" onClick={() => setQty(q => Math.max(1, q - 1))}><Minus size={16} /></button>
+          <button className="qb-qty-step-btn" onClick={() => setQty(q => Math.max(1, q - 1))}>-</button>
           <input
             type="number"
             className="input-field qb-qty-input"
@@ -148,7 +46,7 @@ function EditItemModal({ item, onSave, onClose }) {
             onChange={e => setQty(Math.max(1, parseInt(e.target.value) || 1))}
             autoFocus
           />
-          <button className="qb-qty-step-btn" onClick={() => setQty(q => q + 1)}><Plus size={16} /></button>
+          <button className="qb-qty-step-btn" onClick={() => setQty(q => q + 1)}>+</button>
         </div>
 
         <div className="qb-qty-note-wrap">
@@ -355,27 +253,35 @@ export default function QuickBill() {
   const navigate = useNavigate();
 
   // Products from DB
-  const [products, setProducts]       = useState([]);
+  const [products, setProducts]               = useState([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
 
   // Today's bills
-  const [bills, setBills]             = useState([]);
-  const [loadingBills, setLoadingBills] = useState(true);
-  const [summary, setSummary]         = useState({ totalAmount: 0, billCount: 0, itemCount: 0 });
+  const [bills, setBills]                     = useState([]);
+  const [loadingBills, setLoadingBills]       = useState(true);
+  const [summary, setSummary]                 = useState({ totalAmount: 0, billCount: 0, itemCount: 0 });
 
-  // Search
-  const [searchQuery, setSearchQuery] = useState('');
-  const [showDropdown, setShowDropdown] = useState(false);
+  // ── Inline Entry Row State ─────────────────────────────────────
+  const [selectedProduct, setSelectedProduct] = useState(null);
+  const [searchQuery, setSearchQuery]         = useState('');
+  const [sellingPrice, setSellingPrice]       = useState('');
+  const [quantity, setQuantity]               = useState(1);
+  const [totalAmount, setTotalAmount]         = useState('');
+  const [note, setNote]                       = useState('');
+
+  // Dropdown search state
+  const [showDropdown, setShowDropdown]       = useState(false);
   const [dropdownResults, setDropdownResults] = useState([]);
-  const [selectedProducts, setSelectedProducts] = useState([]);
-  const [highlightedIndex, setHighlightedIndex] = useState(0); // keyboard nav
-  const searchRef = useRef(null);
-  const dropdownRef = useRef(null);
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
 
-  // Qty modal queue
-  const [qtyQueue, setQtyQueue]       = useState([]); // array of product objects
-  const [qtyQueueIdx, setQtyQueueIdx] = useState(0);
-  const [pendingItems, setPendingItems] = useState([]); // collected items before creating bill
+  // Refs for focusing & clicking outside
+  const searchRef      = useRef(null);
+  const dropdownRef    = useRef(null);
+  const searchInputRef = useRef(null);
+  const priceInputRef  = useRef(null);
+  const qtyInputRef    = useRef(null);
+  const totalInputRef  = useRef(null);
+  const noteInputRef   = useRef(null);
 
   // Saving
   const [saving, setSaving]           = useState(false);
@@ -414,17 +320,21 @@ export default function QuickBill() {
     setLoadingBills(false);
   };
 
-  // ── Search dropdown ───────────────────────────────────────────
+  // ── Product Search Dropdown ───────────────────────────────────
   useEffect(() => {
     const q = searchQuery.trim().toLowerCase();
-    if (!q) { setDropdownResults([]); setShowDropdown(false); return; }
+    if (!q || (selectedProduct && searchQuery === selectedProduct.name)) {
+      setDropdownResults([]);
+      setShowDropdown(false);
+      return;
+    }
     const results = products
       .filter(p => p.name.toLowerCase().includes(q) || p.id.toString().includes(q))
       .slice(0, 10);
     setDropdownResults(results);
-    setHighlightedIndex(0); // reset highlight on new results
+    setHighlightedIndex(0);
     setShowDropdown(results.length > 0);
-  }, [searchQuery, products]);
+  }, [searchQuery, products, selectedProduct]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -439,19 +349,47 @@ export default function QuickBill() {
   }, []);
 
   // ── Select product from dropdown ──────────────────────────────
-  const toggleSelect = (product) => {
-    setSelectedProducts(prev => {
-      const exists = prev.find(p => p.id === product.id);
-      if (exists) return prev.filter(p => p.id !== product.id);
-      return [...prev, product];
-    });
+  const selectProduct = (product) => {
+    setSelectedProduct(product);
+    setSearchQuery(product.name);
+    setShowDropdown(false);
+    const p = Number(product.price) || 0;
+    setSellingPrice(p);
+    setQuantity(1);
+    setTotalAmount(p);
+    setTimeout(() => {
+      priceInputRef.current?.focus();
+      priceInputRef.current?.select();
+    }, 50);
   };
 
-  const isSelected = (product) => selectedProducts.some(p => p.id === product.id);
+  // ── Auto Calculations ─────────────────────────────────────────
+  const handlePriceChange = (val) => {
+    setSellingPrice(val);
+    const p = parseFloat(val) || 0;
+    const q = parseFloat(quantity) || 0;
+    setTotalAmount((p * q).toFixed(2));
+  };
 
-  // ── Keyboard: Up/Down navigate, Ctrl+Enter select, Enter confirm ──
+  const handleQtyChange = (val) => {
+    setQuantity(val);
+    const q = parseFloat(val) || 0;
+    const p = parseFloat(sellingPrice) || 0;
+    setTotalAmount((p * q).toFixed(2));
+  };
+
+  const handleTotalChange = (val) => {
+    setTotalAmount(val);
+    const tot = parseFloat(val) || 0;
+    const q = parseFloat(quantity) || 1;
+    if (q > 0) {
+      setSellingPrice((tot / q).toFixed(2));
+    }
+  };
+
+  // ── Keyboard handling for Product Search field ────────────────
   const handleSearchKeyDown = (e) => {
-    if (e.key === 'Escape') { setShowDropdown(false); setSearchQuery(''); return; }
+    if (e.key === 'Escape') { setShowDropdown(false); return; }
 
     if (showDropdown && e.key === 'ArrowDown') {
       e.preventDefault();
@@ -465,79 +403,65 @@ export default function QuickBill() {
       return;
     }
 
-    // Ctrl+Enter — toggle highlighted (or top) result into selection
-    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    // Enter in Search field -> select highlighted product if dropdown open, else submit if product selected
+    if (e.key === 'Enter') {
       e.preventDefault();
-      const target = dropdownResults[highlightedIndex] ?? dropdownResults[0];
-      if (target && target.stock > 0) toggleSelect(target);
+      if (showDropdown && dropdownResults.length > 0) {
+        const target = dropdownResults[highlightedIndex] ?? dropdownResults[0];
+        if (target && target.stock > 0) selectProduct(target);
+      } else if (selectedProduct) {
+        handleInlineSubmit();
+      } else {
+        toast.error('Please select a product first');
+      }
+    }
+  };
+
+  // ── Submit Inline Row ─────────────────────────────────────────
+  const handleInlineSubmit = (e) => {
+    if (e) e.preventDefault();
+
+    if (!selectedProduct) {
+      toast.error('Please select a product first');
+      searchInputRef.current?.focus();
       return;
     }
 
-    // Enter alone — start qty flow with selected products, or highlighted item
-    if (e.key === 'Enter') {
-      e.preventDefault();
-      const toProcess = selectedProducts.length > 0
-        ? selectedProducts
-        : dropdownResults[highlightedIndex]
-        ? [dropdownResults[highlightedIndex]]
-        : dropdownResults.length > 0
-        ? [dropdownResults[0]]
-        : [];
-      if (toProcess.length > 0) startQtyFlow(toProcess);
+    const qtyNum = parseInt(quantity, 10);
+    if (isNaN(qtyNum) || qtyNum < 1) {
+      toast.error('Quantity is mandatory and must be at least 1');
+      qtyInputRef.current?.focus();
+      return;
     }
-  };
 
-  // ── Qty flow ──────────────────────────────────────────────────
-  const startQtyFlow = (productsToProcess) => {
-    setShowDropdown(false);
-    setSearchQuery('');
-    setSelectedProducts([]);
-    setPendingItems([]);
-    setQtyQueue(productsToProcess);
-    setQtyQueueIdx(0);
-  };
+    const priceNum = parseFloat(sellingPrice) || 0;
+    const totalNum = parseFloat(totalAmount) || (priceNum * qtyNum);
 
-  const handleQtyConfirm = useCallback((qty, note = '') => {
-    const product = qtyQueue[qtyQueueIdx];
     const newItem = {
-      product_id:   product.id,
-      product_name: product.name,
-      price:        Number(product.price),
-      quantity:     qty,
-      line_total:   qty * Number(product.price),
+      product_id:   selectedProduct.id,
+      product_name: selectedProduct.name,
+      price:        priceNum,
+      quantity:     qtyNum,
+      line_total:   totalNum,
       note:         note.trim(),
     };
-    const updatedItems = [...pendingItems, newItem];
-    setPendingItems(updatedItems);
 
-    const nextIdx = qtyQueueIdx + 1;
-    if (nextIdx < qtyQueue.length) {
-      setQtyQueueIdx(nextIdx);
-    } else {
-      // All done — create the bill
-      setQtyQueue([]);
-      setQtyQueueIdx(0);
-      createBill(updatedItems);
-    }
-  }, [qtyQueue, qtyQueueIdx, pendingItems]);
+    createBill([newItem]);
 
-  const handleQtyCancel = useCallback(() => {
-    // Skip this product, continue with next
-    const nextIdx = qtyQueueIdx + 1;
-    if (nextIdx < qtyQueue.length) {
-      setQtyQueueIdx(nextIdx);
-    } else {
-      // Create bill with whatever was collected so far
-      if (pendingItems.length > 0) {
-        createBill(pendingItems);
-      }
-      setQtyQueue([]);
-      setQtyQueueIdx(0);
-      setPendingItems([]);
-    }
-  }, [qtyQueue, qtyQueueIdx, pendingItems]);
+    // Reset inline entry row
+    setSelectedProduct(null);
+    setSearchQuery('');
+    setSellingPrice('');
+    setQuantity(1);
+    setTotalAmount('');
+    setNote('');
+    setShowDropdown(false);
+    setTimeout(() => {
+      searchInputRef.current?.focus();
+    }, 50);
+  };
 
-  // ── Create bill ───────────────────────────────────────────────
+  // ── Create bill in DB ─────────────────────────────────────────
   const createBill = async (items) => {
     if (!items || items.length === 0) return;
     setSaving(true);
@@ -555,7 +479,6 @@ export default function QuickBill() {
       toast.error('Failed to create bill: ' + err.message);
     } finally {
       setSaving(false);
-      setPendingItems([]);
     }
   };
 
@@ -578,7 +501,7 @@ export default function QuickBill() {
     setDeleteId(null);
   };
 
-  // ── Edit item quantity ────────────────────────────────────────
+  // ── Edit item quantity / note ──────────────────────────────────
   const openEditItem = (bill, itemIdx) => setEditTarget({ bill, itemIdx });
 
   const handleEditItemSave = async (newQty, newNote = '') => {
@@ -605,76 +528,156 @@ export default function QuickBill() {
   return (
     <div className="qb-root animate-fade-in">
 
-      {/* ── LEFT: Search + Bill list ── */}
+      {/* ── LEFT: Inline Bar + Bill list ── */}
       <div className="qb-left">
 
-        {/* Search bar */}
-        <div className="qb-search-section glass-panel">
-          <div className="qb-search-wrap" ref={searchRef}>
-            <Search size={18} className="qb-search-icon" />
-            <input
-              className="qb-search-input"
-              placeholder="Search product… Ctrl+Enter to multi-select, Enter to confirm"
-              value={searchQuery}
-              onChange={e => setSearchQuery(e.target.value)}
-              onKeyDown={handleSearchKeyDown}
-              onFocus={() => searchQuery && setShowDropdown(dropdownResults.length > 0)}
-              autoComplete="off"
-              autoFocus
-            />
-            {searchQuery && (
-              <button className="qb-search-clear" onClick={() => { setSearchQuery(''); setShowDropdown(false); }}>
-                <X size={16} />
-              </button>
-            )}
-          </div>
+        {/* ── Inline Quick Entry Bar ── */}
+        <div className="qb-inline-entry-bar glass-panel" ref={searchRef}>
+          <div className="qb-inline-fields">
 
-          {/* Selected chips */}
-          {selectedProducts.length > 0 && (
-            <div className="qb-selected-chips">
-              {selectedProducts.map(p => (
-                <span key={p.id} className="qb-chip">
-                  {p.name}
-                  <button onClick={() => toggleSelect(p)}><X size={11} /></button>
-                </span>
-              ))}
-              <button className="qb-chip-confirm" onClick={() => startQtyFlow(selectedProducts)}>
-                <Check size={13} /> Add {selectedProducts.length} item{selectedProducts.length !== 1 ? 's' : ''}
-              </button>
-            </div>
-          )}
-
-          {/* Dropdown */}
-          {showDropdown && (
-            <div className="qb-dropdown" ref={dropdownRef}>
-              {dropdownResults.map((product, idx) => {
-                const sel = isSelected(product);
-                const oos = product.stock <= 0;
-                return (
-                  <div
-                    key={product.id}
-                    className={`qb-dropdown-item ${sel ? 'qb-dropdown-item--selected' : ''} ${oos ? 'qb-dropdown-item--oos' : ''} ${idx === highlightedIndex ? 'qb-dropdown-item--highlighted' : ''}`}
-                    onMouseEnter={() => setHighlightedIndex(idx)}
-                    onClick={() => !oos && toggleSelect(product)}
+            {/* 1. Product Search */}
+            <div className="qb-inline-field qb-field-search">
+              <label className="qb-inline-label">
+                <Search size={12} /> Product <span className="qb-req">*</span>
+              </label>
+              <div className="qb-input-with-clear">
+                <input
+                  ref={searchInputRef}
+                  className="input-field qb-inline-input"
+                  placeholder="Search product..."
+                  value={searchQuery}
+                  onChange={e => {
+                    setSearchQuery(e.target.value);
+                    if (selectedProduct && e.target.value !== selectedProduct.name) {
+                      setSelectedProduct(null);
+                    }
+                  }}
+                  onKeyDown={handleSearchKeyDown}
+                  onFocus={() => searchQuery && setShowDropdown(dropdownResults.length > 0)}
+                  autoComplete="off"
+                  autoFocus
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    className="qb-inline-clear-btn"
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedProduct(null);
+                      setSellingPrice('');
+                      setQuantity(1);
+                      setTotalAmount('');
+                      setShowDropdown(false);
+                    }}
                   >
-                    <div className="qb-drop-check">
-                      {sel ? <Check size={13} /> : null}
-                    </div>
-                    <div className="qb-drop-info">
-                      <span className="qb-drop-name">{product.name}</span>
-                      <span className="qb-drop-sub">
-                        {oos ? 'Out of stock' : `${product.stock} in stock`}
-                      </span>
-                    </div>
-                    <span className="qb-drop-price">₹{Number(product.price).toFixed(2)}</span>
-                  </div>
-                );
-              })}
-              <div className="qb-dropdown-hint">
-                <kbd>↑↓</kbd> navigate · <kbd>Ctrl+Enter</kbd> select · <kbd>Enter</kbd> confirm
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+
+              {/* Dropdown */}
+              {showDropdown && (
+                <div className="qb-dropdown" ref={dropdownRef}>
+                  {dropdownResults.map((product, idx) => {
+                    const oos = product.stock <= 0;
+                    return (
+                      <div
+                        key={product.id}
+                        className={`qb-dropdown-item ${oos ? 'qb-dropdown-item--oos' : ''} ${idx === highlightedIndex ? 'qb-dropdown-item--highlighted' : ''}`}
+                        onMouseEnter={() => setHighlightedIndex(idx)}
+                        onClick={() => !oos && selectProduct(product)}
+                      >
+                        <div className="qb-drop-info">
+                          <span className="qb-drop-name">{product.name}</span>
+                          <span className="qb-drop-sub">
+                            {oos ? 'Out of stock' : `${product.stock} in stock`}
+                          </span>
+                        </div>
+                        <span className="qb-drop-price">₹{Number(product.price).toFixed(2)}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* 2. Selling Price (Editable) */}
+            <div className="qb-inline-field qb-field-price">
+              <label className="qb-inline-label">Selling Price</label>
+              <div className="qb-currency-input-wrap">
+                <span className="qb-currency-symbol">₹</span>
+                <input
+                  ref={priceInputRef}
+                  type="number"
+                  step="0.01"
+                  className="input-field qb-inline-input qb-currency-input"
+                  placeholder="0.00"
+                  value={sellingPrice}
+                  onChange={e => handlePriceChange(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
+                />
               </div>
             </div>
-          )}
+
+            {/* 3. Quantity */}
+            <div className="qb-inline-field qb-field-qty">
+              <label className="qb-inline-label">Qty <span className="qb-req">*</span></label>
+              <input
+                ref={qtyInputRef}
+                type="number"
+                min="1"
+                className="input-field qb-inline-input qb-qty-num-input"
+                value={quantity}
+                onChange={e => handleQtyChange(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
+              />
+            </div>
+
+            {/* 4. Total Amount (Editable) */}
+            <div className="qb-inline-field qb-field-total">
+              <label className="qb-inline-label">Total Amount</label>
+              <div className="qb-currency-input-wrap">
+                <span className="qb-currency-symbol">₹</span>
+                <input
+                  ref={totalInputRef}
+                  type="number"
+                  step="0.01"
+                  className="input-field qb-inline-input qb-currency-input"
+                  placeholder="0.00"
+                  value={totalAmount}
+                  onChange={e => handleTotalChange(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
+                />
+              </div>
+            </div>
+
+            {/* 5. Notes (Optional) */}
+            <div className="qb-inline-field qb-field-notes">
+              <label className="qb-inline-label">Notes (Optional)</label>
+              <input
+                ref={noteInputRef}
+                type="text"
+                className="input-field qb-inline-input"
+                placeholder="e.g. Color print..."
+                value={note}
+                onChange={e => setNote(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
+              />
+            </div>
+
+            {/* Submit button */}
+            <div className="qb-inline-action">
+              <button
+                type="button"
+                className="btn btn-primary qb-inline-add-btn"
+                onClick={handleInlineSubmit}
+                disabled={!selectedProduct}
+              >
+                <Plus size={15} /> Add Bill
+              </button>
+            </div>
+
+          </div>
         </div>
 
         {/* Today's bill list */}
@@ -698,7 +701,7 @@ export default function QuickBill() {
             <div className="qb-empty-bills">
               <ShoppingBag size={36} />
               <p>No bills yet today</p>
-              <span>Search a product above to get started</span>
+              <span>Search &amp; add a product above to get started</span>
             </div>
           ) : (
             <div className="qb-bill-list">
@@ -798,17 +801,6 @@ export default function QuickBill() {
           </button>
         </div>
       </div>
-
-      {/* ── Quantity modal queue ── */}
-      {qtyQueue.length > 0 && qtyQueueIdx < qtyQueue.length && (
-        <QuantityModal
-          product={qtyQueue[qtyQueueIdx]}
-          index={qtyQueueIdx}
-          total={qtyQueue.length}
-          onConfirm={handleQtyConfirm}
-          onCancel={handleQtyCancel}
-        />
-      )}
 
       {/* ── Edit item modal ── */}
       {editTarget && (
