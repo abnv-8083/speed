@@ -25,10 +25,12 @@ async function request(method, path, body = null) {
 
   const res = await fetch(`${BASE_URL}${path}`, options);
 
-  // Handle 401 globally — clear token and redirect to login
-  if (res.status === 401) {
+  // Handle 401 globally — clear token and redirect to login (except on login route itself)
+  if (res.status === 401 && path !== '/api/auth/login') {
     removeToken();
-    window.location.href = '/';
+    if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
+      window.location.href = '/login';
+    }
     throw new Error('Session expired. Please log in again.');
   }
 
