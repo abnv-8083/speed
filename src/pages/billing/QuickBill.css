@@ -692,7 +692,7 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
-  flex: 1.5;
+  flex: 2;
 }
 
 .qb-bill-item-note-text {
@@ -706,6 +706,122 @@
   overflow: hidden;
   text-overflow: ellipsis;
   margin-top: 1px;
+}
+
+/* ── Single Unified Bill Row ─────────────────────────────────── */
+.qb-single-bill-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem 1rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 0.5rem;
+  transition: border-color 0.15s, background 0.15s;
+}
+
+.qb-single-bill-row:hover {
+  border-color: rgba(139, 92, 246, 0.3);
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.qb-bill-badge {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--primary);
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.25);
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  font-family: monospace;
+}
+
+.qb-bill-item-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.qb-bill-item-disc-text {
+  font-size: 0.72rem;
+  color: #10b981;
+  font-style: italic;
+  margin-top: 1px;
+}
+
+.qb-bill-item-qty {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 35px;
+  text-align: center;
+}
+
+.qb-bill-item-price {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  min-width: 65px;
+  text-align: right;
+}
+
+.qb-bill-item-total {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: var(--secondary);
+  min-width: 75px;
+  text-align: right;
+}
+
+.qb-bill-time-text {
+  display: flex;
+  align-items: center;
+  gap: 0.2rem;
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  margin-left: 0.25rem;
+}
+
+.qb-bill-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.qb-bill-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--background);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.qb-btn-edit:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(139, 92, 246, 0.1);
+}
+
+.qb-btn-pdf:hover {
+  color: #3b82f6;
+  border-color: #3b82f6;
+  background: rgba(59, 130, 246, 0.1);
+}
+
+.qb-btn-delete:hover {
+  color: #ef4444;
+  border-color: #ef4444;
+  background: rgba(239, 68, 68, 0.1);
 }
 
 /* ═══════════════════════════════════════════════════════════════

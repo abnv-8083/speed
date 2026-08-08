@@ -196,61 +196,56 @@ async function downloadBillPDF(bill) {
 
 // ── Bill Row ───────────────────────────────────────────────────
 function BillRow({ bill, onDelete, onEditItem }) {
-  return (
-    <div className="qb-bill-row qb-bill-row--open">
-      {/* Header */}
-      <div className="qb-bill-row-header">
-        <div className="qb-bill-row-left">
-          <span className="qb-bill-num">#{bill.bill_number}</span>
-          <span className="qb-bill-items-count">{bill.items.length} item{bill.items.length !== 1 ? 's' : ''}</span>
-        </div>
-        <div className="qb-bill-row-right">
-          <span className="qb-bill-time">
-            <Clock size={11} /> {format(new Date(bill.created_at), 'hh:mm a')}
-          </span>
-          <span className="qb-bill-total">₹{Number(bill.total).toFixed(2)}</span>
-          <button
-            className="qb-bill-invoice-btn"
-            onClick={e => { e.stopPropagation(); downloadBillPDF(bill); }}
-            title="Download Invoice PDF"
-          >
-            <FileText size={13} />
-          </button>
-          <button
-            className="qb-bill-delete-btn"
-            onClick={e => { e.stopPropagation(); onDelete(bill.id); }}
-            title="Delete bill"
-          >
-            <Trash2 size={13} />
-          </button>
-        </div>
-      </div>
+  const timeStr = format(new Date(bill.created_at), 'hh:mm a');
 
-      {/* Always-visible items */}
-      <div className="qb-bill-items">
-        {bill.items.map((item, idx) => (
-          <div key={idx} className="qb-bill-item-row">
-            <div className="qb-bill-item-info">
-              <span className="qb-bill-item-name">{item.product_name}</span>
-              {item.discount > 0 && (
-                <span className="qb-bill-item-note-text" title={`Discount: ₹${item.discount}`}>
-                  Discount: ₹{Number(item.discount).toFixed(2)}
-                </span>
-              )}
-            </div>
-            <span className="qb-bill-item-qty">×{item.quantity}</span>
-            <span className="qb-bill-item-price">₹{Number(item.price).toFixed(2)}</span>
-            <span className="qb-bill-item-total">₹{Number(item.line_total).toFixed(2)}</span>
+  return (
+    <div className="qb-bill-container">
+      {bill.items.map((item, idx) => (
+        <div key={idx} className="qb-single-bill-row">
+          <span className="qb-bill-badge">#{bill.bill_number}</span>
+
+          <div className="qb-bill-item-info">
+            <span className="qb-bill-item-name">{item.product_name}</span>
+            {item.discount > 0 && (
+              <span className="qb-bill-item-disc-text" title={`Discount: ₹${item.discount}`}>
+                Discount: ₹{Number(item.discount).toFixed(2)}
+              </span>
+            )}
+          </div>
+
+          <span className="qb-bill-item-qty">×{item.quantity}</span>
+          <span className="qb-bill-item-price">₹{Number(item.price).toFixed(2)}</span>
+          <span className="qb-bill-item-total">₹{Number(item.line_total).toFixed(2)}</span>
+
+          <span className="qb-bill-time-text">
+            <Clock size={11} /> {timeStr}
+          </span>
+
+          <div className="qb-bill-actions">
             <button
-              className="qb-bill-item-edit"
+              className="qb-bill-action-btn qb-btn-edit"
               onClick={() => onEditItem(bill, idx)}
               title="Edit quantity and discount"
             >
-              <Edit2 size={12} />
+              <Edit2 size={13} />
+            </button>
+            <button
+              className="qb-bill-action-btn qb-btn-pdf"
+              onClick={() => downloadBillPDF(bill)}
+              title="Download Invoice PDF"
+            >
+              <FileText size={13} />
+            </button>
+            <button
+              className="qb-bill-action-btn qb-btn-delete"
+              onClick={() => onDelete(bill.id)}
+              title="Delete bill"
+            >
+              <Trash2 size={13} />
             </button>
           </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 }
