@@ -81,11 +81,21 @@
 /* ═══════════════════════════════════════════════════════════════
    RECEIPT PAPER FORMAT
    559 px wide  =  148 mm at 96 dpi × scale-2 render (A5)
-   Solid 2px black outer border matching the template
+   Outer page margin + Solid 2px black inner border
 ═══════════════════════════════════════════════════════════════ */
-.rcpt-paper {
+.rcpt-page {
   width: 559px;
   min-height: 794px;
+  background: #ffffff;
+  padding: 16px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+}
+
+.rcpt-box {
+  width: 100%;
+  flex: 1;
   background: #ffffff;
   color: #000000;
   font-family: Arial, Helvetica, sans-serif;
@@ -453,5 +463,5 @@
   .no-print { display: none !important; }
   .inv-root { padding: 0 !important; background: #fff !important; }
   .inv-shadow-wrap { box-shadow: none !important; }
-  .rcpt-paper { border: 2px solid #000000 !important; }
+  .rcpt-box { border: 2px solid #000000 !important; }
 }

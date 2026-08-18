@@ -115,103 +115,112 @@ async function downloadBillPDF(bill) {
       <td style="text-align:right;font-weight:700;padding:4px 8px;font-size:11px">${formatCurrency(item.line_total)}</td>
     </tr>`).join('');
 
+  const advance = Number(bill.advance || 0);
+
   const html = `
-    <div style="width:559px;min-height:794px;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:11px;box-sizing:border-box;display:flex;flex-direction:column;border:2px solid #000000">
-      
-      <!-- Header -->
-      <div style="padding:12px 14px 8px;text-align:center;color:#000;display:flex;flex-direction:column;align-items:center">
-        <div style="font-family:'Brush Script MT','Lucida Handwriting','Segoe Script',cursive,sans-serif;font-size:26px;font-weight:900;font-style:italic;line-height:1.1;color:#000">Speed@Net</div>
-        <div style="font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:900;letter-spacing:0.8px;margin:3px 0 2px;text-transform:uppercase;color:#000">ONLINE JAVASEVANA</div>
-        <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.35">Mullassery Building, GA College PO, Palazhi, Kozhikode 673014</div>
-        <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.35;margin-top:1px">Email: speedatnet328@gmail.com, Ph: 0495 3576610, 7356598850</div>
-        <div style="margin-top:6px">
-          <div style="display:inline-block;background:#b0bec5;border:1.5px solid #000;border-radius:7px;padding:2px 24px;font-size:14px;font-weight:800;font-family:'Times New Roman',Times,Georgia,serif;color:#000">Receipt</div>
+    <div style="width:559px;min-height:794px;background:#ffffff;padding:16px;box-sizing:border-box;display:flex;flex-direction:column">
+      <div style="width:100%;flex:1;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:11px;box-sizing:border-box;display:flex;flex-direction:column;border:2px solid #000000">
+        
+        <!-- Header -->
+        <div style="padding:12px 14px 8px;text-align:center;color:#000;display:flex;flex-direction:column;align-items:center">
+          <div style="font-family:'Brush Script MT','Lucida Handwriting','Segoe Script',cursive,sans-serif;font-size:26px;font-weight:900;font-style:italic;line-height:1.1;color:#000">Speed@Net</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:900;letter-spacing:0.8px;margin:3px 0 2px;text-transform:uppercase;color:#000">ONLINE JAVASEVANA</div>
+          <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.35">Mullassery Building, GA College PO, Palazhi, Kozhikode 673014</div>
+          <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.35;margin-top:1px">Email: speedatnet328@gmail.com, Ph: 0495 3576610, 7356598850</div>
+          <div style="margin-top:6px">
+            <div style="display:inline-block;background:#b0bec5;border:1.5px solid #000;border-radius:7px;padding:2px 24px;font-size:14px;font-weight:800;font-family:'Times New Roman',Times,Georgia,serif;color:#000">Receipt</div>
+          </div>
         </div>
+
+        <!-- Meta (Date & To) -->
+        <div style="padding:4px 10px;border-bottom:2px solid #000;display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding-right:6px">
+            <span style="font-size:11.5px;font-weight:700;color:#000">Date:</span>
+            <span style="font-size:11.5px;font-weight:700;color:#000;min-width:90px;text-align:right">${dateStr}</span>
+          </div>
+          <div style="display:flex;align-items:center;gap:16px;padding-left:2px">
+            <span style="font-size:11.5px;font-weight:700;color:#000;min-width:24px">To:</span>
+            <span style="font-size:12px;font-weight:800;color:#000;letter-spacing:0.3px">WALK-IN CUSTOMER</span>
+          </div>
+        </div>
+
+        <!-- Table Container -->
+        <div style="flex:1;position:relative;display:flex;flex-direction:column;min-height:420px">
+          <!-- 4 Continuous full-height vertical column lines -->
+          <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:9%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
+          <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:50%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
+          <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:67%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
+          <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:81%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
+
+          <table style="width:100%;border-collapse:collapse;table-layout:fixed;position:relative;z-index:2">
+            <thead style="background:#b0b0b0">
+              <tr>
+                <th style="width:9%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">SI NO</th>
+                <th style="width:41%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">DISCRIPTION</th>
+                <th style="width:17%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">UNIT PRICE</th>
+                <th style="width:14%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">QTY</th>
+                <th style="width:19%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">AMOUNT</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rows}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Totals Section -->
+        <div style="display:flex;border-top:2px solid #000;border-bottom:2px solid #000">
+          <div style="flex:1"></div>
+          <div style="width:240px;border-left:2px solid #000;display:flex;flex-direction:column">
+            <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
+              <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Total</span>
+              <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
+              <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${formatCurrency(subtotal)}</span>
+            </div>
+            <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
+              <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Advance</span>
+              <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
+              <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${advance > 0 ? formatCurrency(advance) : '-'}</span>
+            </div>
+            <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
+              <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Discount</span>
+              <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
+              <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${totalDiscount > 0 ? formatCurrency(totalDiscount) : '-'}</span>
+            </div>
+            <div style="display:flex;align-items:center;font-size:11px;font-weight:900;color:#000;min-height:20px">
+              <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Grand Total</span>
+              <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
+              <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:900">${formatCurrency(totalAmount)}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Footer / Bank Details & Signatory -->
+        <div style="display:flex;min-height:80px">
+          <div style="flex:1;padding:6px 10px;display:flex;flex-direction:column;justify-content:center;gap:3px">
+            <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
+              <span style="width:82px">Google Pay</span>
+              <span style="margin-right:6px">:</span>
+              <span style="letter-spacing:0.3px">9961206583</span>
+            </div>
+            <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
+              <span style="width:82px">Account No</span>
+              <span style="margin-right:6px">:</span>
+              <span style="letter-spacing:0.3px">38670402105</span>
+            </div>
+            <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
+              <span style="width:82px">IFSC CODE</span>
+              <span style="margin-right:6px">:</span>
+              <span style="letter-spacing:0.3px">SBIN0070576</span>
+            </div>
+          </div>
+          <div style="width:240px;border-left:2px solid #000;padding:5px 8px;display:flex;flex-direction:column;box-sizing:border-box">
+            <div style="font-size:10px;font-weight:800;color:#000">For authorised signatory</div>
+            <div style="flex:1;min-height:48px"></div>
+          </div>
+        </div>
+
       </div>
-
-      <!-- Meta (Date & To) -->
-      <div style="padding:4px 10px;border-bottom:2px solid #000;display:flex;flex-direction:column;gap:3px">
-        <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding-right:6px">
-          <span style="font-size:11.5px;font-weight:700;color:#000">Date:</span>
-          <span style="font-size:11.5px;font-weight:700;color:#000;min-width:90px;text-align:right">${dateStr}</span>
-        </div>
-        <div style="display:flex;align-items:center;gap:16px;padding-left:2px">
-          <span style="font-size:11.5px;font-weight:700;color:#000;min-width:24px">To:</span>
-          <span style="font-size:12px;font-weight:800;color:#000;letter-spacing:0.3px">WALK-IN CUSTOMER</span>
-        </div>
-      </div>
-
-      <!-- Table Container -->
-      <div style="flex:1;position:relative;display:flex;flex-direction:column;min-height:420px">
-        <!-- 4 Continuous full-height vertical column lines -->
-        <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:9%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
-        <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:50%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
-        <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:67%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
-        <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:81%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
-
-        <table style="width:100%;border-collapse:collapse;table-layout:fixed;position:relative;z-index:2">
-          <thead style="background:#b0b0b0">
-            <tr>
-              <th style="width:9%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">SI NO</th>
-              <th style="width:41%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">DISCRIPTION</th>
-              <th style="width:17%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">UNIT PRICE</th>
-              <th style="width:14%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">QTY</th>
-              <th style="width:19%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">AMOUNT</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
-      </div>
-
-      <!-- Totals Section -->
-      <div style="display:flex;border-top:2px solid #000;border-bottom:2px solid #000">
-        <div style="flex:1"></div>
-        <div style="width:240px;border-left:2px solid #000;display:flex;flex-direction:column">
-          <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
-            <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Total</span>
-            <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
-            <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${formatCurrency(subtotal)}</span>
-          </div>
-          <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
-            <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Advance/ Discound</span>
-            <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
-            <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${totalDiscount > 0 ? formatCurrency(totalDiscount) : '-'}</span>
-          </div>
-          <div style="display:flex;align-items:center;font-size:11px;font-weight:900;color:#000;min-height:20px">
-            <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Grand Total</span>
-            <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
-            <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:900">${formatCurrency(totalAmount)}</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer / Bank Details & Signatory -->
-      <div style="display:flex;min-height:80px">
-        <div style="flex:1;padding:6px 10px;display:flex;flex-direction:column;justify-content:center;gap:3px">
-          <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
-            <span style="width:82px">Google Pay</span>
-            <span style="margin-right:6px">:</span>
-            <span style="letter-spacing:0.3px">9961206583</span>
-          </div>
-          <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
-            <span style="width:82px">Account No</span>
-            <span style="margin-right:6px">:</span>
-            <span style="letter-spacing:0.3px">38670402105</span>
-          </div>
-          <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
-            <span style="width:82px">IFSC CODE</span>
-            <span style="margin-right:6px">:</span>
-            <span style="letter-spacing:0.3px">SBIN0070576</span>
-          </div>
-        </div>
-        <div style="width:240px;border-left:2px solid #000;padding:5px 8px;display:flex;flex-direction:column;box-sizing:border-box">
-          <div style="font-size:10px;font-weight:800;color:#000">For authorised signatory</div>
-          <div style="flex:1;min-height:48px"></div>
-        </div>
-      </div>
-
     </div>`;
 
   const el = document.createElement('div');
