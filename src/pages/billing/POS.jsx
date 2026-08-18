@@ -19,6 +19,7 @@ const POS = () => {
   const [discount, setDiscount] = useState(0);
   const [customerName, setCustomerName] = useState('Walk-in Customer');
   const [paymentMethod, setPaymentMethod] = useState('Cash'); // 'Cash' | 'UPI'
+  const [searchTerm, setSearchTerm] = useState('');
 
   useEffect(() => {
     fetchProducts();
