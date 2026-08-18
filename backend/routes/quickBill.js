@@ -50,9 +50,10 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { items, total, note, payment_method } = req.body;
+    const { items, total, advance, note, payment_method } = req.body;
     const today = todayStr();
     const payMethod = (payment_method && payment_method.toUpperCase() === 'UPI') ? 'UPI' : 'Cash';
+    const advAmount = Number(advance || 0);
 
     // Auto-number bills per day
     const todayCount = await QuickBillSession.countDocuments({ billed_date: today });
@@ -62,6 +63,7 @@ router.post('/', async (req, res) => {
       bill_number:    todayCount + 1,
       items,
       total,
+      advance:        advAmount,
       note:           note || '',
       billed_date:    today,
       payment_method: payMethod,
@@ -73,6 +75,7 @@ router.post('/', async (req, res) => {
         customer_name:  note ? note : 'Quick Bill',
         total_amount:   total,
         discount:       items.reduce((s, i) => s + (Number(i.discount) || 0), 0),
+        advance:        advAmount,
         payment_method: payMethod,
       });
 

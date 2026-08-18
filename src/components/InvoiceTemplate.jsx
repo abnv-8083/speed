@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { ArrowLeft, Download, Loader2 } from 'lucide-react';
+import { ArrowLeft, Download, Loader2, Printer } from 'lucide-react';
 import { format } from 'date-fns';
 import './InvoiceTemplate.css';
 
@@ -104,17 +104,22 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
         <button className="inv-back-btn" onClick={onBack}>
           <ArrowLeft size={15} /> {backLabel}
         </button>
-        <button className="inv-dl-btn" onClick={handleDownloadPDF} disabled={downloading}>
-          {downloading ? (
-            <>
-              <Loader2 size={15} className="animate-spin" /> Generating PDF...
-            </>
-          ) : (
-            <>
-              <Download size={15} /> Download PDF
-            </>
-          )}
-        </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+          <button className="inv-print-act-btn" onClick={() => window.print()} title="Print receipt">
+            <Printer size={15} /> Print
+          </button>
+          <button className="inv-dl-btn" onClick={handleDownloadPDF} disabled={downloading}>
+            {downloading ? (
+              <>
+                <Loader2 size={15} className="animate-spin" /> Generating PDF...
+              </>
+            ) : (
+              <>
+                <Download size={15} /> Download PDF
+              </>
+            )}
+          </button>
+        </div>
       </div>
 
       {/* ── A5 paper with global margin ── */}

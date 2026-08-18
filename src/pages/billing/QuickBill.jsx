@@ -3,6 +3,7 @@ import {
   Search, X, Check, Plus, Edit2, Trash2,
   ShoppingBag, Receipt, TrendingUp, Hash, Clock,
   History, Loader2, FileText, Smartphone,
+  Coins, CheckSquare, Square, ArrowRight,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -10,6 +11,7 @@ import { api } from '../../api';
 import { useToast } from '../../components/ToastContext';
 import AppModal from '../../components/AppModal';
 import PremiumLoader from '../../components/PremiumLoader';
+import InvoiceTemplate from '../../components/InvoiceTemplate';
 import './QuickBill.css';
 
 // ── Midnight reset helper ─────────────────────────────────────
@@ -85,255 +87,172 @@ function EditItemModal({ item, onSave, onClose }) {
   );
 }
 
-// ── Generate invoice PDF for a Quick Bill ─────────────────────
-async function downloadBillPDF(bill) {
-  const html2pdf = (await import('html2pdf.js')).default;
+// ── Manage Advance Modal ───────────────────────────────────────
+function ManageAdvanceModal({ bill, onSave, onDelete, onClose }) {
+  const [amount, setAmount] = useState(bill.advance ? String(bill.advance) : '');
+  const [submitting, setSubmitting] = useState(false);
 
-  let dateStr = '';
-  let timeStr = '';
-  try {
-    dateStr = format(new Date(bill.created_at || new Date()), 'dd-MMM-yyyy');
-    timeStr = format(new Date(bill.created_at || new Date()), 'hh:mm a');
-  } catch (e) {
-    dateStr = new Date(bill.created_at || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-    timeStr = new Date(bill.created_at || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  }
-
-  const formatCurrency = (num) => {
-    return Number(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const handleSave = async (e) => {
+    e.preventDefault();
+    const val = Math.max(0, parseFloat(amount) || 0);
+    setSubmitting(true);
+    await onSave(bill.id, val);
+    setSubmitting(false);
+    onClose();
   };
 
-  const totalAmount = Number(bill.total || 0);
-  const totalDiscount = (bill.items || []).reduce((s, i) => s + Number(i.discount || 0), 0);
-  const subtotal = totalAmount + totalDiscount;
-
-  const rows = (bill.items || []).map((item, idx) => `
-    <tr style="min-height:22px">
-      <td style="text-align:center;font-weight:800;padding:3px 6px;font-size:11px">${idx + 1}</td>
-      <td style="text-align:left;font-weight:700;padding:3px 8px;font-size:11px">${item.product_name}</td>
-      <td style="text-align:right;font-weight:700;padding:3px 8px;font-size:11px">
-        <span style="float:left">₹</span><span>${Number(item.price).toFixed(2)}</span>
-      </td>
-      <td style="text-align:right;font-weight:700;padding:3px 8px;font-size:11px">${Number(item.quantity).toFixed(2)}</td>
-      <td style="text-align:right;font-weight:700;padding:3px 8px;font-size:11px">${formatCurrency(item.line_total)}</td>
-    </tr>`).join('');
-
-  const advance = Number(bill.advance || 0);
-
-  const html = `
-    <div style="width:559px;height:775px;max-height:775px;background:#ffffff;padding:12px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
-      <div style="width:100%;height:100%;flex:1;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:11px;box-sizing:border-box;display:flex;flex-direction:column;border:2px solid #000000;overflow:hidden">
-        
-        <!-- Header -->
-        <div style="padding:10px 14px 6px;text-align:center;color:#000;display:flex;flex-direction:column;align-items:center;flex-shrink:0">
-          <div style="font-family:'Brush Script MT','Lucida Handwriting','Segoe Script',cursive,sans-serif;font-size:25px;font-weight:900;font-style:italic;line-height:1.1;color:#000">Speed@Net</div>
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:900;letter-spacing:0.8px;margin:2px 0 2px;text-transform:uppercase;color:#000">ONLINE JAVASEVANA</div>
-          <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.3">Mullassery Building, GA College PO, Palazhi, Kozhikode 673014</div>
-          <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.3;margin-top:1px">Email: speedatnet328@gmail.com, Ph: 0495 3576610, 7356598850</div>
-          <div style="margin-top:5px">
-            <div style="display:inline-block;background:#b0bec5;border:1.5px solid #000;border-radius:7px;padding:2px 24px;font-size:13.5px;font-weight:800;font-family:'Times New Roman',Times,Georgia,serif;color:#000">Receipt</div>
-          </div>
-        </div>
-
-        <!-- Meta (Date, Time & To) -->
-        <div style="padding:4px 10px 4px;border-bottom:2px solid #000;display:flex;flex-direction:column;gap:3px;flex-shrink:0">
-          <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding-right:6px">
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:11px;font-weight:700;color:#000">Date:</span>
-              <span style="font-size:11px;font-weight:700;color:#000">${dateStr}</span>
-            </div>
-            <div style="display:flex;align-items:center;gap:6px">
-              <span style="font-size:11px;font-weight:700;color:#000">Time:</span>
-              <span style="font-size:11px;font-weight:700;color:#000">${timeStr}</span>
-            </div>
-          </div>
-          <div style="display:flex;align-items:center;gap:16px;padding-left:2px">
-            <span style="font-size:11px;font-weight:700;color:#000;min-width:24px">To:</span>
-            <span style="font-size:11.5px;font-weight:800;color:#000;letter-spacing:0.3px">WALK-IN CUSTOMER</span>
-          </div>
-        </div>
-
-        <!-- Table Container -->
-        <div style="flex:1;position:relative;display:flex;flex-direction:column;min-height:0;overflow:hidden">
-          <!-- 4 Continuous full-height vertical column lines -->
-          <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:9%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
-          <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:50%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
-          <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:67%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
-          <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:81%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
-
-          <table style="width:100%;border-collapse:collapse;table-layout:fixed;position:relative;z-index:2">
-            <thead style="background:#b0b0b0">
-              <tr>
-                <th style="width:9%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">SI NO</th>
-                <th style="width:41%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">DISCRIPTION</th>
-                <th style="width:17%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">UNIT PRICE</th>
-                <th style="width:14%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">QTY</th>
-                <th style="width:19%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">AMOUNT</th>
-              </tr>
-            </thead>
-            <tbody>
-              ${rows}
-            </tbody>
-          </table>
-        </div>
-
-        <!-- Totals Section -->
-        <div style="display:flex;border-top:2px solid #000;border-bottom:2px solid #000;flex-shrink:0">
-          <div style="flex:1"></div>
-          <div style="width:240px;border-left:2px solid #000;display:flex;flex-direction:column">
-            <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
-              <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Total</span>
-              <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
-              <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${formatCurrency(subtotal)}</span>
-            </div>
-            <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
-              <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Advance</span>
-              <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
-              <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${advance > 0 ? formatCurrency(advance) : '-'}</span>
-            </div>
-            <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
-              <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Discount</span>
-              <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
-              <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${totalDiscount > 0 ? formatCurrency(totalDiscount) : '-'}</span>
-            </div>
-            <div style="display:flex;align-items:center;font-size:11px;font-weight:900;color:#000;min-height:20px">
-              <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Grand Total</span>
-              <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
-              <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:900">${formatCurrency(totalAmount)}</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Footer / Bank Details & Signatory -->
-        <div style="display:flex;min-height:75px;flex-shrink:0">
-          <div style="flex:1;padding:6px 10px;display:flex;flex-direction:column;justify-content:center;gap:3px">
-            <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
-              <span style="width:82px">Google Pay</span>
-              <span style="margin-right:6px">:</span>
-              <span style="letter-spacing:0.3px">9961206583</span>
-            </div>
-            <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
-              <span style="width:82px">Account No</span>
-              <span style="margin-right:6px">:</span>
-              <span style="letter-spacing:0.3px">38670402105</span>
-            </div>
-            <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
-              <span style="width:82px">IFSC CODE</span>
-              <span style="margin-right:6px">:</span>
-              <span style="letter-spacing:0.3px">SBIN0070576</span>
-            </div>
-          </div>
-          <div style="width:240px;border-left:2px solid #000;padding:5px 8px;display:flex;flex-direction:column;box-sizing:border-box">
-            <div style="font-size:10px;font-weight:800;color:#000">For authorised signatory</div>
-            <div style="flex:1;min-height:44px"></div>
-          </div>
-        </div>
-
-      </div>
-    </div>`;
-
-  const container = document.createElement('div');
-  container.style.cssText = 'position:fixed;top:0;left:0;width:559px;height:775px;z-index:-9999;background:#ffffff;pointer-events:none;';
-  container.innerHTML = html;
-  document.body.appendChild(container);
-
-  const targetEl = container.firstElementChild || container;
-
-  await html2pdf()
-    .set({
-      margin:      0,
-      filename:    `Receipt_Bill_${bill.bill_number}_${dateStr}.pdf`,
-      image:       { type: 'jpeg', quality: 1 },
-      html2canvas: {
-        scale:           2,
-        useCORS:         true,
-        backgroundColor: '#ffffff',
-        logging:         false,
-      },
-      jsPDF: {
-        unit:        'mm',
-        format:      'a5',
-        orientation: 'portrait',
-      },
-    })
-    .from(targetEl)
-    .save();
-
-  document.body.removeChild(container);
-}
-
-// ── Bill Row ───────────────────────────────────────────────────
-function BillRow({ bill, onDelete, onEditItem }) {
-  const [downloading, setDownloading] = useState(false);
-  const timeStr = format(new Date(bill.created_at), 'hh:mm a');
-  const isUpi = (bill.payment_method || '').toUpperCase() === 'UPI';
-
-  const handleDownload = async () => {
-    if (downloading) return;
-    setDownloading(true);
-    try {
-      await downloadBillPDF(bill);
-    } catch (err) {
-      console.error('Failed to download bill PDF:', err);
-    } finally {
-      setDownloading(false);
-    }
+  const handleDelete = async () => {
+    setSubmitting(true);
+    await onDelete(bill.id);
+    setSubmitting(false);
+    onClose();
   };
 
   return (
-    <div className="qb-bill-container">
-      {bill.items.map((item, idx) => (
-        <div key={idx} className="qb-single-bill-row">
-          <div className="qb-bill-badge-group">
-            <span className="qb-bill-badge">#{bill.bill_number}</span>
-            <span className={`qb-pay-badge ${isUpi ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
-              {isUpi ? 'UPI' : 'Cash'}
-            </span>
-          </div>
-
-          <div className="qb-bill-item-info">
-            <span className="qb-bill-item-name">{item.product_name}</span>
-            {item.discount > 0 && (
-              <span className="qb-bill-item-disc-text" title={`Discount: ₹${item.discount}`}>
-                Discount: ₹{Number(item.discount).toFixed(2)}
-              </span>
-            )}
-          </div>
-
-          <span className="qb-bill-item-qty">×{item.quantity}</span>
-          <span className="qb-bill-item-price">₹{Number(item.price).toFixed(2)}</span>
-          <span className="qb-bill-item-total">₹{Number(item.line_total).toFixed(2)}</span>
-
-          <span className="qb-bill-time-text">
-            <Clock size={11} /> {timeStr}
-          </span>
-
-          <div className="qb-bill-actions">
+    <AppModal
+      title={`Advance Payment — Bill #${bill.bill_number}`}
+      onClose={onClose}
+      width="360px"
+      footer={
+        <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+          {Number(bill.advance) > 0 ? (
             <button
-              className="qb-bill-action-btn qb-btn-edit"
-              onClick={() => onEditItem(bill, idx)}
-              title="Edit quantity and discount"
+              type="button"
+              className="btn"
+              style={{ background: '#ef4444', color: '#fff', fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}
+              onClick={handleDelete}
+              disabled={submitting}
             >
-              <Edit2 size={13} />
+              <Trash2 size={13} /> Remove
             </button>
-            <button
-              className="qb-bill-action-btn qb-btn-pdf"
-              onClick={handleDownload}
-              disabled={downloading}
-              title="Download Invoice PDF"
-            >
-              {downloading ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
-            </button>
-            <button
-              className="qb-bill-action-btn qb-btn-delete"
-              onClick={() => onDelete(bill.id)}
-              title="Delete bill"
-            >
-              <Trash2 size={13} />
+          ) : <div />}
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button type="button" className="btn btn-secondary" onClick={onClose} disabled={submitting}>Cancel</button>
+            <button type="button" className="btn btn-primary" onClick={handleSave} disabled={submitting}>
+              {submitting ? 'Saving...' : 'Save Advance'}
             </button>
           </div>
         </div>
-      ))}
+      }
+    >
+      <form onSubmit={handleSave} style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+        <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+          Bill Total: <strong style={{ color: 'var(--text)' }}>₹{Number(bill.total).toFixed(2)}</strong>
+        </div>
+        <div>
+          <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+            Advance Amount (₹)
+          </label>
+          <div className="qb-currency-input-wrap">
+            <span className="qb-currency-symbol">₹</span>
+            <input
+              type="number"
+              step="0.01"
+              min="0"
+              max={bill.total}
+              autoFocus
+              className="input-field qb-inline-input qb-currency-input"
+              placeholder="0.00"
+              value={amount}
+              onChange={e => setAmount(e.target.value)}
+            />
+          </div>
+        </div>
+      </form>
+    </AppModal>
+  );
+}
+
+// ── Bill Row ───────────────────────────────────────────────────
+function BillRow({
+  bill,
+  onDelete,
+  onEditItem,
+  onManageAdvance,
+  selectionMode,
+  isSelected,
+  onToggleSelect,
+}) {
+  const timeStr = format(new Date(bill.created_at), 'hh:mm a');
+  const isUpi = (bill.payment_method || '').toUpperCase() === 'UPI';
+  const hasAdvance = Number(bill.advance) > 0;
+
+  return (
+    <div
+      className={`qb-bill-container ${selectionMode ? 'qb-bill-container--selectable' : ''} ${isSelected ? 'qb-bill-container--selected' : ''}`}
+      onClick={selectionMode ? onToggleSelect : undefined}
+    >
+      {selectionMode && (
+        <div className="qb-select-checkbox-col" onClick={(e) => { e.stopPropagation(); onToggleSelect(); }}>
+          <input
+            type="checkbox"
+            className="qb-bill-checkbox"
+            checked={isSelected}
+            onChange={onToggleSelect}
+          />
+        </div>
+      )}
+
+      <div className="qb-bill-items-flow">
+        {bill.items.map((item, idx) => (
+          <div key={idx} className="qb-single-bill-row">
+            <div className="qb-bill-badge-group">
+              <span className="qb-bill-badge">#{bill.bill_number}</span>
+              <span className={`qb-pay-badge ${isUpi ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
+                {isUpi ? 'UPI' : 'Cash'}
+              </span>
+              {hasAdvance && idx === 0 && (
+                <span className="qb-advance-badge" title={`Advance Paid: ₹${Number(bill.advance).toFixed(2)}`}>
+                  <Coins size={11} /> Adv: ₹{Number(bill.advance).toFixed(2)}
+                </span>
+              )}
+            </div>
+
+            <div className="qb-bill-item-info">
+              <span className="qb-bill-item-name">{item.product_name}</span>
+              {item.discount > 0 && (
+                <span className="qb-bill-item-disc-text" title={`Discount: ₹${item.discount}`}>
+                  Discount: ₹{Number(item.discount).toFixed(2)}
+                </span>
+              )}
+            </div>
+
+            <span className="qb-bill-item-qty">×{item.quantity}</span>
+            <span className="qb-bill-item-price">₹{Number(item.price).toFixed(2)}</span>
+            <span className="qb-bill-item-total">₹{Number(item.line_total).toFixed(2)}</span>
+
+            <span className="qb-bill-time-text">
+              <Clock size={11} /> {timeStr}
+            </span>
+
+            {!selectionMode && (
+              <div className="qb-bill-actions" onClick={e => e.stopPropagation()}>
+                <button
+                  className={`qb-bill-action-btn qb-btn-advance ${hasAdvance ? 'qb-btn-advance--active' : ''}`}
+                  onClick={() => onManageAdvance(bill)}
+                  title="Manage Advance Payment"
+                >
+                  <Coins size={13} />
+                </button>
+                <button
+                  className="qb-bill-action-btn qb-btn-edit"
+                  onClick={() => onEditItem(bill, idx)}
+                  title="Edit quantity and discount"
+                >
+                  <Edit2 size={13} />
+                </button>
+                <button
+                  className="qb-bill-action-btn qb-btn-delete"
+                  onClick={() => onDelete(bill.id)}
+                  title="Delete bill"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -351,6 +270,17 @@ export default function QuickBill() {
   const [bills, setBills]                     = useState([]);
   const [loadingBills, setLoadingBills]       = useState(true);
   const [summary, setSummary]                 = useState({ totalAmount: 0, billCount: 0, itemCount: 0, upiAmount: 0, upiCount: 0 });
+
+  // ── Multi-Bill Selection & Invoice State ───────────────────────
+  const [selectionMode, setSelectionMode]             = useState(false);
+  const [selectedBillIds, setSelectedBillIds]         = useState(new Set());
+  const [showAddressModal, setShowAddressModal]       = useState(false);
+  const [customerNameInput, setCustomerNameInput]     = useState('');
+  const [customerAddressInput, setCustomerAddressInput] = useState('');
+  const [previewInvoice, setPreviewInvoice]           = useState(null);
+
+  // ── Manage Advance Modal State ─────────────────────────────────
+  const [advanceTargetBill, setAdvanceTargetBill]     = useState(null);
 
   // ── Inline Entry Row State ─────────────────────────────────────
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -410,6 +340,90 @@ export default function QuickBill() {
       setSummary(summaryData || { totalAmount: 0, billCount: 0, itemCount: 0, upiAmount: 0, upiCount: 0 });
     } catch (err) { toast.error('Failed to load today\'s bills'); }
     setLoadingBills(false);
+  };
+
+  // ── Selection helpers ──────────────────────────────────────────
+  const toggleSelectBill = (id) => {
+    setSelectedBillIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
+
+  const handleSelectAll = () => {
+    if (selectedBillIds.size === bills.length) {
+      setSelectedBillIds(new Set());
+    } else {
+      setSelectedBillIds(new Set(bills.map(b => b.id)));
+    }
+  };
+
+  // ── Generate Combined Invoice Preview ─────────────────────────
+  const handleGenerateInvoicePreview = () => {
+    const selectedBills = bills.filter(b => selectedBillIds.has(b.id));
+    if (selectedBills.length === 0) return;
+
+    // Combine all items
+    const combinedItems = [];
+    selectedBills.forEach(b => {
+      (b.items || []).forEach(item => {
+        combinedItems.push({
+          product_name: item.product_name,
+          quantity: item.quantity,
+          price: item.price,
+          price_at_time: item.price,
+          line_total: item.line_total,
+          discount: item.discount || 0,
+        });
+      });
+    });
+
+    const totalDiscount = combinedItems.reduce((s, i) => s + Number(i.discount || 0), 0);
+    const subtotal = combinedItems.reduce((s, i) => s + Number(i.line_total || 0), 0) + totalDiscount;
+    const totalAmount = combinedItems.reduce((s, i) => s + Number(i.line_total || 0), 0);
+    const totalAdvance = selectedBills.reduce((s, b) => s + Number(b.advance || 0), 0);
+
+    const invoiceObj = {
+      id: selectedBills.map(b => b.bill_number).join(', '),
+      customer_name: customerNameInput.trim() || 'Walk-in Customer',
+      customer_address: customerAddressInput.trim(),
+      items: combinedItems,
+      subtotal: subtotal,
+      discount: totalDiscount,
+      advance: totalAdvance,
+      total_amount: totalAmount,
+      created_at: new Date(),
+    };
+
+    setShowAddressModal(false);
+    setSelectionMode(false);
+    setSelectedBillIds(new Set());
+    setCustomerNameInput('');
+    setCustomerAddressInput('');
+    setPreviewInvoice(invoiceObj);
+  };
+
+  // ── Advance Management Handlers ────────────────────────────────
+  const handleSaveAdvance = async (billId, advanceAmount) => {
+    try {
+      await api.updateQuickBill(billId, { advance: advanceAmount });
+      setBills(prev => prev.map(b => b.id === billId ? { ...b, advance: advanceAmount } : b));
+      toast.success(advanceAmount > 0 ? `Advance of ₹${advanceAmount.toFixed(2)} saved` : 'Advance removed');
+    } catch (err) {
+      toast.error('Failed to update advance: ' + err.message);
+    }
+  };
+
+  const handleDeleteAdvance = async (billId) => {
+    try {
+      await api.updateQuickBill(billId, { advance: 0 });
+      setBills(prev => prev.map(b => b.id === billId ? { ...b, advance: 0 } : b));
+      toast.success('Advance payment removed');
+    } catch (err) {
+      toast.error('Failed to remove advance: ' + err.message);
+    }
   };
 
   // ── Product Search Dropdown ───────────────────────────────────
@@ -645,6 +659,17 @@ export default function QuickBill() {
   // ── Today string ──────────────────────────────────────────────
   const todayLabel = format(new Date(), 'EEEE, dd MMM yyyy');
 
+  // ── Invoice / Preview View ─────────────────────────────────────
+  if (previewInvoice) {
+    return (
+      <InvoiceTemplate
+        invoice={previewInvoice}
+        onBack={() => setPreviewInvoice(null)}
+        backLabel="Back to Quick Bill"
+      />
+    );
+  }
+
   return (
     <div className="qb-root animate-fade-in">
 
@@ -746,7 +771,7 @@ export default function QuickBill() {
                   checked={isUPI}
                   onChange={e => setIsUPI(e.target.checked)}
                 />
-                <span className="qb-upi-checkbox-text">UPI</span>
+                <span className="qb-upi-toggle-text">{isUPI ? 'UPI' : 'Cash'}</span>
               </label>
             </div>
 
@@ -827,13 +852,71 @@ export default function QuickBill() {
               <h3>Today's Bills</h3>
               <span className="qb-bill-list-date">{todayLabel}</span>
             </div>
-            <button
-              className="qb-history-btn"
-              onClick={() => navigate('/billing/quickbill/history')}
-            >
-              <History size={14} /> History
-            </button>
+            <div className="qb-list-header-actions" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              {bills.length > 0 && !selectionMode && (
+                <button
+                  type="button"
+                  className="qb-invoice-mode-btn"
+                  onClick={() => {
+                    setSelectionMode(true);
+                    setSelectedBillIds(new Set());
+                  }}
+                  title="Select multiple bills to create an invoice"
+                >
+                  <FileText size={14} /> Create Invoice
+                </button>
+              )}
+              <button
+                className="qb-history-btn"
+                onClick={() => navigate('/billing/quickbill/history')}
+              >
+                <History size={14} /> History
+              </button>
+            </div>
           </div>
+
+          {/* Selection mode floating bar */}
+          {selectionMode && (
+            <div className="qb-selection-bar animate-fade-in">
+              <div className="qb-selection-left">
+                <button
+                  type="button"
+                  className="qb-select-all-btn"
+                  onClick={handleSelectAll}
+                >
+                  {selectedBillIds.size === bills.length && bills.length > 0 ? (
+                    <CheckSquare size={16} />
+                  ) : (
+                    <Square size={16} />
+                  )}
+                  <span>{selectedBillIds.size === bills.length && bills.length > 0 ? 'Deselect All' : 'Select All'}</span>
+                </button>
+                <span className="qb-selection-count">
+                  <strong>{selectedBillIds.size}</strong> of {bills.length} selected
+                </span>
+              </div>
+              <div className="qb-selection-right">
+                <button
+                  type="button"
+                  className="btn btn-secondary qb-selection-cancel-btn"
+                  onClick={() => {
+                    setSelectionMode(false);
+                    setSelectedBillIds(new Set());
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  className="btn btn-primary qb-selection-next-btn"
+                  disabled={selectedBillIds.size === 0}
+                  onClick={() => setShowAddressModal(true)}
+                >
+                  Next <ArrowRight size={14} />
+                </button>
+              </div>
+            </div>
+          )}
 
           {loadingBills ? (
             <div className="qb-center-loader"><PremiumLoader text="Loading bills…" /></div>
@@ -849,8 +932,12 @@ export default function QuickBill() {
                 <BillRow
                   key={bill.id}
                   bill={bill}
+                  selectionMode={selectionMode}
+                  isSelected={selectedBillIds.has(bill.id)}
+                  onToggleSelect={() => toggleSelectBill(bill.id)}
                   onDelete={id => setDeleteId(id)}
                   onEditItem={openEditItem}
+                  onManageAdvance={b => setAdvanceTargetBill(b)}
                 />
               ))}
             </div>
@@ -949,6 +1036,79 @@ export default function QuickBill() {
           </button>
         </div>
       </div>
+
+      {/* ── Manage Advance Modal ── */}
+      {advanceTargetBill && (
+        <ManageAdvanceModal
+          bill={advanceTargetBill}
+          onSave={handleSaveAdvance}
+          onDelete={handleDeleteAdvance}
+          onClose={() => setAdvanceTargetBill(null)}
+        />
+      )}
+
+      {/* ── Address / Customer Details Modal for Invoice ── */}
+      {showAddressModal && (
+        <AppModal
+          title="Create Invoice — Customer Details"
+          onClose={() => setShowAddressModal(false)}
+          width="440px"
+          footer={
+            <>
+              <button className="btn btn-secondary" onClick={() => setShowAddressModal(false)}>Cancel</button>
+              <button
+                className="btn btn-primary"
+                onClick={handleGenerateInvoicePreview}
+              >
+                <FileText size={14} /> Preview Invoice
+              </button>
+            </>
+          }
+        >
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ background: 'var(--surface-hover)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}>
+              <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>
+                {selectedBillIds.size} Bill{selectedBillIds.size !== 1 ? 's' : ''} Selected
+              </div>
+              <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem', lineHeight: '1.4' }}>
+                Total Items: {bills.filter(b => selectedBillIds.has(b.id)).reduce((s, b) => s + b.items.length, 0)} •
+                Grand Total: ₹{bills.filter(b => selectedBillIds.has(b.id)).reduce((s, b) => s + Number(b.total || 0), 0).toFixed(2)}
+                {bills.filter(b => selectedBillIds.has(b.id)).reduce((s, b) => s + Number(b.advance || 0), 0) > 0 && (
+                  <span> • Total Advance: ₹{bills.filter(b => selectedBillIds.has(b.id)).reduce((s, b) => s + Number(b.advance || 0), 0).toFixed(2)}</span>
+                )}
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                Customer / To Name (Optional)
+              </label>
+              <input
+                type="text"
+                className="input-field"
+                placeholder="Walk-in Customer"
+                value={customerNameInput}
+                onChange={e => setCustomerNameInput(e.target.value)}
+                autoFocus
+              />
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                Customer Address / Details (Optional)
+              </label>
+              <textarea
+                className="input-field"
+                rows="2"
+                placeholder="Customer Address / Contact (optional)"
+                value={customerAddressInput}
+                onChange={e => setCustomerAddressInput(e.target.value)}
+                style={{ resize: 'vertical' }}
+              />
+            </div>
+          </div>
+        </AppModal>
+      )}
 
       {/* ── Edit item modal ── */}
       {editTarget && (

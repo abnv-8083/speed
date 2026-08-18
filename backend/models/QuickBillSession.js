@@ -22,6 +22,7 @@ const quickBillSchema = new mongoose.Schema(
     bill_number:  { type: Number },                          // auto-incremented per day
     items:        { type: [itemSchema], default: [] },
     total:        { type: Number, required: true, min: 0 },
+    advance:      { type: Number, default: 0, min: 0 },       // advance payment amount
     note:         { type: String, default: '' },
     billed_date:  { type: String, required: true },          // "YYYY-MM-DD" for easy day grouping
     payment_method: { type: String, default: 'Cash' },        // "Cash" or "UPI"
