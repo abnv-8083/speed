@@ -128,6 +128,12 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
                 <span className="inv-meta-val">{timeStr}</span>
               </div>
               <div className="inv-meta-row">
+                <span className="inv-meta-key">Payment</span>
+                <span className="inv-meta-val" style={{ fontWeight: 700, color: (invoice.payment_method || invoice.paymentMethod || '').toUpperCase() === 'UPI' ? '#7c3aed' : '#15803d' }}>
+                  {invoice.payment_method || invoice.paymentMethod || 'Cash'}
+                </span>
+              </div>
+              <div className="inv-meta-row">
                 <span className="inv-meta-key">Status</span>
                 <span className="inv-paid-chip">Paid</span>
               </div>

@@ -50,27 +50,30 @@ router.get('/', async (req, res) => {
  */
 router.post('/', async (req, res) => {
   try {
-    const { items, total, note } = req.body;
+    const { items, total, note, payment_method } = req.body;
     const today = todayStr();
+    const payMethod = (payment_method && payment_method.toUpperCase() === 'UPI') ? 'UPI' : 'Cash';
 
     // Auto-number bills per day
     const todayCount = await QuickBillSession.countDocuments({ billed_date: today });
 
     // 1. Create the QuickBillSession
     const bill = await QuickBillSession.create({
-      bill_number: todayCount + 1,
+      bill_number:    todayCount + 1,
       items,
       total,
-      note:        note || '',
-      billed_date: today,
+      note:           note || '',
+      billed_date:    today,
+      payment_method: payMethod,
     });
 
     // 2. Mirror into Invoice collection so Sales Report includes it
     try {
       const invoice = await Invoice.create({
-        customer_name: note ? note : 'Quick Bill',
-        total_amount:  total,
-        discount:      items.reduce((s, i) => s + (Number(i.discount) || 0), 0),
+        customer_name:  note ? note : 'Quick Bill',
+        total_amount:   total,
+        discount:       items.reduce((s, i) => s + (Number(i.discount) || 0), 0),
+        payment_method: payMethod,
       });
 
       // 3. Create InvoiceItems — resolve product_id from name if needed
@@ -111,9 +114,14 @@ router.patch('/:id', async (req, res) => {
     );
     if (!bill) return res.status(404).json({ error: 'Bill not found' });
 
-    // Sync the mirrored invoice total if it exists
-    if (bill.linked_invoice_id && req.body.total !== undefined) {
-      await Invoice.findByIdAndUpdate(bill.linked_invoice_id, { total_amount: req.body.total });
+    // Sync the mirrored invoice total & payment method if it exists
+    if (bill.linked_invoice_id) {
+      const invoiceUpdates = {};
+      if (req.body.total !== undefined) invoiceUpdates.total_amount = req.body.total;
+      if (req.body.payment_method !== undefined) invoiceUpdates.payment_method = req.body.payment_method;
+      if (Object.keys(invoiceUpdates).length > 0) {
+        await Invoice.findByIdAndUpdate(bill.linked_invoice_id, invoiceUpdates);
+      }
     }
 
     // Sync invoice items if items were updated
@@ -183,11 +191,31 @@ router.get('/summary', async (req, res) => {
           totalAmount: { $sum: '$total' },
           billCount:   { $sum: 1 },
           itemCount:   { $sum: { $sum: '$items.quantity' } },
+          upiAmount: {
+            $sum: {
+              $cond: [{ $eq: ['$payment_method', 'UPI'] }, '$total', 0]
+            }
+          },
+          upiCount: {
+            $sum: {
+              $cond: [{ $eq: ['$payment_method', 'UPI'] }, 1, 0]
+            }
+          },
+          cashAmount: {
+            $sum: {
+              $cond: [{ $ne: ['$payment_method', 'UPI'] }, '$total', 0]
+            }
+          },
+          cashCount: {
+            $sum: {
+              $cond: [{ $ne: ['$payment_method', 'UPI'] }, 1, 0]
+            }
+          },
         },
       },
     ]);
 
-    res.json(result || { totalAmount: 0, billCount: 0, itemCount: 0 });
+    res.json(result || { totalAmount: 0, billCount: 0, itemCount: 0, upiAmount: 0, upiCount: 0, cashAmount: 0, cashCount: 0 });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

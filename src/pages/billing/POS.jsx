@@ -16,9 +16,9 @@ const POS = () => {
   const [showInvoice, setShowInvoice] = useState(false);
   const [showCustomerModal, setShowCustomerModal] = useState(false);
   const [lastInvoice, setLastInvoice] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [discount, setDiscount] = useState(0);
   const [customerName, setCustomerName] = useState('Walk-in Customer');
+  const [paymentMethod, setPaymentMethod] = useState('Cash'); // 'Cash' | 'UPI'
 
   useEffect(() => {
     fetchProducts();
@@ -76,16 +76,17 @@ const POS = () => {
     try {
       // 1. Create invoice
       const invoice = await api.createInvoice({
-        total_amount: cartTotal,
-        discount: discount,
-        customer_name: finalName,
+        total_amount:   cartTotal,
+        discount:       discount,
+        customer_name:  finalName,
+        payment_method: paymentMethod,
       });
 
       // 2. Insert invoice items
       const itemsToInsert = cart.map(item => ({
-        invoice_id: invoice.id,
-        product_id: item.product.id,
-        quantity: item.quantity,
+        invoice_id:    invoice.id,
+        product_id:    item.product.id,
+        quantity:      item.quantity,
         price_at_time: item.product.price,
       }));
       await api.createInvoiceItems(itemsToInsert);
@@ -105,6 +106,7 @@ const POS = () => {
         discount: discount,
         total: cartTotal,
         customerName: finalName,
+        paymentMethod: paymentMethod,
         date: new Date(),
       });
 
@@ -112,6 +114,7 @@ const POS = () => {
       setCart([]);
       setDiscount(0);
       setCustomerName('Walk-in Customer');
+      setPaymentMethod('Cash');
       setShowInvoice(true);
     } catch (err) {
       toast.error('Error creating invoice: ' + err.message);
@@ -363,6 +366,27 @@ const POS = () => {
               placeholder="Walk-in Customer"
               autoFocus
             />
+          </div>
+          <div className="pos-modal-field" style={{ marginTop: '0.75rem' }}>
+            <label>Payment Method</label>
+            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <button
+                type="button"
+                className={`btn ${paymentMethod === 'Cash' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1, padding: '0.45rem' }}
+                onClick={() => setPaymentMethod('Cash')}
+              >
+                Cash
+              </button>
+              <button
+                type="button"
+                className={`btn ${paymentMethod === 'UPI' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ flex: 1, padding: '0.45rem' }}
+                onClick={() => setPaymentMethod('UPI')}
+              >
+                UPI
+              </button>
+            </div>
           </div>
         </AppModal>
       )}

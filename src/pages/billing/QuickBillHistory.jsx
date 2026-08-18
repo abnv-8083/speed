@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import {
   ArrowLeft, Calendar, Search, Download, FileText,
   ChevronDown, ChevronRight, TrendingUp, Receipt, ShoppingBag,
-  X, Loader2, AlertTriangle,
+  X, Loader2, AlertTriangle, Smartphone,
 } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import { api } from '../../api';
@@ -22,10 +22,14 @@ const PRESETS = [
 // ── Expandable bill row ───────────────────────────────────────
 function BillHistoryRow({ bill }) {
   const [open, setOpen] = useState(false);
+  const isUpi = (bill.payment_method || '').toUpperCase() === 'UPI';
   return (
     <div className={`qbh-row ${open ? 'qbh-row--open' : ''}`}>
       <div className="qbh-row-header" onClick={() => setOpen(v => !v)}>
         <span className="qbh-row-num">#{bill.bill_number}</span>
+        <span className={`qb-pay-badge ${isUpi ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
+          {isUpi ? 'UPI' : 'Cash'}
+        </span>
         <span className="qbh-row-date">{format(new Date(bill.created_at), 'dd MMM yyyy')}</span>
         <span className="qbh-row-time">{format(new Date(bill.created_at), 'hh:mm a')}</span>
         <span className="qbh-row-items">
@@ -147,17 +151,20 @@ export default function QuickBillHistory() {
   // ── Summary stats ──────────────────────────────────────────────
   const totalRevenue = filteredBills.reduce((s, b) => s + Number(b.total), 0);
   const totalItems   = filteredBills.reduce((s, b) => s + b.items.reduce((si, i) => si + i.quantity, 0), 0);
+  const totalUPI     = filteredBills.filter(b => (b.payment_method || '').toUpperCase() === 'UPI').reduce((s, b) => s + Number(b.total), 0);
 
   // ── CSV export ────────────────────────────────────────────────
   const exportCSV = () => {
     setExporting('csv');
     try {
-      let csv = 'Date,Bill #,Product,Quantity,Unit Price,Line Total,Bill Total\n';
+      let csv = 'Date,Bill #,Payment Method,Product,Quantity,Unit Price,Line Total,Bill Total\n';
       filteredBills.forEach(bill => {
+        const payMethod = (bill.payment_method || '').toUpperCase() === 'UPI' ? 'UPI' : 'Cash';
         bill.items.forEach((item, idx) => {
           csv += [
             bill.billed_date,
             bill.bill_number,
+            payMethod,
             `"${item.product_name.replace(/"/g, '""')}"`,
             item.quantity,
             Number(item.price).toFixed(2),
@@ -381,6 +388,13 @@ export default function QuickBillHistory() {
             <div>
               <span className="qbh-strip-label">Days with Sales</span>
               <span className="qbh-strip-value">{grouped.length}</span>
+            </div>
+          </div>
+          <div className="qbh-strip-stat">
+            <Smartphone size={15} />
+            <div>
+              <span className="qbh-strip-label">UPI Total</span>
+              <span className="qbh-strip-value" style={{ color: '#a78bfa' }}>₹{totalUPI.toFixed(2)}</span>
             </div>
           </div>
           <div className="qbh-strip-stat">

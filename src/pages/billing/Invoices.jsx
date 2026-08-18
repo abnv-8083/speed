@@ -122,7 +122,12 @@ const Invoices = () => {
                   paginatedInvoices.map(invoice => (
                     <div key={invoice.id} className="inv-row">
                       <div className="inv-col-id">
-                        <span className="inv-id-badge">INV-{invoice.id.toString().padStart(6, '0')}</span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span className="inv-id-badge">INV-{invoice.id.toString().padStart(6, '0')}</span>
+                          <span className={`qb-pay-badge-sm ${(invoice.payment_method || '').toUpperCase() === 'UPI' ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
+                            {(invoice.payment_method || '').toUpperCase() === 'UPI' ? 'UPI' : 'Cash'}
+                          </span>
+                        </div>
                         <span className="inv-customer-name">{invoice.customer_name || 'Walk-in Customer'}</span>
                       </div>
                       <div className="inv-col-items">

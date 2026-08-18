@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, X, Check, Plus, Edit2, Trash2,
   ShoppingBag, Receipt, TrendingUp, Hash, Clock,
-  History, Loader2, FileText,
+  History, Loader2, FileText, Smartphone,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -133,6 +133,10 @@ async function downloadBillPDF(bill) {
           <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:3px;font-size:9px">
             <span style="color:#94a3b8">Time</span><span style="color:#0f172a;font-weight:600">${timeStr}</span>
           </div>
+          <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:3px;font-size:9px;align-items:center">
+            <span style="color:#94a3b8">Payment</span>
+            <span style="background:${(bill.payment_method || '').toUpperCase() === 'UPI' ? '#ede9fe' : '#dcfce7'};color:${(bill.payment_method || '').toUpperCase() === 'UPI' ? '#7c3aed' : '#15803d'};font-size:7.5px;font-weight:700;padding:1px 8px;border-radius:999px;text-transform:uppercase">${bill.payment_method || 'Cash'}</span>
+          </div>
           <div style="display:flex;justify-content:flex-end;gap:10px;font-size:9px;align-items:center">
             <span style="color:#94a3b8">Status</span>
             <span style="background:#dcfce7;color:#15803d;font-size:7.5px;font-weight:700;padding:1px 8px;border-radius:999px;text-transform:uppercase">Paid</span>
@@ -197,12 +201,18 @@ async function downloadBillPDF(bill) {
 // ── Bill Row ───────────────────────────────────────────────────
 function BillRow({ bill, onDelete, onEditItem }) {
   const timeStr = format(new Date(bill.created_at), 'hh:mm a');
+  const isUpi = (bill.payment_method || '').toUpperCase() === 'UPI';
 
   return (
     <div className="qb-bill-container">
       {bill.items.map((item, idx) => (
         <div key={idx} className="qb-single-bill-row">
-          <span className="qb-bill-badge">#{bill.bill_number}</span>
+          <div className="qb-bill-badge-group">
+            <span className="qb-bill-badge">#{bill.bill_number}</span>
+            <span className={`qb-pay-badge ${isUpi ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
+              {isUpi ? 'UPI' : 'Cash'}
+            </span>
+          </div>
 
           <div className="qb-bill-item-info">
             <span className="qb-bill-item-name">{item.product_name}</span>
@@ -262,7 +272,7 @@ export default function QuickBill() {
   // Today's bills
   const [bills, setBills]                     = useState([]);
   const [loadingBills, setLoadingBills]       = useState(true);
-  const [summary, setSummary]                 = useState({ totalAmount: 0, billCount: 0, itemCount: 0 });
+  const [summary, setSummary]                 = useState({ totalAmount: 0, billCount: 0, itemCount: 0, upiAmount: 0, upiCount: 0 });
 
   // ── Inline Entry Row State ─────────────────────────────────────
   const [selectedProduct, setSelectedProduct] = useState(null);
@@ -271,6 +281,7 @@ export default function QuickBill() {
   const [quantity, setQuantity]               = useState(1);
   const [discount, setDiscount]               = useState('');
   const [totalAmount, setTotalAmount]         = useState('');
+  const [isUPI, setIsUPI]                     = useState(false);
 
   // Dropdown search state
   const [showDropdown, setShowDropdown]       = useState(false);
@@ -318,7 +329,7 @@ export default function QuickBill() {
         api.getQuickBillSummary(),
       ]);
       setBills(billsData || []);
-      setSummary(summaryData || { totalAmount: 0, billCount: 0, itemCount: 0 });
+      setSummary(summaryData || { totalAmount: 0, billCount: 0, itemCount: 0, upiAmount: 0, upiCount: 0 });
     } catch (err) { toast.error('Failed to load today\'s bills'); }
     setLoadingBills(false);
   };
@@ -484,14 +495,17 @@ export default function QuickBill() {
     setSaving(true);
     try {
       const total = items.reduce((s, i) => s + i.line_total, 0);
-      const newBill = await api.createQuickBill({ items, total });
+      const payMethod = isUPI ? 'UPI' : 'Cash';
+      const newBill = await api.createQuickBill({ items, total, payment_method: payMethod });
       setBills(prev => [newBill, ...prev]);
       setSummary(prev => ({
         totalAmount: prev.totalAmount + total,
         billCount:   prev.billCount + 1,
         itemCount:   prev.itemCount + items.reduce((s, i) => s + i.quantity, 0),
+        upiAmount:   (prev.upiAmount || 0) + (payMethod === 'UPI' ? total : 0),
+        upiCount:    (prev.upiCount || 0) + (payMethod === 'UPI' ? 1 : 0),
       }));
-      toast.success(`Bill #${newBill.bill_number} created — ₹${total.toFixed(2)}`);
+      toast.success(`Bill #${newBill.bill_number} (${payMethod}) created — ₹${total.toFixed(2)}`);
     } catch (err) {
       toast.error('Failed to create bill: ' + err.message);
     } finally {
@@ -507,10 +521,13 @@ export default function QuickBill() {
       const deleted = bills.find(b => b.id === deleteId);
       setBills(prev => prev.filter(b => b.id !== deleteId));
       if (deleted) {
+        const wasUpi = (deleted.payment_method || '').toUpperCase() === 'UPI';
         setSummary(prev => ({
           totalAmount: prev.totalAmount - deleted.total,
           billCount:   prev.billCount - 1,
           itemCount:   prev.itemCount - deleted.items.reduce((s, i) => s + i.quantity, 0),
+          upiAmount:   Math.max(0, (prev.upiAmount || 0) - (wasUpi ? deleted.total : 0)),
+          upiCount:    Math.max(0, (prev.upiCount || 0) - (wasUpi ? 1 : 0)),
         }));
       }
       toast.success('Bill deleted');
@@ -696,6 +713,20 @@ export default function QuickBill() {
               </div>
             </div>
 
+            {/* 6. UPI Checkbox */}
+            <div className="qb-inline-field qb-field-upi">
+              <label className="qb-inline-label">Method</label>
+              <label className={`qb-upi-checkbox-label ${isUPI ? 'qb-upi-checked' : ''}`} title="Check to mark as UPI payment">
+                <input
+                  type="checkbox"
+                  className="qb-upi-checkbox"
+                  checked={isUPI}
+                  onChange={e => setIsUPI(e.target.checked)}
+                />
+                <span className="qb-upi-checkbox-text">UPI</span>
+              </label>
+            </div>
+
             {/* Submit button */}
             <div className="qb-inline-action">
               <button
@@ -782,15 +813,15 @@ export default function QuickBill() {
                 <span className="qb-stat-value">{summary.itemCount || 0}</span>
               </div>
             </div>
-            <div className="qb-stat-card qb-stat-avg">
-              <Hash size={18} />
+            <div className="qb-stat-card qb-stat-upi">
+              <Smartphone size={18} />
               <div>
-                <span className="qb-stat-label">Avg. Bill Value</span>
+                <span className="qb-stat-label">UPI Payments</span>
                 <span className="qb-stat-value">
-                  {summary.billCount > 0
-                    ? `₹${(summary.totalAmount / summary.billCount).toFixed(2)}`
-                    : '—'
-                  }
+                  ₹{Number(summary.upiAmount || 0).toFixed(2)}
+                </span>
+                <span className="qb-stat-sub">
+                  {summary.upiCount || 0} bill{(summary.upiCount || 0) !== 1 ? 's' : ''}
                 </span>
               </div>
             </div>
@@ -809,18 +840,26 @@ export default function QuickBill() {
             {bills.length === 0 ? (
               <span className="qb-summary-no-bills">No bills yet</span>
             ) : (
-              bills.slice(0, 6).map(bill => (
-                <div key={bill.id} className="qb-summary-bill-row">
-                  <span className="qb-summary-bill-num">#{bill.bill_number}</span>
-                  <span className="qb-summary-bill-items">
-                    {bill.items.length} item{bill.items.length !== 1 ? 's' : ''}
-                  </span>
-                  <span className="qb-summary-bill-time">
-                    {format(new Date(bill.created_at), 'hh:mm a')}
-                  </span>
-                  <span className="qb-summary-bill-total">₹{Number(bill.total).toFixed(2)}</span>
-                </div>
-              ))
+              bills.slice(0, 6).map(bill => {
+                const isUpi = (bill.payment_method || '').toUpperCase() === 'UPI';
+                return (
+                  <div key={bill.id} className="qb-summary-bill-row">
+                    <div className="qb-summary-bill-num-wrap">
+                      <span className="qb-summary-bill-num">#{bill.bill_number}</span>
+                      <span className={`qb-pay-badge-sm ${isUpi ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
+                        {isUpi ? 'UPI' : 'Cash'}
+                      </span>
+                    </div>
+                    <span className="qb-summary-bill-items">
+                      {bill.items.length} item{bill.items.length !== 1 ? 's' : ''}
+                    </span>
+                    <span className="qb-summary-bill-time">
+                      {format(new Date(bill.created_at), 'hh:mm a')}
+                    </span>
+                    <span className="qb-summary-bill-total">₹{Number(bill.total).toFixed(2)}</span>
+                  </div>
+                );
+              })
             )}
             {bills.length > 6 && (
               <span className="qb-summary-more">+{bills.length - 6} more bills</span>

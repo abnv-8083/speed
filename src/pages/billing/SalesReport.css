@@ -518,6 +518,69 @@
   font-size: 0.875rem;
 }
 
+/* ── Sales Transactions Header & Filters ─────────────────────── */
+.sr-tx-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.sr-pay-filters {
+  display: flex;
+  gap: 0.35rem;
+  align-items: center;
+}
+
+.sr-pay-pill {
+  padding: 0.22rem 0.65rem;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s ease;
+}
+
+.sr-pay-pill:hover {
+  border-color: var(--primary);
+  color: var(--text);
+}
+
+.sr-pay-pill--active {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+  font-weight: 700;
+}
+
+.sr-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.sr-pay-badge--upi {
+  background: rgba(139, 92, 246, 0.18);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+.sr-pay-badge--cash {
+  background: rgba(16, 185, 129, 0.12);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
 /* ── Chart tooltip (legacy name, some charts use it) ──────────── */
 .chart-tooltip       { padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
 .chart-tooltip-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.2rem; }

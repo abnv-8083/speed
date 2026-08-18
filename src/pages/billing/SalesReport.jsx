@@ -3,7 +3,7 @@ import {
   TrendingUp, TrendingDown, Receipt, DollarSign, Package,
   BarChart3, Download, Calendar, ArrowRight, Plus, Trash2,
   Edit2, Check, X, AlertTriangle, Wallet, PieChart, Activity,
-  ChevronRight,
+  ChevronRight, Smartphone,
 } from 'lucide-react';
 import { format, subDays, startOfDay, endOfDay } from 'date-fns';
 import {
@@ -146,7 +146,8 @@ const SalesReport = () => {
   // Profit drill-down modal
   const [showProfitModal, setShowProfitModal] = useState(false);
 
-  // Transactions pagination
+  // Transactions payment filter & pagination
+  const [paymentFilter, setPaymentFilter] = useState('ALL'); // 'ALL' | 'UPI' | 'CASH'
   const [tablePage, setTablePage] = useState(1);
   const TABLE_PAGE_SIZE = 10;
 
@@ -176,11 +177,27 @@ const SalesReport = () => {
     setEndDate(format(new Date(), 'yyyy-MM-dd'));
   };
 
+  // ── Filtered Sales Data (by payment method) ──────────────────
+  const filteredSalesData = useMemo(() => {
+    if (paymentFilter === 'UPI') {
+      return salesData.filter(inv => (inv.payment_method || '').toUpperCase() === 'UPI');
+    }
+    if (paymentFilter === 'CASH') {
+      return salesData.filter(inv => (inv.payment_method || '').toUpperCase() !== 'UPI');
+    }
+    return salesData;
+  }, [salesData, paymentFilter]);
+
   // ── Computed metrics ─────────────────────────────────────────
   const metrics = useMemo(() => {
     const revenue    = salesData.reduce((s, inv) => s + Number(inv.total_amount), 0);
     const discounts  = salesData.reduce((s, inv) => s + Number(inv.discount || 0), 0);
     const totalExp   = expenses.reduce((s, e) => s + Number(e.amount), 0);
+
+    const upiInvoices  = salesData.filter(inv => (inv.payment_method || '').toUpperCase() === 'UPI');
+    const upiRevenue   = upiInvoices.reduce((s, inv) => s + Number(inv.total_amount || 0), 0);
+    const cashInvoices = salesData.filter(inv => (inv.payment_method || '').toUpperCase() !== 'UPI');
+    const cashRevenue  = cashInvoices.reduce((s, inv) => s + Number(inv.total_amount || 0), 0);
 
     // Gross profit = sum of (selling_price - cost_price) × qty per item across all invoices
     let cogs = 0;
@@ -202,10 +219,12 @@ const SalesReport = () => {
       }
 
       const invProfit = invRevenue - invCogs;
+      const isUpi = (inv.payment_method || '').toUpperCase() === 'UPI';
       billProfits.push({
         id:           inv.id,
         customer:     inv.customer_name || 'Walk-in',
         date:         inv.created_at,
+        paymentMethod: isUpi ? 'UPI' : 'Cash',
         revenue:      invRevenue,
         cogs:         invCogs,
         profit:       invProfit,
@@ -268,6 +287,8 @@ const SalesReport = () => {
     return {
       revenue, discounts, totalExp, cogs, grossProfit, netProfit, profitPct,
       itemsCount, invoiceCount: salesData.length,
+      upiRevenue, upiCount: upiInvoices.length,
+      cashRevenue, cashCount: cashInvoices.length,
       avgOrder: salesData.length > 0 ? revenue / salesData.length : 0,
       chartData, expPieData, topProducts,
       billProfits: billProfits.sort((a, b) => new Date(b.date) - new Date(a.date)),
@@ -306,12 +327,13 @@ const SalesReport = () => {
   // ── CSV export ────────────────────────────────────────────────
   const exportCSV = () => {
     let csv = 'data:text/csv;charset=utf-8,';
-    csv += 'Type,Date,Reference,Description,Amount\n';
+    csv += 'Type,Date,Reference,Customer,Payment Method,Discount,Amount\n';
     salesData.forEach(inv => {
-      csv += `Revenue,${new Date(inv.created_at).toLocaleDateString()},INV-${String(inv.id).slice(-6)},${inv.customer_name || 'Walk-in'},${inv.total_amount}\n`;
+      const pm = (inv.payment_method || '').toUpperCase() === 'UPI' ? 'UPI' : 'Cash';
+      csv += `Revenue,${new Date(inv.created_at).toLocaleDateString()},INV-${String(inv.id).slice(-6)},${inv.customer_name || 'Walk-in'},${pm},${inv.discount || 0},${inv.total_amount}\n`;
     });
     expenses.forEach(e => {
-      csv += `Expense,${e.expense_date},EXP,${e.title} (${e.category}),${e.amount}\n`;
+      csv += `Expense,${e.expense_date},EXP,${e.title} (${e.category}),—,—,${e.amount}\n`;
     });
     const a = document.createElement('a');
     a.setAttribute('href', encodeURI(csv));
@@ -342,14 +364,17 @@ const SalesReport = () => {
         <td style="padding:6px 10px;text-align:right;font-size:12px;font-weight:700;color:#10b981">₹${p.revenue.toFixed(2)}</td>
       </tr>`).join('');
 
-    const invoiceRows = salesData.slice(0, 50).map((inv, i) =>
-      `<tr style="${i % 2 === 0 ? '' : 'background:#f8fafc'}">
+    const invoiceRows = salesData.slice(0, 50).map((inv, i) => {
+      const isUpi = (inv.payment_method || '').toUpperCase() === 'UPI';
+      return `<tr style="${i % 2 === 0 ? '' : 'background:#f8fafc'}">
         <td style="padding:5px 10px;font-size:11px;color:#64748b">${new Date(inv.created_at).toLocaleDateString()}</td>
         <td style="padding:5px 10px;font-size:11px;font-family:monospace;color:#6366f1">INV-${String(inv.id).slice(-6).padStart(6,'0')}</td>
         <td style="padding:5px 10px;font-size:11px">${inv.customer_name || 'Walk-in'}</td>
+        <td style="padding:5px 10px;text-align:center;font-size:10px"><span style="background:${isUpi ? '#ede9fe' : '#dcfce7'};color:${isUpi ? '#7c3aed' : '#15803d'};font-weight:700;padding:1px 6px;border-radius:4px">${isUpi ? 'UPI' : 'Cash'}</span></td>
         <td style="padding:5px 10px;text-align:right;font-size:11px;color:#f87171">${inv.discount > 0 ? `-₹${Number(inv.discount).toFixed(2)}` : '—'}</td>
         <td style="padding:5px 10px;text-align:right;font-size:11px;font-weight:700;color:#10b981">₹${Number(inv.total_amount).toFixed(2)}</td>
-      </tr>`).join('');
+      </tr>`;
+    }).join('');
 
     const html = `
       <div style="font-family:Inter,Arial,sans-serif;color:#111;padding:24px;background:#fff">
@@ -384,13 +409,13 @@ const SalesReport = () => {
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
           ${[
             { label: 'Invoices', value: metrics.invoiceCount },
-            { label: 'Items Sold', value: metrics.itemsCount },
+            { label: 'UPI Payments', value: `₹${metrics.upiRevenue.toFixed(2)} (${metrics.upiCount})` },
+            { label: 'Cash Payments', value: `₹${metrics.cashRevenue.toFixed(2)} (${metrics.cashCount})` },
             { label: 'Avg. Order', value: `₹${metrics.avgOrder.toFixed(2)}` },
-            { label: 'Discounts Given', value: `₹${metrics.discounts.toFixed(2)}` },
           ].map(m => `
             <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:1px solid #e2e8f0">
               <p style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 3px;font-weight:700">${m.label}</p>
-              <p style="font-size:16px;font-weight:800;color:#1e293b;margin:0">${m.value}</p>
+              <p style="font-size:15px;font-weight:800;color:#1e293b;margin:0">${m.value}</p>
             </div>`).join('')}
         </div>
 
@@ -401,8 +426,10 @@ const SalesReport = () => {
           <div>
             <h2 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 8px">Income Statement</h2>
             <table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0">
-              <tr style="background:#f1f5f9"><td style="padding:8px 12px;font-weight:700;font-size:12px">Revenue</td><td style="padding:8px 12px;text-align:right;font-weight:700;font-size:12px;color:#10b981">+₹${metrics.revenue.toFixed(2)}</td></tr>
-              <tr><td style="padding:6px 12px 6px 24px;color:#64748b;font-size:12px">Discounts</td><td style="padding:6px 12px;text-align:right;color:#f87171;font-size:12px">-₹${metrics.discounts.toFixed(2)}</td></tr>
+              <tr style="background:#f1f5f9"><td style="padding:8px 12px;font-weight:700;font-size:12px">Revenue (Gross)</td><td style="padding:8px 12px;text-align:right;font-weight:700;font-size:12px;color:#10b981">+₹${metrics.revenue.toFixed(2)}</td></tr>
+              <tr><td style="padding:6px 12px 6px 24px;color:#64748b;font-size:12px">↳ Cash Sales</td><td style="padding:6px 12px;text-align:right;color:#10b981;font-size:12px">₹${metrics.cashRevenue.toFixed(2)}</td></tr>
+              <tr><td style="padding:6px 12px 6px 24px;color:#64748b;font-size:12px">↳ UPI Sales</td><td style="padding:6px 12px;text-align:right;color:#7c3aed;font-size:12px">₹${metrics.upiRevenue.toFixed(2)}</td></tr>
+              <tr><td style="padding:6px 12px 6px 24px;color:#64748b;font-size:12px">Discounts Given</td><td style="padding:6px 12px;text-align:right;color:#f87171;font-size:12px">-₹${metrics.discounts.toFixed(2)}</td></tr>
               <tr style="background:#fef9f9"><td style="padding:8px 12px;font-weight:700;font-size:12px">Total Expenses</td><td style="padding:8px 12px;text-align:right;font-weight:700;font-size:12px;color:#f87171">-₹${metrics.totalExp.toFixed(2)}</td></tr>
               ${expCatRows}
               <tr style="background:${isProfit ? '#f0fdf4' : '#fef2f2'}"><td style="padding:10px 12px;font-weight:900;font-size:13px">${isProfit ? 'Net Profit' : 'Net Loss'}</td><td style="padding:10px 12px;text-align:right;font-weight:900;font-size:13px;color:${isProfit ? '#10b981' : '#f87171'}">₹${Math.abs(metrics.netProfit).toFixed(2)}</td></tr>
@@ -432,10 +459,11 @@ const SalesReport = () => {
             <th style="padding:7px 10px;text-align:left;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Date</th>
             <th style="padding:7px 10px;text-align:left;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Invoice</th>
             <th style="padding:7px 10px;text-align:left;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Customer</th>
+            <th style="padding:7px 10px;text-align:center;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Method</th>
             <th style="padding:7px 10px;text-align:right;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Discount</th>
             <th style="padding:7px 10px;text-align:right;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Amount</th>
           </tr>
-          ${invoiceRows || '<tr><td colspan="5" style="padding:12px;text-align:center;color:#94a3b8;font-size:12px">No transactions</td></tr>'}
+          ${invoiceRows || '<tr><td colspan="6" style="padding:12px;text-align:center;color:#94a3b8;font-size:12px">No transactions</td></tr>'}
         </table>
 
         <p style="margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px">
@@ -540,7 +568,10 @@ const SalesReport = () => {
                   hint="Price − Cost per item · Click to see breakdown"
                 />
                 <MetricCard label="Profit Margin" value={`${metrics.profitPct.toFixed(1)}%`}
-                  accent={metrics.profitPct >= 0 ? 'success' : 'danger'} icon={<PieChart size={18}/>} />                <MetricCard label="Invoices" value={metrics.invoiceCount} accent="primary" icon={<Receipt size={18}/>} />
+                  accent={metrics.profitPct >= 0 ? 'success' : 'danger'} icon={<PieChart size={18}/>} />
+                <MetricCard label="UPI Payments" value={`₹${metrics.upiRevenue.toFixed(2)}`} accent="primary" icon={<Smartphone size={18}/>} hint={`${metrics.upiCount} transaction${metrics.upiCount !== 1 ? 's' : ''}`} />
+                <MetricCard label="Cash Payments" value={`₹${metrics.cashRevenue.toFixed(2)}`} accent="success" icon={<Wallet size={18}/>} hint={`${metrics.cashCount} transaction${metrics.cashCount !== 1 ? 's' : ''}`} />
+                <MetricCard label="Invoices" value={metrics.invoiceCount} accent="primary" icon={<Receipt size={18}/>} />
                 <MetricCard label="Items Sold" value={metrics.itemsCount} accent="warning" icon={<Package size={18}/>} />
                 <MetricCard label="Avg. Order" value={`₹${metrics.avgOrder.toFixed(2)}`} accent="neutral" icon={<Activity size={18}/>} />
                 <MetricCard label="Discounts Given" value={`₹${metrics.discounts.toFixed(2)}`} accent="neutral" icon={<Wallet size={18}/>} />
@@ -728,6 +759,14 @@ const SalesReport = () => {
                     <span className="sr-pl-green">+₹{metrics.revenue.toFixed(2)}</span>
                   </div>
                   <div className="sr-pl-line sr-pl-line--sub">
+                    <span>↳ Cash Sales</span>
+                    <span className="sr-pl-green">₹{metrics.cashRevenue.toFixed(2)}</span>
+                  </div>
+                  <div className="sr-pl-line sr-pl-line--sub">
+                    <span>↳ UPI Sales</span>
+                    <span style={{ color: '#a78bfa', fontWeight: 600 }}>₹{metrics.upiRevenue.toFixed(2)}</span>
+                  </div>
+                  <div className="sr-pl-line sr-pl-line--sub">
                     <span>Discounts Given</span>
                     <span className="sr-pl-red">-₹{metrics.discounts.toFixed(2)}</span>
                   </div>
@@ -765,8 +804,28 @@ const SalesReport = () => {
 
               {/* Transactions table */}
               <div className="sr-chart-card glass-panel">
-                <div className="sr-chart-header">
+                <div className="sr-chart-header sr-tx-header">
                   <h3>Sales Transactions</h3>
+                  <div className="sr-pay-filters">
+                    <button
+                      className={`sr-pay-pill ${paymentFilter === 'ALL' ? 'sr-pay-pill--active' : ''}`}
+                      onClick={() => { setPaymentFilter('ALL'); setTablePage(1); }}
+                    >
+                      All ({salesData.length})
+                    </button>
+                    <button
+                      className={`sr-pay-pill ${paymentFilter === 'UPI' ? 'sr-pay-pill--active' : ''}`}
+                      onClick={() => { setPaymentFilter('UPI'); setTablePage(1); }}
+                    >
+                      UPI ({metrics.upiCount})
+                    </button>
+                    <button
+                      className={`sr-pay-pill ${paymentFilter === 'CASH' ? 'sr-pay-pill--active' : ''}`}
+                      onClick={() => { setPaymentFilter('CASH'); setTablePage(1); }}
+                    >
+                      Cash ({metrics.cashCount})
+                    </button>
+                  </div>
                 </div>
                 <div className="table-responsive">
                   <table className="report-table">
@@ -775,29 +834,38 @@ const SalesReport = () => {
                         <th>Date</th>
                         <th>Invoice</th>
                         <th>Customer</th>
+                        <th style={{ textAlign: 'center' }}>Method</th>
                         <th className="text-right">Discount</th>
                         <th className="text-right">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {salesData.length === 0 ? (
-                        <tr><td colSpan="5" className="table-empty-cell">No transactions found.</td></tr>
+                      {filteredSalesData.length === 0 ? (
+                        <tr><td colSpan="6" className="table-empty-cell">No transactions found.</td></tr>
                       ) : (
-                        salesData
+                        filteredSalesData
                           .slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE)
-                          .map((inv, idx) => (
-                            <tr key={inv.id} className={idx % 2 === 0 ? 'row-even' : 'row-odd'}>
-                              <td>{new Date(inv.created_at).toLocaleDateString()}</td>
-                              <td className="inv-id-cell">INV-{String(inv.id).slice(-6).padStart(6,'0')}</td>
-                              <td>{inv.customer_name || 'Walk-in'}</td>
-                              <td className="text-right text-error">{inv.discount > 0 ? `-₹${Number(inv.discount).toFixed(2)}` : '—'}</td>
-                              <td className="text-right text-success font-bold">₹{Number(inv.total_amount).toFixed(2)}</td>
-                            </tr>
-                          ))
+                          .map((inv, idx) => {
+                            const isUpi = (inv.payment_method || '').toUpperCase() === 'UPI';
+                            return (
+                              <tr key={inv.id} className={idx % 2 === 0 ? 'row-even' : 'row-odd'}>
+                                <td>{new Date(inv.created_at).toLocaleDateString()}</td>
+                                <td className="inv-id-cell">INV-{String(inv.id).slice(-6).padStart(6,'0')}</td>
+                                <td>{inv.customer_name || 'Walk-in'}</td>
+                                <td style={{ textAlign: 'center' }}>
+                                  <span className={`sr-pay-badge ${isUpi ? 'sr-pay-badge--upi' : 'sr-pay-badge--cash'}`}>
+                                    {isUpi ? 'UPI' : 'Cash'}
+                                  </span>
+                                </td>
+                                <td className="text-right text-error">{inv.discount > 0 ? `-₹${Number(inv.discount).toFixed(2)}` : '—'}</td>
+                                <td className="text-right text-success font-bold">₹{Number(inv.total_amount).toFixed(2)}</td>
+                              </tr>
+                            );
+                          })
                       )}
                     </tbody>
                   </table>
-                  <Pagination currentPage={tablePage} totalItems={salesData.length}
+                  <Pagination currentPage={tablePage} totalItems={filteredSalesData.length}
                     itemsPerPage={TABLE_PAGE_SIZE} onPageChange={setTablePage} />
                 </div>
               </div>
@@ -831,7 +899,7 @@ const SalesReport = () => {
         <AppModal
           title={`Gross Profit Breakdown — ${metrics.billProfits.length} bills`}
           onClose={() => setShowProfitModal(false)}
-          width="720px"
+          width="760px"
           noPadding
         >
           <div style={{ padding: '0.75rem 1rem', borderBottom: '1px solid var(--border)', display: 'flex', gap: '1.5rem', flexWrap: 'wrap', background: 'var(--background)' }}>
@@ -851,19 +919,25 @@ const SalesReport = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'var(--background)', position: 'sticky', top: 0 }}>
-                  {['Date', 'Invoice', 'Customer', 'Revenue', 'COGS', 'Profit', 'Margin'].map(h => (
-                    <th key={h} style={{ padding: '0.55rem 0.85rem', textAlign: h === 'Date' || h === 'Invoice' || h === 'Customer' ? 'left' : 'right', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                  {['Date', 'Invoice', 'Customer', 'Method', 'Revenue', 'COGS', 'Profit', 'Margin'].map(h => (
+                    <th key={h} style={{ padding: '0.55rem 0.85rem', textAlign: h === 'Date' || h === 'Invoice' || h === 'Customer' ? 'left' : h === 'Method' ? 'center' : 'right', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {metrics.billProfits.map((b, i) => {
                   const isPos = b.profit >= 0;
+                  const isUpi = b.paymentMethod === 'UPI';
                   return (
                     <tr key={b.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
                       <td style={{ padding: '0.6rem 0.85rem', color: 'var(--text-muted)' }}>{format(new Date(b.date), 'dd MMM yy')}</td>
                       <td style={{ padding: '0.6rem 0.85rem', fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 700 }}>INV-{String(b.id).slice(-6).padStart(6,'0')}</td>
                       <td style={{ padding: '0.6rem 0.85rem', color: 'var(--text)' }}>{b.customer}</td>
+                      <td style={{ padding: '0.6rem 0.85rem', textAlign: 'center' }}>
+                        <span className={`sr-pay-badge ${isUpi ? 'sr-pay-badge--upi' : 'sr-pay-badge--cash'}`}>
+                          {b.paymentMethod}
+                        </span>
+                      </td>
                       <td style={{ padding: '0.6rem 0.85rem', textAlign: 'right', color: 'var(--secondary)', fontWeight: 600 }}>₹{b.revenue.toFixed(2)}</td>
                       <td style={{ padding: '0.6rem 0.85rem', textAlign: 'right', color: '#f87171' }}>₹{b.cogs.toFixed(2)}</td>
                       <td style={{ padding: '0.6rem 0.85rem', textAlign: 'right', color: isPos ? 'var(--secondary)' : '#f87171', fontWeight: 700 }}>
@@ -876,7 +950,7 @@ const SalesReport = () => {
                   );
                 })}
                 {metrics.billProfits.length === 0 && (
-                  <tr><td colSpan={7} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No invoices in this date range.</td></tr>
+                  <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No invoices in this date range.</td></tr>
                 )}
               </tbody>
             </table>

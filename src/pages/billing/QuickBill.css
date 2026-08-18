@@ -56,11 +56,12 @@
 }
 
 .qb-field-search   { flex: 2; min-width: 160px; }
-.qb-field-price    { flex: 1; min-width: 90px; }
 .qb-field-qty      { flex: 0.7; min-width: 65px; }
+.qb-field-price    { flex: 1; min-width: 90px; }
 .qb-field-discount { flex: 1; min-width: 90px; }
 .qb-field-total    { flex: 1.1; min-width: 95px; }
-.qb-inline-action { flex: none; }
+.qb-field-upi      { flex: 0.8; min-width: 75px; }
+.qb-inline-action  { flex: none; }
 
 .qb-inline-label {
   display: flex;
@@ -127,6 +128,51 @@
   font-weight: 700;
 }
 
+.qb-upi-checkbox-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  padding: 0.52rem 0.65rem;
+  border-radius: 9px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+  height: 38px;
+  box-sizing: border-box;
+}
+
+.qb-upi-checkbox-label:hover {
+  border-color: var(--primary);
+  background: rgba(139, 92, 246, 0.05);
+}
+
+.qb-upi-checkbox-label.qb-upi-checked {
+  background: rgba(139, 92, 246, 0.15);
+  border-color: var(--primary);
+  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.35);
+}
+
+.qb-upi-checkbox {
+  width: 15px;
+  height: 15px;
+  accent-color: var(--primary);
+  cursor: pointer;
+  margin: 0;
+}
+
+.qb-upi-checkbox-text {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.qb-upi-checked .qb-upi-checkbox-text {
+  color: #a78bfa;
+}
+
 .qb-inline-add-btn {
   display: flex;
   align-items: center;
@@ -136,6 +182,8 @@
   font-size: 0.85rem;
   font-weight: 700;
   white-space: nowrap;
+  height: 38px;
+  box-sizing: border-box;
 }
 
 /* Dropdown override for inline bar */
@@ -457,6 +505,12 @@
   text-overflow: ellipsis;
 }
 
+.qb-stat-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 .qb-stat-revenue { border-left-color: var(--secondary); background: rgba(16,185,129,0.06); }
 .qb-stat-revenue svg { color: var(--secondary); }
 
@@ -466,12 +520,61 @@
 .qb-stat-items   { border-left-color: #f59e0b; background: rgba(245,158,11,0.06); }
 .qb-stat-items svg { color: #f59e0b; }
 
+.qb-stat-upi     { border-left-color: #8b5cf6; background: rgba(139,92,246,0.09); }
+.qb-stat-upi svg { color: #a78bfa; }
+
 .qb-stat-avg     { border-left-color: #64748b; background: rgba(100,116,139,0.06); }
 .qb-stat-avg svg { color: #94a3b8; }
 
 .qb-summary-divider {
   height: 1px;
   background: var(--border);
+}
+
+/* Payment Badges */
+.qb-bill-badge-group {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.qb-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.12rem 0.45rem;
+  border-radius: 6px;
+  font-size: 0.65rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.qb-pay-badge--upi {
+  background: rgba(139, 92, 246, 0.18);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.35);
+}
+
+.qb-pay-badge--cash {
+  background: rgba(16, 185, 129, 0.12);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.qb-pay-badge-sm {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.05rem 0.3rem;
+  border-radius: 4px;
+  font-size: 0.6rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.qb-summary-bill-num-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
 }
 
 /* Recent bills mini list */
