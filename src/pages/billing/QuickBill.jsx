@@ -106,46 +106,46 @@ async function downloadBillPDF(bill) {
 
   const rows = (bill.items || []).map((item, idx) => `
     <tr style="min-height:22px">
-      <td style="text-align:center;font-weight:800;padding:4px 6px;border-right:1.5px solid #000;font-size:11px">${idx + 1}</td>
-      <td style="text-align:left;font-weight:700;padding:4px 8px;border-right:1.5px solid #000;font-size:11px">${item.product_name}</td>
-      <td style="text-align:right;font-weight:700;padding:4px 8px;border-right:1.5px solid #000;font-size:11px">
+      <td style="text-align:center;font-weight:800;padding:3px 6px;font-size:11px">${idx + 1}</td>
+      <td style="text-align:left;font-weight:700;padding:3px 8px;font-size:11px">${item.product_name}</td>
+      <td style="text-align:right;font-weight:700;padding:3px 8px;font-size:11px">
         <span style="float:left">₹</span><span>${Number(item.price).toFixed(2)}</span>
       </td>
-      <td style="text-align:right;font-weight:700;padding:4px 8px;border-right:1.5px solid #000;font-size:11px">${Number(item.quantity).toFixed(2)}</td>
-      <td style="text-align:right;font-weight:700;padding:4px 8px;font-size:11px">${formatCurrency(item.line_total)}</td>
+      <td style="text-align:right;font-weight:700;padding:3px 8px;font-size:11px">${Number(item.quantity).toFixed(2)}</td>
+      <td style="text-align:right;font-weight:700;padding:3px 8px;font-size:11px">${formatCurrency(item.line_total)}</td>
     </tr>`).join('');
 
   const advance = Number(bill.advance || 0);
 
   const html = `
-    <div style="width:559px;min-height:794px;background:#ffffff;padding:16px;box-sizing:border-box;display:flex;flex-direction:column">
-      <div style="width:100%;flex:1;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:11px;box-sizing:border-box;display:flex;flex-direction:column;border:2px solid #000000">
+    <div style="width:559px;height:775px;max-height:775px;background:#ffffff;padding:12px;box-sizing:border-box;display:flex;flex-direction:column;overflow:hidden">
+      <div style="width:100%;height:100%;flex:1;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:11px;box-sizing:border-box;display:flex;flex-direction:column;border:2px solid #000000;overflow:hidden">
         
         <!-- Header -->
-        <div style="padding:12px 14px 8px;text-align:center;color:#000;display:flex;flex-direction:column;align-items:center">
-          <div style="font-family:'Brush Script MT','Lucida Handwriting','Segoe Script',cursive,sans-serif;font-size:26px;font-weight:900;font-style:italic;line-height:1.1;color:#000">Speed@Net</div>
-          <div style="font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:900;letter-spacing:0.8px;margin:3px 0 2px;text-transform:uppercase;color:#000">ONLINE JAVASEVANA</div>
-          <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.35">Mullassery Building, GA College PO, Palazhi, Kozhikode 673014</div>
-          <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.35;margin-top:1px">Email: speedatnet328@gmail.com, Ph: 0495 3576610, 7356598850</div>
-          <div style="margin-top:6px">
-            <div style="display:inline-block;background:#b0bec5;border:1.5px solid #000;border-radius:7px;padding:2px 24px;font-size:14px;font-weight:800;font-family:'Times New Roman',Times,Georgia,serif;color:#000">Receipt</div>
+        <div style="padding:10px 14px 6px;text-align:center;color:#000;display:flex;flex-direction:column;align-items:center;flex-shrink:0">
+          <div style="font-family:'Brush Script MT','Lucida Handwriting','Segoe Script',cursive,sans-serif;font-size:25px;font-weight:900;font-style:italic;line-height:1.1;color:#000">Speed@Net</div>
+          <div style="font-family:Arial,Helvetica,sans-serif;font-size:16px;font-weight:900;letter-spacing:0.8px;margin:2px 0 2px;text-transform:uppercase;color:#000">ONLINE JAVASEVANA</div>
+          <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.3">Mullassery Building, GA College PO, Palazhi, Kozhikode 673014</div>
+          <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.3;margin-top:1px">Email: speedatnet328@gmail.com, Ph: 0495 3576610, 7356598850</div>
+          <div style="margin-top:5px">
+            <div style="display:inline-block;background:#b0bec5;border:1.5px solid #000;border-radius:7px;padding:2px 24px;font-size:13.5px;font-weight:800;font-family:'Times New Roman',Times,Georgia,serif;color:#000">Receipt</div>
           </div>
         </div>
 
         <!-- Meta (Date & To) -->
-        <div style="padding:4px 10px;border-bottom:2px solid #000;display:flex;flex-direction:column;gap:3px">
+        <div style="padding:4px 10px 4px;border-bottom:2px solid #000;display:flex;flex-direction:column;gap:3px;flex-shrink:0">
           <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding-right:6px">
-            <span style="font-size:11.5px;font-weight:700;color:#000">Date:</span>
-            <span style="font-size:11.5px;font-weight:700;color:#000;min-width:90px;text-align:right">${dateStr}</span>
+            <span style="font-size:11px;font-weight:700;color:#000">Date:</span>
+            <span style="font-size:11px;font-weight:700;color:#000;min-width:90px;text-align:right">${dateStr}</span>
           </div>
           <div style="display:flex;align-items:center;gap:16px;padding-left:2px">
-            <span style="font-size:11.5px;font-weight:700;color:#000;min-width:24px">To:</span>
-            <span style="font-size:12px;font-weight:800;color:#000;letter-spacing:0.3px">WALK-IN CUSTOMER</span>
+            <span style="font-size:11px;font-weight:700;color:#000;min-width:24px">To:</span>
+            <span style="font-size:11.5px;font-weight:800;color:#000;letter-spacing:0.3px">WALK-IN CUSTOMER</span>
           </div>
         </div>
 
         <!-- Table Container -->
-        <div style="flex:1;position:relative;display:flex;flex-direction:column;min-height:420px">
+        <div style="flex:1;position:relative;display:flex;flex-direction:column;min-height:0;overflow:hidden">
           <!-- 4 Continuous full-height vertical column lines -->
           <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:9%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
           <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:50%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
@@ -169,7 +169,7 @@ async function downloadBillPDF(bill) {
         </div>
 
         <!-- Totals Section -->
-        <div style="display:flex;border-top:2px solid #000;border-bottom:2px solid #000">
+        <div style="display:flex;border-top:2px solid #000;border-bottom:2px solid #000;flex-shrink:0">
           <div style="flex:1"></div>
           <div style="width:240px;border-left:2px solid #000;display:flex;flex-direction:column">
             <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
@@ -196,7 +196,7 @@ async function downloadBillPDF(bill) {
         </div>
 
         <!-- Footer / Bank Details & Signatory -->
-        <div style="display:flex;min-height:80px">
+        <div style="display:flex;min-height:75px;flex-shrink:0">
           <div style="flex:1;padding:6px 10px;display:flex;flex-direction:column;justify-content:center;gap:3px">
             <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
               <span style="width:82px">Google Pay</span>
@@ -216,17 +216,19 @@ async function downloadBillPDF(bill) {
           </div>
           <div style="width:240px;border-left:2px solid #000;padding:5px 8px;display:flex;flex-direction:column;box-sizing:border-box">
             <div style="font-size:10px;font-weight:800;color:#000">For authorised signatory</div>
-            <div style="flex:1;min-height:48px"></div>
+            <div style="flex:1;min-height:44px"></div>
           </div>
         </div>
 
       </div>
     </div>`;
 
-  const el = document.createElement('div');
-  el.innerHTML = html;
-  el.style.cssText = 'position:fixed;left:-9999px;top:0;width:559px;height:790px';
-  document.body.appendChild(el);
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed;top:0;left:0;width:559px;height:775px;z-index:-9999;background:#ffffff;pointer-events:none;';
+  container.innerHTML = html;
+  document.body.appendChild(container);
+
+  const targetEl = container.firstElementChild || container;
 
   await html2pdf()
     .set({
@@ -237,23 +239,18 @@ async function downloadBillPDF(bill) {
         scale:           2,
         useCORS:         true,
         backgroundColor: '#ffffff',
-        width:           559,
-        height:          790,
-        windowWidth:     559,
-        windowHeight:    790,
-        scrollY:         0,
+        logging:         false,
       },
       jsPDF: {
         unit:        'mm',
         format:      'a5',
         orientation: 'portrait',
       },
-      pagebreak: { mode: 'avoid-all' },
     })
-    .from(el.firstElementChild)
+    .from(targetEl)
     .save();
 
-  document.body.removeChild(el);
+  document.body.removeChild(container);
 }
 
 // ── Bill Row ───────────────────────────────────────────────────
