@@ -142,26 +142,25 @@ async function downloadBillPDF(bill) {
       </div>
 
       <!-- Table Container -->
-      <div style="flex:1;display:flex;flex-direction:column;min-height:380px">
-        <table style="width:100%;height:100%;border-collapse:collapse;table-layout:fixed">
+      <div style="flex:1;position:relative;display:flex;flex-direction:column;min-height:420px">
+        <!-- 4 Continuous full-height vertical column lines -->
+        <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:9%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
+        <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:50%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
+        <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:67%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
+        <div style="position:absolute;top:0;bottom:0;height:100%;width:0;left:81%;border-left:1.5px solid #000;pointer-events:none;z-index:1"></div>
+
+        <table style="width:100%;border-collapse:collapse;table-layout:fixed;position:relative;z-index:2">
           <thead style="background:#b0b0b0">
             <tr>
-              <th style="width:9%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;border-right:1.5px solid #000;text-align:center">SI NO</th>
-              <th style="width:41%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;border-right:1.5px solid #000;text-align:center">DISCRIPTION</th>
-              <th style="width:17%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;border-right:1.5px solid #000;text-align:center">UNIT PRICE</th>
-              <th style="width:14%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;border-right:1.5px solid #000;text-align:center">QTY</th>
+              <th style="width:9%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">SI NO</th>
+              <th style="width:41%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">DISCRIPTION</th>
+              <th style="width:17%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">UNIT PRICE</th>
+              <th style="width:14%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">QTY</th>
               <th style="width:19%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">AMOUNT</th>
             </tr>
           </thead>
           <tbody>
             ${rows}
-            <tr style="height:100%">
-              <td style="border-right:1.5px solid #000;height:100%"></td>
-              <td style="border-right:1.5px solid #000;height:100%"></td>
-              <td style="border-right:1.5px solid #000;height:100%"></td>
-              <td style="border-right:1.5px solid #000;height:100%"></td>
-              <td style="height:100%"></td>
-            </tr>
           </tbody>
         </table>
       </div>

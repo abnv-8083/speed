@@ -129,6 +129,12 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
 
           {/* ── Table Container ── */}
           <div className="rcpt-table-container">
+            {/* Continuous full-height vertical column guide lines */}
+            <div className="rcpt-col-line rcpt-line-1" />
+            <div className="rcpt-col-line rcpt-line-2" />
+            <div className="rcpt-col-line rcpt-line-3" />
+            <div className="rcpt-col-line rcpt-line-4" />
+
             <table className="rcpt-table">
               <thead>
                 <tr>
@@ -152,14 +158,6 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
                     <td className="rcpt-td-amount">{formatCurrency(item.lineTotal)}</td>
                   </tr>
                 ))}
-                {/* Filler rows / blank rows to extend column gridlines */}
-                <tr className="rcpt-tr-filler">
-                  <td className="rcpt-td-sino"></td>
-                  <td className="rcpt-td-desc"></td>
-                  <td className="rcpt-td-price"></td>
-                  <td className="rcpt-td-qty"></td>
-                  <td className="rcpt-td-amount"></td>
-                </tr>
               </tbody>
             </table>
           </div>
