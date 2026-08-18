@@ -225,7 +225,7 @@ async function downloadBillPDF(bill) {
 
   const el = document.createElement('div');
   el.innerHTML = html;
-  el.style.cssText = 'position:fixed;left:-9999px;top:0;width:559px';
+  el.style.cssText = 'position:fixed;left:-9999px;top:0;width:559px;height:790px';
   document.body.appendChild(el);
 
   await html2pdf()
@@ -233,8 +233,22 @@ async function downloadBillPDF(bill) {
       margin:      0,
       filename:    `Receipt_Bill_${bill.bill_number}_${dateStr}.pdf`,
       image:       { type: 'jpeg', quality: 1 },
-      html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 559, windowWidth: 559 },
-      jsPDF:       { unit: 'mm', format: 'a5', orientation: 'portrait' },
+      html2canvas: {
+        scale:           2,
+        useCORS:         true,
+        backgroundColor: '#ffffff',
+        width:           559,
+        height:          790,
+        windowWidth:     559,
+        windowHeight:    790,
+        scrollY:         0,
+      },
+      jsPDF: {
+        unit:        'mm',
+        format:      'a5',
+        orientation: 'portrait',
+      },
+      pagebreak: { mode: 'avoid-all' },
     })
     .from(el.firstElementChild)
     .save();

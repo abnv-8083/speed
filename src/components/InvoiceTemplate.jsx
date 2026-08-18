@@ -62,6 +62,7 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
     if (!el) return;
 
     el.style.width = '559px';
+    el.style.height = '790px';
 
     await html2pdf()
       .set({
@@ -73,18 +74,23 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
           useCORS:         true,
           backgroundColor: '#ffffff',
           width:           559,
+          height:          790,
           windowWidth:     559,
+          windowHeight:    790,
+          scrollY:         0,
         },
         jsPDF: {
           unit:        'mm',
           format:      'a5',
           orientation: 'portrait',
         },
+        pagebreak: { mode: 'avoid-all' },
       })
       .from(el)
       .save();
 
     el.style.width = '';
+    el.style.height = '';
   };
 
   const advance      = Number(invoice.advance || 0);

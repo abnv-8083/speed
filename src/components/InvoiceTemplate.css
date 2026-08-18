@@ -82,19 +82,23 @@
    RECEIPT PAPER FORMAT
    559 px wide  =  148 mm at 96 dpi × scale-2 render (A5)
    Outer page margin + Solid 2px black inner border
+   Exact fixed height: 790px to fit on 1 single A5 page
 ═══════════════════════════════════════════════════════════════ */
 .rcpt-page {
   width: 559px;
-  min-height: 794px;
+  height: 790px;
+  max-height: 790px;
   background: #ffffff;
-  padding: 16px;
+  padding: 14px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
 .rcpt-box {
   width: 100%;
+  height: 100%;
   flex: 1;
   background: #ffffff;
   color: #000000;
@@ -104,21 +108,23 @@
   display: flex;
   flex-direction: column;
   border: 2px solid #000000;
+  overflow: hidden;
 }
 
 /* ── Header ──────────────────────────────────────────────────── */
 .rcpt-header {
-  padding: 12px 14px 8px;
+  padding: 10px 14px 6px;
   text-align: center;
   color: #000000;
   display: flex;
   flex-direction: column;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .rcpt-brand {
   font-family: 'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive, sans-serif;
-  font-size: 26px;
+  font-size: 25px;
   font-weight: 900;
   font-style: italic;
   letter-spacing: 0.5px;
@@ -128,10 +134,10 @@
 
 .rcpt-title {
   font-family: Arial, Helvetica, sans-serif;
-  font-size: 17px;
+  font-size: 16px;
   font-weight: 900;
   letter-spacing: 0.8px;
-  margin: 3px 0 2px;
+  margin: 2px 0 2px;
   text-transform: uppercase;
   color: #000000;
 }
@@ -140,19 +146,19 @@
   font-size: 9.5px;
   font-weight: 700;
   color: #000000;
-  line-height: 1.35;
+  line-height: 1.3;
 }
 
 .rcpt-contact {
   font-size: 9.5px;
   font-weight: 700;
   color: #000000;
-  line-height: 1.35;
+  line-height: 1.3;
   margin-top: 1px;
 }
 
 .rcpt-pill-wrap {
-  margin-top: 6px;
+  margin-top: 5px;
 }
 
 .rcpt-pill {
@@ -161,7 +167,7 @@
   border: 1.5px solid #000000;
   border-radius: 7px;
   padding: 2px 24px;
-  font-size: 14px;
+  font-size: 13.5px;
   font-weight: 800;
   font-family: 'Times New Roman', Times, Georgia, serif;
   color: #000000;
@@ -175,6 +181,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+  flex-shrink: 0;
 }
 
 .rcpt-date-row {
@@ -193,7 +200,7 @@
 }
 
 .rcpt-meta-label {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #000000;
 }
@@ -203,7 +210,7 @@
 }
 
 .rcpt-meta-value {
-  font-size: 11.5px;
+  font-size: 11px;
   font-weight: 700;
   color: #000000;
   min-width: 90px;
@@ -211,7 +218,7 @@
 }
 
 .rcpt-to-name {
-  font-size: 12px;
+  font-size: 11.5px;
   font-weight: 800;
   color: #000000;
   letter-spacing: 0.3px;
@@ -223,7 +230,8 @@
   position: relative;
   display: flex;
   flex-direction: column;
-  min-height: 420px;
+  min-height: 0;
+  overflow: hidden;
 }
 
 /* Continuous full-height vertical column divider lines */
