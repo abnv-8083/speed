@@ -72,277 +72,373 @@
   box-shadow:
     0 4px 8px rgba(0,0,0,0.12),
     0 20px 48px rgba(0,0,0,0.22);
-  border-radius: 3px;
+  border-radius: 2px;
   overflow: hidden;
   flex-shrink: 0;
+  background: #fff;
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   A5 PAPER
-   559 px wide  =  148 mm at 96 dpi × scale-2 render
-   794 px tall  =  210 mm
-   All sizing in px so html2pdf renders at exact A5
+   RECEIPT PAPER FORMAT
+   559 px wide  =  148 mm at 96 dpi × scale-2 render (A5)
+   Solid 2px black outer border matching the template
 ═══════════════════════════════════════════════════════════════ */
-.inv-paper {
+.rcpt-paper {
   width: 559px;
   min-height: 794px;
   background: #ffffff;
-  color: #111827;
-  font-family: 'Inter', 'Outfit', Arial, sans-serif;
+  color: #000000;
+  font-family: Arial, Helvetica, sans-serif;
   font-size: 11px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
+  border: 2px solid #000000;
 }
 
-/* ── Header band ──────────────────────────────────────────────── */
-.inv-header {
+/* ── Header ──────────────────────────────────────────────────── */
+.rcpt-header {
+  padding: 12px 14px 8px;
+  text-align: center;
+  color: #000000;
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
   align-items: center;
-  background: linear-gradient(135deg, #1e1b4b 0%, #312e81 55%, #4c1d95 100%);
-  padding: 20px 28px 18px;
-  box-sizing: border-box;
 }
 
-.inv-brand {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.inv-logo {
-  width: 38px;
-  height: 38px;
-  background: rgba(255,255,255,0.15);
-  border: 1.5px solid rgba(255,255,255,0.35);
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 900;
-  font-size: 13px;
-  letter-spacing: -0.5px;
-  color: #fff;
-  flex-shrink: 0;
-}
-
-.inv-brand-name {
-  font-size: 15px;
-  font-weight: 800;
-  color: #fff;
-  letter-spacing: -0.3px;
-  line-height: 1.1;
-}
-
-.inv-brand-sub {
-  font-size: 9px;
-  color: rgba(255,255,255,0.55);
-  margin-top: 2px;
-}
-
-.inv-title-block {
-  text-align: right;
-}
-
-.inv-title-word {
+.rcpt-brand {
+  font-family: 'Brush Script MT', 'Lucida Handwriting', 'Segoe Script', cursive, sans-serif;
   font-size: 26px;
   font-weight: 900;
-  letter-spacing: 5px;
-  color: rgba(255,255,255,0.88);
-  line-height: 1;
+  font-style: italic;
+  letter-spacing: 0.5px;
+  line-height: 1.1;
+  color: #000000;
 }
 
-.inv-title-num {
-  font-size: 9px;
-  color: rgba(255,255,255,0.45);
-  letter-spacing: 1.5px;
-  margin-top: 3px;
-  text-align: right;
-}
-
-/* ── Bill-to + meta ───────────────────────────────────────────── */
-.inv-meta {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  padding: 16px 28px 14px;
-  border-bottom: 1px solid #e2e8f0;
-  box-sizing: border-box;
-  gap: 12px;
-}
-
-.inv-meta-label {
-  font-size: 7.5px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  color: #94a3b8;
+.rcpt-title {
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 17px;
+  font-weight: 900;
+  letter-spacing: 0.8px;
+  margin: 3px 0 2px;
   text-transform: uppercase;
-  margin-bottom: 4px;
+  color: #000000;
 }
 
-.inv-customer {
-  font-size: 14px;
+.rcpt-address {
+  font-size: 9.5px;
   font-weight: 700;
-  color: #0f172a;
+  color: #000000;
+  line-height: 1.35;
 }
 
-.inv-meta-right {
+.rcpt-contact {
+  font-size: 9.5px;
+  font-weight: 700;
+  color: #000000;
+  line-height: 1.35;
+  margin-top: 1px;
+}
+
+.rcpt-pill-wrap {
+  margin-top: 6px;
+}
+
+.rcpt-pill {
+  display: inline-block;
+  background: #b0bec5;
+  border: 1.5px solid #000000;
+  border-radius: 7px;
+  padding: 2px 24px;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: 'Times New Roman', Times, Georgia, serif;
+  color: #000000;
+  letter-spacing: 0.3px;
+}
+
+/* ── Meta (Date & To) ────────────────────────────────────────── */
+.rcpt-meta-section {
+  padding: 4px 10px 4px;
+  border-bottom: 2px solid #000000;
   display: flex;
   flex-direction: column;
   gap: 3px;
-  text-align: right;
-  flex-shrink: 0;
 }
 
-.inv-meta-row {
+.rcpt-date-row {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16px;
+  padding-right: 6px;
+}
+
+.rcpt-to-row {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
+  gap: 16px;
+  padding-left: 2px;
 }
 
-.inv-meta-key {
-  font-size: 8.5px;
-  color: #94a3b8;
-  font-weight: 500;
+.rcpt-meta-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #000000;
 }
 
-.inv-meta-val {
-  font-size: 9px;
-  color: #1e293b;
-  font-weight: 600;
-  min-width: 70px;
+.rcpt-to-tag {
+  min-width: 24px;
+}
+
+.rcpt-meta-value {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #000000;
+  min-width: 90px;
   text-align: right;
 }
 
-.inv-paid-chip {
-  background: #dcfce7;
-  color: #15803d;
-  font-size: 7.5px;
-  font-weight: 700;
-  padding: 1px 8px;
-  border-radius: 999px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
+.rcpt-to-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #000000;
+  letter-spacing: 0.3px;
 }
 
-/* ── Items table ──────────────────────────────────────────────── */
-.inv-table {
+/* ── Table Container ─────────────────────────────────────────── */
+.rcpt-table-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 380px;
+}
+
+.rcpt-table {
   width: 100%;
+  height: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-.inv-th {
-  padding: 7px 28px;
-  font-size: 8px;
-  font-weight: 700;
+.rcpt-table thead {
+  background: #b0b0b0;
+}
+
+.rcpt-table th {
+  padding: 4px 4px;
+  font-size: 10px;
+  font-weight: 900;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: #64748b;
-  background: #f8fafc;
-  border-top: 1px solid #e2e8f0;
-  border-bottom: 1px solid #e2e8f0;
-  box-sizing: border-box;
-}
-
-/* Column widths — fixed so they never overflow */
-.inv-th-desc { text-align: left;   width: 47%; padding-left: 28px; }
-.inv-th-qty  { text-align: center; width: 12%; padding: 7px 4px; }
-.inv-th-up   { text-align: right;  width: 22%; padding: 7px 8px; }
-.inv-th-tot  { text-align: right;  width: 19%; padding-right: 28px; }
-
-.inv-td {
-  padding: 6px 0;
-  font-size: 10.5px;
-  color: #334155;
-  box-sizing: border-box;
-  word-break: break-word;
-}
-
-.inv-td-desc { text-align: left;   font-weight: 600; color: #0f172a; padding-left: 28px;  width: 47%; }
-.inv-td-qty  { text-align: center; color: #64748b;   padding: 6px 4px; width: 12%; }
-.inv-td-up   { text-align: right;  color: #64748b;   padding: 6px 8px; width: 22%; }
-.inv-td-tot  { text-align: right;  font-weight: 700; color: #0f172a; padding-right: 28px; width: 19%; }
-
-.inv-tr-even { background: #ffffff; }
-.inv-tr-odd  { background: #f8fafc; }
-
-/* ── Spacer ───────────────────────────────────────────────────── */
-.inv-spacer {
-  flex: 1;
-  min-height: 24px;
-}
-
-/* ── Summary ──────────────────────────────────────────────────── */
-.inv-summary-wrap {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 28px 16px;
-  box-sizing: border-box;
-}
-
-.inv-summary {
-  width: 196px;
-  border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  overflow: hidden;
-}
-
-.inv-sum-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 10px;
-  font-size: 9.5px;
-  color: #64748b;
-}
-
-.inv-sum-row:first-child { padding-top: 7px; }
-
-.inv-sum-disc {
-  color: #dc2626;
-}
-
-.inv-sum-total {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 6px 10px 7px;
-  background: linear-gradient(135deg, #1e1b4b, #4c1d95);
-  font-size: 11.5px;
-  font-weight: 800;
-  color: #fff;
-}
-
-/* ── Footer ───────────────────────────────────────────────────── */
-.inv-footer {
-  padding: 12px 28px 16px;
-  border-top: 1px solid #f1f5f9;
+  color: #000000;
+  border-bottom: 2px solid #000000;
+  border-right: 1.5px solid #000000;
   text-align: center;
   box-sizing: border-box;
 }
 
-.inv-thankyou {
-  font-size: 10.5px;
+.rcpt-table th:last-child {
+  border-right: none;
+}
+
+/* Column Widths */
+.rcpt-th-sino   { width: 9%; }
+.rcpt-th-desc   { width: 41%; }
+.rcpt-th-price  { width: 17%; }
+.rcpt-th-qty    { width: 14%; }
+.rcpt-th-amount { width: 19%; }
+
+.rcpt-tr-item td {
+  padding: 3px 6px;
+  font-size: 11px;
+  color: #000000;
+  border-right: 1.5px solid #000000;
+  box-sizing: border-box;
+  vertical-align: middle;
+}
+
+.rcpt-tr-item td:last-child {
+  border-right: none;
+}
+
+.rcpt-td-sino {
+  text-align: center;
+  font-weight: 800;
+}
+
+.rcpt-td-desc {
+  text-align: left;
   font-weight: 700;
-  color: #1e293b;
-  margin-bottom: 4px;
+  padding-left: 8px !important;
+  word-break: break-word;
 }
 
-.inv-terms {
-  font-size: 7.5px;
-  color: #94a3b8;
-  line-height: 1.5;
-  margin-bottom: 5px;
+.rcpt-td-price {
+  text-align: right;
+  font-weight: 700;
+  padding-right: 8px !important;
 }
 
-.inv-footer-contact {
-  font-size: 7.5px;
-  color: #cbd5e1;
+.rcpt-curr-sym {
+  float: left;
+  font-weight: 700;
 }
 
-/* ── No-print ─────────────────────────────────────────────────── */
+.rcpt-val-text {
+  float: right;
+}
+
+.rcpt-td-qty {
+  text-align: right;
+  font-weight: 700;
+  padding-right: 8px !important;
+}
+
+.rcpt-td-amount {
+  text-align: right;
+  font-weight: 700;
+  padding-right: 8px !important;
+}
+
+/* Filler row keeps the vertical lines extended down to the bottom */
+.rcpt-tr-filler {
+  height: 100%;
+}
+
+.rcpt-tr-filler td {
+  border-right: 1.5px solid #000000;
+  height: 100%;
+}
+
+.rcpt-tr-filler td:last-child {
+  border-right: none;
+}
+
+/* ── Totals Section ──────────────────────────────────────────── */
+.rcpt-totals-section {
+  display: flex;
+  border-top: 2px solid #000000;
+  border-bottom: 2px solid #000000;
+}
+
+.rcpt-totals-left {
+  flex: 1;
+}
+
+.rcpt-totals-right {
+  width: 240px;
+  border-left: 2px solid #000000;
+  display: flex;
+  flex-direction: column;
+}
+
+.rcpt-total-row {
+  display: flex;
+  align-items: center;
+  border-bottom: 1px solid #000000;
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+  min-height: 20px;
+}
+
+.rcpt-total-row:last-child {
+  border-bottom: none;
+}
+
+.rcpt-total-grand {
+  font-weight: 900;
+}
+
+.rcpt-total-label {
+  flex: 1;
+  text-align: right;
+  padding: 3px 8px 3px 4px;
+  border-right: 1.5px solid #000000;
+}
+
+.rcpt-total-sym {
+  width: 22px;
+  text-align: center;
+  padding: 3px 2px;
+  border-right: 1.5px solid #000000;
+  font-weight: 700;
+}
+
+.rcpt-total-val {
+  width: 82px;
+  text-align: right;
+  padding: 3px 8px 3px 4px;
+  font-weight: 700;
+}
+
+.rcpt-total-grand .rcpt-total-val {
+  font-weight: 900;
+}
+
+/* ── Footer / Bank Details & Signatory ───────────────────────── */
+.rcpt-footer {
+  display: flex;
+  min-height: 80px;
+}
+
+.rcpt-footer-left {
+  flex: 1;
+  padding: 6px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 3px;
+}
+
+.rcpt-bank-row {
+  display: flex;
+  align-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: #000000;
+}
+
+.rcpt-bank-lbl {
+  width: 82px;
+  font-weight: 700;
+}
+
+.rcpt-bank-sep {
+  margin-right: 6px;
+  font-weight: 700;
+}
+
+.rcpt-bank-val {
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.rcpt-footer-right {
+  width: 240px;
+  border-left: 2px solid #000000;
+  padding: 5px 8px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+.rcpt-signatory-title {
+  font-size: 10px;
+  font-weight: 800;
+  color: #000000;
+}
+
+.rcpt-signatory-space {
+  flex: 1;
+  min-height: 48px;
+}
+
+/* ── Print Styles ────────────────────────────────────────────── */
 @media print {
   .no-print { display: none !important; }
+  .inv-root { padding: 0 !important; background: #fff !important; }
+  .inv-shadow-wrap { box-shadow: none !important; }
+  .rcpt-paper { border: 2px solid #000000 !important; }
 }

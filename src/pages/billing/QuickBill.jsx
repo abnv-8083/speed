@@ -89,94 +89,130 @@ function EditItemModal({ item, onSave, onClose }) {
 async function downloadBillPDF(bill) {
   const html2pdf = (await import('html2pdf.js')).default;
 
-  const invNumber = `QB-${String(bill.bill_number).padStart(4, '0')}`;
-  const dateStr   = new Date(bill.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-  const timeStr   = new Date(bill.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-  const total     = Number(bill.total).toFixed(2);
+  let dateStr = '';
+  try {
+    dateStr = format(new Date(bill.created_at || new Date()), 'dd-MMM-yyyy');
+  } catch (e) {
+    dateStr = new Date(bill.created_at || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
 
-  const rows = bill.items.map(item => `
-    <tr>
-      <td style="text-align:left;padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:500;color:#0f172a">
-        ${item.product_name}
-        ${item.discount ? `<div style="font-size:8.5px;color:#16a34a;font-style:italic;margin-top:2px">Discount: ₹${Number(item.discount).toFixed(2)}</div>` : ''}
+  const formatCurrency = (num) => {
+    return Number(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
+
+  const totalAmount = Number(bill.total || 0);
+  const totalDiscount = (bill.items || []).reduce((s, i) => s + Number(i.discount || 0), 0);
+  const subtotal = totalAmount + totalDiscount;
+
+  const rows = (bill.items || []).map((item, idx) => `
+    <tr style="min-height:22px">
+      <td style="text-align:center;font-weight:800;padding:4px 6px;border-right:1.5px solid #000;font-size:11px">${idx + 1}</td>
+      <td style="text-align:left;font-weight:700;padding:4px 8px;border-right:1.5px solid #000;font-size:11px">${item.product_name}</td>
+      <td style="text-align:right;font-weight:700;padding:4px 8px;border-right:1.5px solid #000;font-size:11px">
+        <span style="float:left">₹</span><span>${Number(item.price).toFixed(2)}</span>
       </td>
-      <td style="text-align:center;padding:7px 4px;border-bottom:1px solid #f1f5f9;color:#64748b">${item.quantity}</td>
-      <td style="text-align:right;padding:7px 8px;border-bottom:1px solid #f1f5f9;color:#64748b">₹${Number(item.price).toFixed(2)}</td>
-      <td style="text-align:right;padding:7px 10px;border-bottom:1px solid #f1f5f9;font-weight:700;color:#0f172a">₹${Number(item.line_total).toFixed(2)}</td>
+      <td style="text-align:right;font-weight:700;padding:4px 8px;border-right:1.5px solid #000;font-size:11px">${Number(item.quantity).toFixed(2)}</td>
+      <td style="text-align:right;font-weight:700;padding:4px 8px;font-size:11px">${formatCurrency(item.line_total)}</td>
     </tr>`).join('');
 
   const html = `
-    <div style="width:559px;min-height:794px;background:#fff;color:#111827;font-family:Inter,Arial,sans-serif;font-size:11px;box-sizing:border-box;display:flex;flex-direction:column">
-      <div style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#1e1b4b,#312e81,#4c1d95);padding:20px 28px 18px">
-        <div style="display:flex;align-items:center;gap:10px">
-          <div style="width:38px;height:38px;background:rgba(255,255,255,0.15);border:1.5px solid rgba(255,255,255,0.35);border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;color:#fff">S@N</div>
-          <div>
-            <div style="font-size:15px;font-weight:800;color:#fff">Speed@net</div>
-            <div style="font-size:9px;color:rgba(255,255,255,0.55)">CRM &amp; Business Portal</div>
-          </div>
-        </div>
-        <div style="text-align:right">
-          <div style="font-size:26px;font-weight:900;letter-spacing:5px;color:rgba(255,255,255,0.88)">INVOICE</div>
-          <div style="font-size:9px;color:rgba(255,255,255,0.45);letter-spacing:1.5px;margin-top:3px">${invNumber}</div>
+    <div style="width:559px;min-height:794px;background:#ffffff;color:#000000;font-family:Arial,Helvetica,sans-serif;font-size:11px;box-sizing:border-box;display:flex;flex-direction:column;border:2px solid #000000">
+      
+      <!-- Header -->
+      <div style="padding:12px 14px 8px;text-align:center;color:#000;display:flex;flex-direction:column;align-items:center">
+        <div style="font-family:'Brush Script MT','Lucida Handwriting','Segoe Script',cursive,sans-serif;font-size:26px;font-weight:900;font-style:italic;line-height:1.1;color:#000">Speed@Net</div>
+        <div style="font-family:Arial,Helvetica,sans-serif;font-size:17px;font-weight:900;letter-spacing:0.8px;margin:3px 0 2px;text-transform:uppercase;color:#000">ONLINE JAVASEVANA</div>
+        <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.35">Mullassery Building, GA College PO, Palazhi, Kozhikode 673014</div>
+        <div style="font-size:9.5px;font-weight:700;color:#000;line-height:1.35;margin-top:1px">Email: speedatnet328@gmail.com, Ph: 0495 3576610, 7356598850</div>
+        <div style="margin-top:6px">
+          <div style="display:inline-block;background:#b0bec5;border:1.5px solid #000;border-radius:7px;padding:2px 24px;font-size:14px;font-weight:800;font-family:'Times New Roman',Times,Georgia,serif;color:#000">Receipt</div>
         </div>
       </div>
 
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;padding:16px 28px 14px;border-bottom:1px solid #e2e8f0">
-        <div>
-          <div style="font-size:7.5px;font-weight:700;letter-spacing:0.1em;color:#94a3b8;text-transform:uppercase;margin-bottom:4px">BILLED TO</div>
-          <div style="font-size:14px;font-weight:700;color:#0f172a">Walk-in Customer</div>
+      <!-- Meta (Date & To) -->
+      <div style="padding:4px 10px;border-bottom:2px solid #000;display:flex;flex-direction:column;gap:3px">
+        <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding-right:6px">
+          <span style="font-size:11.5px;font-weight:700;color:#000">Date:</span>
+          <span style="font-size:11.5px;font-weight:700;color:#000;min-width:90px;text-align:right">${dateStr}</span>
         </div>
-        <div style="text-align:right">
-          <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:3px;font-size:9px">
-            <span style="color:#94a3b8">Date</span><span style="color:#0f172a;font-weight:600">${dateStr}</span>
+        <div style="display:flex;align-items:center;gap:16px;padding-left:2px">
+          <span style="font-size:11.5px;font-weight:700;color:#000;min-width:24px">To:</span>
+          <span style="font-size:12px;font-weight:800;color:#000;letter-spacing:0.3px">WALK-IN CUSTOMER</span>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div style="flex:1;display:flex;flex-direction:column;min-height:380px">
+        <table style="width:100%;height:100%;border-collapse:collapse;table-layout:fixed">
+          <thead style="background:#b0b0b0">
+            <tr>
+              <th style="width:9%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;border-right:1.5px solid #000;text-align:center">SI NO</th>
+              <th style="width:41%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;border-right:1.5px solid #000;text-align:center">DISCRIPTION</th>
+              <th style="width:17%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;border-right:1.5px solid #000;text-align:center">UNIT PRICE</th>
+              <th style="width:14%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;border-right:1.5px solid #000;text-align:center">QTY</th>
+              <th style="width:19%;padding:4px;font-size:10px;font-weight:900;text-transform:uppercase;color:#000;border-bottom:2px solid #000;text-align:center">AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows}
+            <tr style="height:100%">
+              <td style="border-right:1.5px solid #000;height:100%"></td>
+              <td style="border-right:1.5px solid #000;height:100%"></td>
+              <td style="border-right:1.5px solid #000;height:100%"></td>
+              <td style="border-right:1.5px solid #000;height:100%"></td>
+              <td style="height:100%"></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Totals Section -->
+      <div style="display:flex;border-top:2px solid #000;border-bottom:2px solid #000">
+        <div style="flex:1"></div>
+        <div style="width:240px;border-left:2px solid #000;display:flex;flex-direction:column">
+          <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
+            <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Total</span>
+            <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
+            <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${formatCurrency(subtotal)}</span>
           </div>
-          <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:3px;font-size:9px">
-            <span style="color:#94a3b8">Time</span><span style="color:#0f172a;font-weight:600">${timeStr}</span>
+          <div style="display:flex;align-items:center;border-bottom:1px solid #000;font-size:11px;font-weight:700;color:#000;min-height:20px">
+            <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Advance/ Discound</span>
+            <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
+            <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:700">${totalDiscount > 0 ? formatCurrency(totalDiscount) : '-'}</span>
           </div>
-          <div style="display:flex;justify-content:flex-end;gap:10px;margin-bottom:3px;font-size:9px;align-items:center">
-            <span style="color:#94a3b8">Payment</span>
-            <span style="background:${(bill.payment_method || '').toUpperCase() === 'UPI' ? '#ede9fe' : '#dcfce7'};color:${(bill.payment_method || '').toUpperCase() === 'UPI' ? '#7c3aed' : '#15803d'};font-size:7.5px;font-weight:700;padding:1px 8px;border-radius:999px;text-transform:uppercase">${bill.payment_method || 'Cash'}</span>
-          </div>
-          <div style="display:flex;justify-content:flex-end;gap:10px;font-size:9px;align-items:center">
-            <span style="color:#94a3b8">Status</span>
-            <span style="background:#dcfce7;color:#15803d;font-size:7.5px;font-weight:700;padding:1px 8px;border-radius:999px;text-transform:uppercase">Paid</span>
+          <div style="display:flex;align-items:center;font-size:11px;font-weight:900;color:#000;min-height:20px">
+            <span style="flex:1;text-align:right;padding:3px 8px 3px 4px;border-right:1.5px solid #000">Grand Total</span>
+            <span style="width:22px;text-align:center;padding:3px 2px;border-right:1.5px solid #000;font-weight:700">₹</span>
+            <span style="width:82px;text-align:right;padding:3px 8px 3px 4px;font-weight:900">${formatCurrency(totalAmount)}</span>
           </div>
         </div>
       </div>
 
-      <table style="width:100%;border-collapse:collapse">
-        <thead>
-          <tr>
-            <th style="text-align:left;padding:7px 10px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0">Description</th>
-            <th style="text-align:center;padding:7px 4px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:12%">Qty</th>
-            <th style="text-align:right;padding:7px 8px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:22%">Unit Price</th>
-            <th style="text-align:right;padding:7px 10px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#64748b;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;width:19%">Total</th>
-          </tr>
-        </thead>
-        <tbody>${rows}</tbody>
-      </table>
-
-      <div style="flex:1;min-height:20px"></div>
-
-      <div style="display:flex;justify-content:flex-end;padding:0 28px 16px">
-        <div style="width:196px;border:1px solid #e2e8f0;border-radius:6px;overflow:hidden">
-          <div style="display:flex;justify-content:space-between;padding:7px 10px 4px;font-size:9.5px;color:#64748b">
-            <span>Subtotal</span><span>₹${total}</span>
+      <!-- Footer / Bank Details & Signatory -->
+      <div style="display:flex;min-height:80px">
+        <div style="flex:1;padding:6px 10px;display:flex;flex-direction:column;justify-content:center;gap:3px">
+          <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
+            <span style="width:82px">Google Pay</span>
+            <span style="margin-right:6px">:</span>
+            <span style="letter-spacing:0.3px">9961206583</span>
           </div>
-          <div style="display:flex;justify-content:space-between;padding:4px 10px;font-size:9.5px;color:#64748b">
-            <span>Tax (0%)</span><span>₹0.00</span>
+          <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
+            <span style="width:82px">Account No</span>
+            <span style="margin-right:6px">:</span>
+            <span style="letter-spacing:0.3px">38670402105</span>
           </div>
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:6px 10px 7px;background:linear-gradient(135deg,#1e1b4b,#4c1d95);font-size:11.5px;font-weight:800;color:#fff">
-            <span>Total Amount</span><span>₹${total}</span>
+          <div style="display:flex;align-items:center;font-size:11px;font-weight:700;color:#000">
+            <span style="width:82px">IFSC CODE</span>
+            <span style="margin-right:6px">:</span>
+            <span style="letter-spacing:0.3px">SBIN0070576</span>
           </div>
+        </div>
+        <div style="width:240px;border-left:2px solid #000;padding:5px 8px;display:flex;flex-direction:column;box-sizing:border-box">
+          <div style="font-size:10px;font-weight:800;color:#000">For authorised signatory</div>
+          <div style="flex:1;min-height:48px"></div>
         </div>
       </div>
 
-      <div style="padding:12px 28px 16px;border-top:1px solid #f1f5f9;text-align:center">
-        <div style="font-size:10.5px;font-weight:700;color:#1e293b;margin-bottom:4px">Thank you for your business!</div>
-        <div style="font-size:7.5px;color:#94a3b8;line-height:1.5">Goods once sold will not be taken back or exchanged. Subject to local jurisdiction.</div>
-        <div style="font-size:7.5px;color:#cbd5e1;margin-top:4px">Speed@net · contact@speednet.com · +91 98765 43210</div>
-      </div>
     </div>`;
 
   const el = document.createElement('div');
@@ -187,7 +223,7 @@ async function downloadBillPDF(bill) {
   await html2pdf()
     .set({
       margin:      0,
-      filename:    `${invNumber}.pdf`,
+      filename:    `Receipt_Bill_${bill.bill_number}_${dateStr}.pdf`,
       image:       { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 559, windowWidth: 559 },
       jsPDF:       { unit: 'mm', format: 'a5', orientation: 'portrait' },

@@ -1,9 +1,10 @@
 import React, { useRef } from 'react';
 import { ArrowLeft, Download } from 'lucide-react';
+import { format } from 'date-fns';
 import './InvoiceTemplate.css';
 
 /**
- * Shared invoice template — POS (after checkout) and Invoices (history).
+ * Shared invoice/receipt template matching the Speed@Net Online Javasevana format.
  *
  * Props:
  *  invoice   — normalised invoice object (POS or DB shape)
@@ -29,22 +30,30 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
     if (item.product) {
       return {
         name:      item.product.name,
-        qty:       item.quantity,
+        qty:       Number(item.quantity),
         unitPrice: Number(item.product.price),
         lineTotal: Number(item.total),
       };
     }
     return {
-      name:      item.products?.name || '—',
-      qty:       item.quantity,
-      unitPrice: Number(item.price_at_time),
-      lineTotal: item.quantity * Number(item.price_at_time),
+      name:      item.products?.name || item.product_name || '—',
+      qty:       Number(item.quantity),
+      unitPrice: Number(item.price_at_time ?? item.price ?? 0),
+      lineTotal: Number(item.line_total ?? (Number(item.quantity) * Number(item.price_at_time ?? item.price ?? 0))),
     };
   });
 
   const invNumber = `INV-${String(id).slice(-6).padStart(6, '0')}`;
-  const dateStr   = createdAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-  const timeStr   = createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  let dateStr = '';
+  try {
+    dateStr = format(createdAt, 'dd-MMM-yyyy');
+  } catch (e) {
+    dateStr = createdAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  }
+
+  const formatCurrency = (num) => {
+    return Number(num).toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  };
 
   // ── PDF via html2pdf.js ───────────────────────────────────────
   const handleDownloadPDF = async () => {
@@ -52,14 +61,12 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
     const el = paperRef.current;
     if (!el) return;
 
-    // Temporarily force the exact pixel width html2pdf will render at
-    // A5 = 148 x 210 mm  →  at 96 dpi scale=2: 559 × 794 px
     el.style.width = '559px';
 
     await html2pdf()
       .set({
         margin:      0,
-        filename:    `${invNumber}.pdf`,
+        filename:    `Receipt_${customerName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`,
         image:       { type: 'jpeg', quality: 1 },
         html2canvas: {
           scale:           2,
@@ -77,7 +84,7 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
       .from(el)
       .save();
 
-    el.style.width = '';   // restore
+    el.style.width = '';
   };
 
   return (
@@ -95,108 +102,116 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
 
       {/* ── A5 paper ── */}
       <div className="inv-shadow-wrap">
-        <div className="inv-paper" ref={paperRef}>
+        <div className="rcpt-paper" ref={paperRef}>
 
-          {/* Header */}
-          <div className="inv-header">
-            <div className="inv-brand">
-              <div className="inv-logo">S@N</div>
-              <div className="inv-brand-text">
-                <div className="inv-brand-name">Speed@net</div>
-                <div className="inv-brand-sub">CRM &amp; Business Portal</div>
-              </div>
-            </div>
-            <div className="inv-title-block">
-              <div className="inv-title-word">INVOICE</div>
-              <div className="inv-title-num">{invNumber}</div>
+          {/* ── Header ── */}
+          <div className="rcpt-header">
+            <div className="rcpt-brand">Speed@Net</div>
+            <div className="rcpt-title">ONLINE JAVASEVANA</div>
+            <div className="rcpt-address">Mullassery Building, GA College PO, Palazhi, Kozhikode 673014</div>
+            <div className="rcpt-contact">Email: speedatnet328@gmail.com, Ph: 0495 3576610, 7356598850</div>
+            <div className="rcpt-pill-wrap">
+              <div className="rcpt-pill">Receipt</div>
             </div>
           </div>
 
-          {/* Bill-to + meta */}
-          <div className="inv-meta">
-            <div className="inv-billed-to">
-              <div className="inv-meta-label">BILLED TO</div>
-              <div className="inv-customer">{customerName}</div>
+          {/* ── Meta (Date & To) ── */}
+          <div className="rcpt-meta-section">
+            <div className="rcpt-date-row">
+              <span className="rcpt-meta-label">Date:</span>
+              <span className="rcpt-meta-value">{dateStr}</span>
             </div>
-            <div className="inv-meta-right">
-              <div className="inv-meta-row">
-                <span className="inv-meta-key">Date</span>
-                <span className="inv-meta-val">{dateStr}</span>
-              </div>
-              <div className="inv-meta-row">
-                <span className="inv-meta-key">Time</span>
-                <span className="inv-meta-val">{timeStr}</span>
-              </div>
-              <div className="inv-meta-row">
-                <span className="inv-meta-key">Payment</span>
-                <span className="inv-meta-val" style={{ fontWeight: 700, color: (invoice.payment_method || invoice.paymentMethod || '').toUpperCase() === 'UPI' ? '#7c3aed' : '#15803d' }}>
-                  {invoice.payment_method || invoice.paymentMethod || 'Cash'}
-                </span>
-              </div>
-              <div className="inv-meta-row">
-                <span className="inv-meta-key">Status</span>
-                <span className="inv-paid-chip">Paid</span>
-              </div>
+            <div className="rcpt-to-row">
+              <span className="rcpt-meta-label rcpt-to-tag">To:</span>
+              <span className="rcpt-to-name">{customerName.toUpperCase()}</span>
             </div>
           </div>
 
-          {/* Items table */}
-          <table className="inv-table">
-            <thead>
-              <tr>
-                <th className="inv-th inv-th-desc">Description</th>
-                <th className="inv-th inv-th-qty">Qty</th>
-                <th className="inv-th inv-th-up">Unit Price</th>
-                <th className="inv-th inv-th-tot">Total</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item, i) => (
-                <tr key={i} className={i % 2 === 0 ? 'inv-tr-even' : 'inv-tr-odd'}>
-                  <td className="inv-td inv-td-desc">{item.name}</td>
-                  <td className="inv-td inv-td-qty">{item.qty}</td>
-                  <td className="inv-td inv-td-up">₹{item.unitPrice.toFixed(2)}</td>
-                  <td className="inv-td inv-td-tot">₹{item.lineTotal.toFixed(2)}</td>
+          {/* ── Table Container ── */}
+          <div className="rcpt-table-container">
+            <table className="rcpt-table">
+              <thead>
+                <tr>
+                  <th className="rcpt-th-sino">SI NO</th>
+                  <th className="rcpt-th-desc">DISCRIPTION</th>
+                  <th className="rcpt-th-price">UNIT PRICE</th>
+                  <th className="rcpt-th-qty">QTY</th>
+                  <th className="rcpt-th-amount">AMOUNT</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {items.map((item, idx) => (
+                  <tr key={idx} className="rcpt-tr-item">
+                    <td className="rcpt-td-sino">{idx + 1}</td>
+                    <td className="rcpt-td-desc">{item.name}</td>
+                    <td className="rcpt-td-price">
+                      <span className="rcpt-curr-sym">₹</span>
+                      <span className="rcpt-val-text">{item.unitPrice.toFixed(2)}</span>
+                    </td>
+                    <td className="rcpt-td-qty">{item.qty.toFixed(2)}</td>
+                    <td className="rcpt-td-amount">{formatCurrency(item.lineTotal)}</td>
+                  </tr>
+                ))}
+                {/* Filler rows / blank rows to extend column gridlines */}
+                <tr className="rcpt-tr-filler">
+                  <td className="rcpt-td-sino"></td>
+                  <td className="rcpt-td-desc"></td>
+                  <td className="rcpt-td-price"></td>
+                  <td className="rcpt-td-qty"></td>
+                  <td className="rcpt-td-amount"></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
 
-          {/* Spacer pushes summary to bottom */}
-          <div className="inv-spacer" />
-
-          {/* Summary */}
-          <div className="inv-summary-wrap">
-            <div className="inv-summary">
-              <div className="inv-sum-row">
-                <span>Subtotal</span><span>₹{subtotal.toFixed(2)}</span>
+          {/* ── Totals Section ── */}
+          <div className="rcpt-totals-section">
+            <div className="rcpt-totals-left"></div>
+            <div className="rcpt-totals-right">
+              <div className="rcpt-total-row">
+                <span className="rcpt-total-label">Total</span>
+                <span className="rcpt-total-sym">₹</span>
+                <span className="rcpt-total-val">{formatCurrency(subtotal)}</span>
               </div>
-              {discount > 0 && (
-                <div className="inv-sum-row inv-sum-disc">
-                  <span>Discount</span><span>−₹{discount.toFixed(2)}</span>
-                </div>
-              )}
-              <div className="inv-sum-row">
-                <span>Tax (0%)</span><span>₹0.00</span>
+              <div className="rcpt-total-row">
+                <span className="rcpt-total-label">Advance/ Discound</span>
+                <span className="rcpt-total-sym">₹</span>
+                <span className="rcpt-total-val">{discount > 0 ? formatCurrency(discount) : '-'}</span>
               </div>
-              <div className="inv-sum-total">
-                <span>Total Amount</span><span>₹{totalAmount.toFixed(2)}</span>
+              <div className="rcpt-total-row rcpt-total-grand">
+                <span className="rcpt-total-label">Grand Total</span>
+                <span className="rcpt-total-sym">₹</span>
+                <span className="rcpt-total-val">{formatCurrency(totalAmount)}</span>
               </div>
             </div>
           </div>
 
-          {/* Footer */}
-          <div className="inv-footer">
-            <div className="inv-thankyou">Thank you for your business!</div>
-            <div className="inv-terms">
-              Goods once sold will not be taken back or exchanged. Subject to local jurisdiction.
+          {/* ── Footer / Bank Details & Signatory ── */}
+          <div className="rcpt-footer">
+            <div className="rcpt-footer-left">
+              <div className="rcpt-bank-row">
+                <span className="rcpt-bank-lbl">Google Pay</span>
+                <span className="rcpt-bank-sep">:</span>
+                <span className="rcpt-bank-val">9961206583</span>
+              </div>
+              <div className="rcpt-bank-row">
+                <span className="rcpt-bank-lbl">Account No</span>
+                <span className="rcpt-bank-sep">:</span>
+                <span className="rcpt-bank-val">38670402105</span>
+              </div>
+              <div className="rcpt-bank-row">
+                <span className="rcpt-bank-lbl">IFSC CODE</span>
+                <span className="rcpt-bank-sep">:</span>
+                <span className="rcpt-bank-val">SBIN0070576</span>
+              </div>
             </div>
-            <div className="inv-footer-contact">
-              Speed@net · contact@speednet.com · +91 98765 43210
+            <div className="rcpt-footer-right">
+              <div className="rcpt-signatory-title">For authorised signatory</div>
+              <div className="rcpt-signatory-space"></div>
             </div>
           </div>
 
-        </div>{/* /inv-paper */}
+        </div>{/* /rcpt-paper */}
       </div>
 
     </div>
