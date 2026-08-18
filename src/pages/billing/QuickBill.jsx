@@ -90,10 +90,13 @@ async function downloadBillPDF(bill) {
   const html2pdf = (await import('html2pdf.js')).default;
 
   let dateStr = '';
+  let timeStr = '';
   try {
     dateStr = format(new Date(bill.created_at || new Date()), 'dd-MMM-yyyy');
+    timeStr = format(new Date(bill.created_at || new Date()), 'hh:mm a');
   } catch (e) {
     dateStr = new Date(bill.created_at || new Date()).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    timeStr = new Date(bill.created_at || new Date()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   const formatCurrency = (num) => {
@@ -132,11 +135,17 @@ async function downloadBillPDF(bill) {
           </div>
         </div>
 
-        <!-- Meta (Date & To) -->
+        <!-- Meta (Date, Time & To) -->
         <div style="padding:4px 10px 4px;border-bottom:2px solid #000;display:flex;flex-direction:column;gap:3px;flex-shrink:0">
           <div style="display:flex;justify-content:flex-end;align-items:center;gap:16px;padding-right:6px">
-            <span style="font-size:11px;font-weight:700;color:#000">Date:</span>
-            <span style="font-size:11px;font-weight:700;color:#000;min-width:90px;text-align:right">${dateStr}</span>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:11px;font-weight:700;color:#000">Date:</span>
+              <span style="font-size:11px;font-weight:700;color:#000">${dateStr}</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <span style="font-size:11px;font-weight:700;color:#000">Time:</span>
+              <span style="font-size:11px;font-weight:700;color:#000">${timeStr}</span>
+            </div>
           </div>
           <div style="display:flex;align-items:center;gap:16px;padding-left:2px">
             <span style="font-size:11px;font-weight:700;color:#000;min-width:24px">To:</span>
@@ -255,8 +264,21 @@ async function downloadBillPDF(bill) {
 
 // ── Bill Row ───────────────────────────────────────────────────
 function BillRow({ bill, onDelete, onEditItem }) {
+  const [downloading, setDownloading] = useState(false);
   const timeStr = format(new Date(bill.created_at), 'hh:mm a');
   const isUpi = (bill.payment_method || '').toUpperCase() === 'UPI';
+
+  const handleDownload = async () => {
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      await downloadBillPDF(bill);
+    } catch (err) {
+      console.error('Failed to download bill PDF:', err);
+    } finally {
+      setDownloading(false);
+    }
+  };
 
   return (
     <div className="qb-bill-container">
@@ -296,10 +318,11 @@ function BillRow({ bill, onDelete, onEditItem }) {
             </button>
             <button
               className="qb-bill-action-btn qb-btn-pdf"
-              onClick={() => downloadBillPDF(bill)}
+              onClick={handleDownload}
+              disabled={downloading}
               title="Download Invoice PDF"
             >
-              <FileText size={13} />
+              {downloading ? <Loader2 size={13} className="animate-spin" /> : <FileText size={13} />}
             </button>
             <button
               className="qb-bill-action-btn qb-btn-delete"

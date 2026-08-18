@@ -62,9 +62,15 @@
   transition: all 0.15s;
 }
 
-.inv-dl-btn:hover {
+.inv-dl-btn:hover:not(:disabled) {
   transform: translateY(-1px);
   box-shadow: 0 6px 20px rgba(139,92,246,0.45);
+}
+
+.inv-dl-btn:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+  transform: none !important;
 }
 
 /* ── Paper shadow wrapper ─────────────────────────────────────── */
@@ -174,7 +180,7 @@
   letter-spacing: 0.3px;
 }
 
-/* ── Meta (Date & To) ────────────────────────────────────────── */
+/* ── Meta (Date, Time & To) ──────────────────────────────────── */
 .rcpt-meta-section {
   padding: 4px 10px 4px;
   border-bottom: 2px solid #000000;
@@ -190,6 +196,12 @@
   align-items: center;
   gap: 16px;
   padding-right: 6px;
+}
+
+.rcpt-meta-pair {
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 
 .rcpt-to-row {

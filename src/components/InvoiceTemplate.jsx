@@ -1,5 +1,5 @@
-import React, { useRef } from 'react';
-import { ArrowLeft, Download } from 'lucide-react';
+import React, { useState, useRef } from 'react';
+import { ArrowLeft, Download, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
 import './InvoiceTemplate.css';
 
@@ -13,6 +13,7 @@ import './InvoiceTemplate.css';
  */
 const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
   const paperRef = useRef(null);
+  const [downloading, setDownloading] = useState(false);
 
   // ── Normalise from POS cart shape or DB shape ─────────────────
   const id           = invoice.id;
@@ -45,10 +46,13 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
 
   const invNumber = `INV-${String(id).slice(-6).padStart(6, '0')}`;
   let dateStr = '';
+  let timeStr = '';
   try {
     dateStr = format(createdAt, 'dd-MMM-yyyy');
+    timeStr = format(createdAt, 'hh:mm a');
   } catch (e) {
     dateStr = createdAt.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+    timeStr = createdAt.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   }
 
   const formatCurrency = (num) => {
@@ -57,29 +61,37 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
 
   // ── PDF via html2pdf.js ───────────────────────────────────────
   const handleDownloadPDF = async () => {
-    const html2pdf = (await import('html2pdf.js')).default;
-    const el = paperRef.current;
-    if (!el) return;
+    if (downloading) return;
+    setDownloading(true);
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const el = paperRef.current;
+      if (!el) return;
 
-    await html2pdf()
-      .set({
-        margin:      0,
-        filename:    `Receipt_${customerName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`,
-        image:       { type: 'jpeg', quality: 1 },
-        html2canvas: {
-          scale:           2,
-          useCORS:         true,
-          backgroundColor: '#ffffff',
-          logging:         false,
-        },
-        jsPDF: {
-          unit:        'mm',
-          format:      'a5',
-          orientation: 'portrait',
-        },
-      })
-      .from(el)
-      .save();
+      await html2pdf()
+        .set({
+          margin:      0,
+          filename:    `Receipt_${customerName.replace(/[^a-zA-Z0-9]/g, '_')}_${dateStr}.pdf`,
+          image:       { type: 'jpeg', quality: 1 },
+          html2canvas: {
+            scale:           2,
+            useCORS:         true,
+            backgroundColor: '#ffffff',
+            logging:         false,
+          },
+          jsPDF: {
+            unit:        'mm',
+            format:      'a5',
+            orientation: 'portrait',
+          },
+        })
+        .from(el)
+        .save();
+    } catch (err) {
+      console.error('PDF export failed:', err);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   const advance      = Number(invoice.advance || 0);
@@ -92,8 +104,16 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
         <button className="inv-back-btn" onClick={onBack}>
           <ArrowLeft size={15} /> {backLabel}
         </button>
-        <button className="inv-dl-btn" onClick={handleDownloadPDF}>
-          <Download size={15} /> Download PDF
+        <button className="inv-dl-btn" onClick={handleDownloadPDF} disabled={downloading}>
+          {downloading ? (
+            <>
+              <Loader2 size={15} className="animate-spin" /> Generating PDF...
+            </>
+          ) : (
+            <>
+              <Download size={15} /> Download PDF
+            </>
+          )}
         </button>
       </div>
 
@@ -113,11 +133,17 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
               </div>
             </div>
 
-            {/* ── Meta (Date & To) ── */}
+            {/* ── Meta (Date, Time & To) ── */}
             <div className="rcpt-meta-section">
               <div className="rcpt-date-row">
-                <span className="rcpt-meta-label">Date:</span>
-                <span className="rcpt-meta-value">{dateStr}</span>
+                <div className="rcpt-meta-pair">
+                  <span className="rcpt-meta-label">Date:</span>
+                  <span className="rcpt-meta-value">{dateStr}</span>
+                </div>
+                <div className="rcpt-meta-pair">
+                  <span className="rcpt-meta-label">Time:</span>
+                  <span className="rcpt-meta-value">{timeStr}</span>
+                </div>
               </div>
               <div className="rcpt-to-row">
                 <span className="rcpt-meta-label rcpt-to-tag">To:</span>
