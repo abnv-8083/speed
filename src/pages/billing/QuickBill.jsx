@@ -658,7 +658,21 @@ export default function QuickBill() {
               />
             </div>
 
-            {/* 3. Selling Price (Editable) */}
+            {/* 3. UPI Checkbox */}
+            <div className="qb-inline-field qb-field-upi">
+              <label className="qb-inline-label">Method</label>
+              <label className={`qb-upi-checkbox-label ${isUPI ? 'qb-upi-checked' : ''}`} title="Check to mark as UPI payment">
+                <input
+                  type="checkbox"
+                  className="qb-upi-checkbox"
+                  checked={isUPI}
+                  onChange={e => setIsUPI(e.target.checked)}
+                />
+                <span className="qb-upi-checkbox-text">UPI</span>
+              </label>
+            </div>
+
+            {/* 4. Selling Price (Editable) */}
             <div className="qb-inline-field qb-field-price">
               <label className="qb-inline-label">Selling Price</label>
               <div className="qb-currency-input-wrap">
@@ -676,7 +690,7 @@ export default function QuickBill() {
               </div>
             </div>
 
-            {/* 4. Discount (Optional) */}
+            {/* 5. Discount (Optional) */}
             <div className="qb-inline-field qb-field-discount">
               <label className="qb-inline-label">Discount (Optional)</label>
               <div className="qb-currency-input-wrap">
@@ -695,7 +709,7 @@ export default function QuickBill() {
               </div>
             </div>
 
-            {/* 5. Total Amount (Editable) */}
+            {/* 6. Total Amount (Editable) */}
             <div className="qb-inline-field qb-field-total">
               <label className="qb-inline-label">Total Amount</label>
               <div className="qb-currency-input-wrap">
@@ -711,20 +725,6 @@ export default function QuickBill() {
                   onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
                 />
               </div>
-            </div>
-
-            {/* 6. UPI Checkbox */}
-            <div className="qb-inline-field qb-field-upi">
-              <label className="qb-inline-label">Method</label>
-              <label className={`qb-upi-checkbox-label ${isUPI ? 'qb-upi-checked' : ''}`} title="Check to mark as UPI payment">
-                <input
-                  type="checkbox"
-                  className="qb-upi-checkbox"
-                  checked={isUPI}
-                  onChange={e => setIsUPI(e.target.checked)}
-                />
-                <span className="qb-upi-checkbox-text">UPI</span>
-              </label>
             </div>
 
             {/* Submit button */}
