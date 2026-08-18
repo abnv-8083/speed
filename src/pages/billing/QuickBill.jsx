@@ -362,8 +362,8 @@ export default function QuickBill() {
     setDiscount('');
     setTotalAmount(p);
     setTimeout(() => {
-      priceInputRef.current?.focus();
-      priceInputRef.current?.select();
+      qtyInputRef.current?.focus();
+      qtyInputRef.current?.select();
     }, 50);
   };
 
@@ -627,7 +627,21 @@ export default function QuickBill() {
               )}
             </div>
 
-            {/* 2. Selling Price (Editable) */}
+            {/* 2. Quantity */}
+            <div className="qb-inline-field qb-field-qty">
+              <label className="qb-inline-label">Qty <span className="qb-req">*</span></label>
+              <input
+                ref={qtyInputRef}
+                type="number"
+                min="1"
+                className="input-field qb-inline-input qb-qty-num-input"
+                value={quantity}
+                onChange={e => handleQtyChange(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
+              />
+            </div>
+
+            {/* 3. Selling Price (Editable) */}
             <div className="qb-inline-field qb-field-price">
               <label className="qb-inline-label">Selling Price</label>
               <div className="qb-currency-input-wrap">
@@ -643,20 +657,6 @@ export default function QuickBill() {
                   onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
                 />
               </div>
-            </div>
-
-            {/* 3. Quantity */}
-            <div className="qb-inline-field qb-field-qty">
-              <label className="qb-inline-label">Qty <span className="qb-req">*</span></label>
-              <input
-                ref={qtyInputRef}
-                type="number"
-                min="1"
-                className="input-field qb-inline-input qb-qty-num-input"
-                value={quantity}
-                onChange={e => handleQtyChange(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && handleInlineSubmit(e)}
-              />
             </div>
 
             {/* 4. Discount (Optional) */}
