@@ -15,6 +15,7 @@ const loanPaymentRoutes   = require('./routes/loanPayments');
 const printLogRoutes      = require('./routes/printLogs');
 const printerConfigRoutes = require('./routes/printerConfigs');
 const vaultRoutes         = require('./routes/vault');
+const customerRoutes      = require('./routes/customers');
 const cvSaveRoutes        = require('./routes/cvSaves');
 const agentRoutes         = require('./routes/agent');
 const quickBillRoutes     = require('./routes/quickBill');
@@ -27,10 +28,12 @@ app.use(cors({
   origin: process.env.FRONTEND_URL || '*',
   credentials: true,
 }));
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // ── Routes ────────────────────────────────────────────────────
 app.use('/api/auth',            authRoutes);
+app.use('/api/customers',       customerRoutes);
 app.use('/api/products',        productRoutes);
 app.use('/api/invoices',        invoiceRoutes);
 app.use('/api/loans',           loanRoutes);

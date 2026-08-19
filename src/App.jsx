@@ -19,7 +19,8 @@ import SavedCVs from './pages/cv/SavedCVs';
 import CVLayout from './pages/cv/CVLayout';
 import ToolsPortal from './pages/tools/ToolsPortal';
 import ToolsLayout from './pages/tools/ToolsLayout';
-import PasswordManager from './pages/passwords/PasswordManager';
+import CustomerList from './pages/customers/CustomerList';
+import CustomerDetail from './pages/customers/CustomerDetail';
 import PrintingHistory from './pages/printing/PrintingHistory';
 import PrintingLayout from './pages/printing/PrintingLayout';
 import Layout from './components/Layout';
@@ -38,8 +39,8 @@ function App() {
               
               {/* Billing Module Nested Routes */}
               <Route path="/billing" element={<BillingLayout />}>
-                <Route index element={<Navigate to="pos" replace />} />
-                <Route path="pos"        element={<POS />} />
+                <Route index element={<Navigate to="quickbill" replace />} />
+                <Route path="pos"        element={<Navigate to="/billing/quickbill" replace />} />
                 <Route path="quickbill"  element={<QuickBill />} />
                 <Route path="quickbill/history" element={<QuickBillHistory />} />
                 <Route path="products"   element={<Products />} />
@@ -60,7 +61,9 @@ function App() {
                 <Route path="size"    element={<ToolsPortal />} />
                 <Route path="image"   element={<ToolsPortal />} />
               </Route>
-              <Route path="/passwords" element={<PasswordManager />} />
+              <Route path="/customers" element={<CustomerList />} />
+              <Route path="/customers/:id" element={<CustomerDetail />} />
+              <Route path="/passwords" element={<Navigate to="/customers" replace />} />
               <Route path="/printing" element={<PrintingLayout />}>
                 <Route index element={<Navigate to="stock" replace />} />
                 <Route path="stock"   element={<PrintingHistory />} />

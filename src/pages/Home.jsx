@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CreditCard, PieChart, ArrowRight, FileText, ShieldCheck, Wrench, Printer } from 'lucide-react';
+import { CreditCard, PieChart, ArrowRight, FileText, Users, Wrench, Printer } from 'lucide-react';
 import './Home.css';
 
 const Home = () => {
@@ -78,19 +78,19 @@ const Home = () => {
           </div>
         </div>
 
-        {/* Password Manager Card */}
+        {/* Customer Management Card */}
         <div 
           className="portal-card card-pass animate-fade-in" 
           style={{ animationDelay: '0.4s' }}
-          onClick={() => navigate('/passwords')}
+          onClick={() => navigate('/customers')}
         >
-          <div className="portal-icon-wrapper">
-            <ShieldCheck size={32} />
+          <div className="portal-icon-wrapper" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
+            <Users size={32} />
           </div>
-          <h2>Password Manager</h2>
-          <p>Store and manage all your passwords securely with AES-256-GCM encryption. Protected by a master password.</p>
+          <h2>Customer Management</h2>
+          <p>Register customers, access billed invoices, upload PDF & photo documents, and manage credentials.</p>
           <div className="portal-action">
-            Open Vault <ArrowRight size={18} />
+            Open Customers <ArrowRight size={18} />
           </div>
         </div>
 

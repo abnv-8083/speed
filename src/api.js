@@ -139,4 +139,25 @@ export const api = {
   getCvSaves:    ()            => request('GET',    '/api/cv-saves'),
   upsertCvSave:  (body)        => request('POST',   '/api/cv-saves', body),
   deleteCvSave:  (id)          => request('DELETE', `/api/cv-saves/${id}`),
+
+  // ── Customers ────────────────────────────────────────────────
+  getCustomers: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request('GET', `/api/customers${qs ? `?${qs}` : ''}`);
+  },
+  getCustomer:        (id)         => request('GET',    `/api/customers/${id}`),
+  createCustomer:     (body)       => request('POST',   '/api/customers', body),
+  updateCustomer:     (id, body)   => request('PATCH',  `/api/customers/${id}`, body),
+  deleteCustomer:     (id)         => request('DELETE', `/api/customers/${id}`),
+  getCustomerInvoices:(id)         => request('GET',    `/api/customers/${id}/invoices`),
+
+  // Customer Documents
+  addCustomerDocument:    (id, body)        => request('POST',   `/api/customers/${id}/documents`, body),
+  updateCustomerDocument: (id, docId, body) => request('PATCH',  `/api/customers/${id}/documents/${docId}`, body),
+  deleteCustomerDocument: (id, docId)       => request('DELETE', `/api/customers/${id}/documents/${docId}`),
+
+  // Customer Passwords / Credentials
+  addCustomerPassword:    (id, body)        => request('POST',   `/api/customers/${id}/passwords`, body),
+  updateCustomerPassword: (id, pwdId, body) => request('PATCH',  `/api/customers/${id}/passwords/${pwdId}`, body),
+  deleteCustomerPassword: (id, pwdId)       => request('DELETE', `/api/customers/${id}/passwords/${pwdId}`),
 };

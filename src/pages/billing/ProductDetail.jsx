@@ -140,6 +140,8 @@ const ProductDetail = () => {
 
   const stockStatus = product.is_blocked
     ? { label: 'Blocked',      cls: 'status-error'   }
+    : product.type === 'service'
+    ? { label: 'Service',      cls: 'status-good'    }
     : product.stock > 10
     ? { label: 'In Stock',     cls: 'status-good'    }
     : product.stock > 0
@@ -157,11 +159,13 @@ const ProductDetail = () => {
           <ArrowLeft size={17} /> Inventory
         </button>
         <div className="pd-topbar-actions">
-          <button className="pd-btn pd-btn-stock" onClick={() => { setNewStock(String(product.stock)); setShowStockModal(true); }}>
-            <Layers size={15} /> Update Stock
-          </button>
+          {product.type !== 'service' && (
+            <button className="pd-btn pd-btn-stock" onClick={() => { setNewStock(String(product.stock)); setShowStockModal(true); }}>
+              <Layers size={15} /> Update Stock
+            </button>
+          )}
           <button className="pd-btn pd-btn-edit" onClick={openEditModal}>
-            <Edit2 size={15} /> Edit Product
+            <Edit2 size={15} /> Edit Item
           </button>
           <button
             className={`pd-btn ${product.is_blocked ? 'pd-btn-unblock' : 'pd-btn-block'}`}
@@ -194,6 +198,12 @@ const ProductDetail = () => {
 
           <div className="pd-stats-grid">
             <div className="pd-stat">
+              <span className="pd-stat-label">Item Type</span>
+              <span className="pd-stat-value" style={{ textTransform: 'capitalize', color: product.type === 'service' ? '#38bdf8' : 'var(--text-primary)' }}>
+                {product.type || 'Product'}
+              </span>
+            </div>
+            <div className="pd-stat">
               <span className="pd-stat-label">Selling Price</span>
               <span className="pd-stat-value pd-stat-price">₹{Number(product.price).toFixed(2)}</span>
             </div>
@@ -221,8 +231,12 @@ const ProductDetail = () => {
             </div>
             <div className="pd-stat">
               <span className="pd-stat-label">Stock Level</span>
-              <span className={`pd-stat-value ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
-                {product.stock} <small>units</small>
+              <span className={`pd-stat-value ${product.type === 'service' ? '' : product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
+                {product.type === 'service' ? (
+                  <span style={{ color: '#38bdf8', fontSize: '0.9rem' }}>Service (No Stock)</span>
+                ) : (
+                  <>{product.stock} <small>units</small></>
+                )}
               </span>
             </div>
             <div className="pd-stat">

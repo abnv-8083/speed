@@ -526,11 +526,12 @@ export default function QuickBill() {
       e.preventDefault();
       if (showDropdown && dropdownResults.length > 0) {
         const target = dropdownResults[highlightedIndex] ?? dropdownResults[0];
-        if (target && target.stock > 0) selectProduct(target);
+        const canSelect = target && (target.type === 'service' || target.stock > 0);
+        if (canSelect) selectProduct(target);
       } else if (selectedProduct) {
         handleInlineSubmit();
       } else {
-        toast.error('Please select a product first');
+        toast.error('Please select a product or service first');
       }
     }
   };
@@ -725,7 +726,8 @@ export default function QuickBill() {
               {showDropdown && (
                 <div className="qb-dropdown" ref={dropdownRef}>
                   {dropdownResults.map((product, idx) => {
-                    const oos = product.stock <= 0;
+                    const isService = product.type === 'service';
+                    const oos = !isService && product.stock <= 0;
                     return (
                       <div
                         key={product.id}
@@ -736,7 +738,7 @@ export default function QuickBill() {
                         <div className="qb-drop-info">
                           <span className="qb-drop-name">{product.name}</span>
                           <span className="qb-drop-sub">
-                            {oos ? 'Out of stock' : `${product.stock} in stock`}
+                            {isService ? '⚡ Service' : oos ? 'Out of stock' : `${product.stock} in stock`}
                           </span>
                         </div>
                         <span className="qb-drop-price">₹{Number(product.price).toFixed(2)}</span>

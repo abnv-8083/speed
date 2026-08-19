@@ -3,9 +3,10 @@ const mongoose = require('mongoose');
 const productSchema = new mongoose.Schema(
   {
     name:       { type: String, required: true, trim: true },
+    type:       { type: String, enum: ['product', 'service'], default: 'product' },
     price:      { type: Number, required: true, min: 0 },
     cost_price: { type: Number, default: 0, min: 0 },  // purchase/cost price
-    stock:      { type: Number, required: true, min: 0, default: 0 },
+    stock:      { type: Number, min: 0, default: 0 },
     is_print:   { type: Boolean, default: false },
     is_blocked: { type: Boolean, default: false },
   },

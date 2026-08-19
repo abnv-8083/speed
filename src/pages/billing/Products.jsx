@@ -18,6 +18,7 @@ const Products = () => {
   const [loading, setLoading]             = useState(true);
   const [showAddForm, setShowAddForm]     = useState(false);
   const [newProdName, setNewProdName]     = useState('');
+  const [newProdType, setNewProdType]     = useState('product'); // 'product' | 'service'
   const [newProdCost, setNewProdCost]     = useState('');
   const [newProdPrice, setNewProdPrice]   = useState('');
   const [newProdStock, setNewProdStock]   = useState('');
@@ -51,21 +52,26 @@ const Products = () => {
 
   const handleAddProduct = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!newProdName || !newProdPrice || !newProdStock) return;
+    if (!newProdName || !newProdPrice) return;
+    if (newProdType === 'product' && !newProdStock) {
+      toast.error('Stock is required for physical products');
+      return;
+    }
     try {
       const data = await api.createProduct({
         name:       newProdName,
+        type:       newProdType,
         cost_price: parseFloat(newProdCost) || 0,
         price:      parseFloat(newProdPrice),
-        stock:      parseInt(newProdStock),
+        stock:      newProdType === 'product' ? parseInt(newProdStock, 10) || 0 : 0,
         is_print:   false,
       });
       setProducts([...products, data]);
-      setNewProdName(''); setNewProdCost(''); setNewProdPrice(''); setNewProdStock('');
+      setNewProdName(''); setNewProdType('product'); setNewProdCost(''); setNewProdPrice(''); setNewProdStock('');
       setShowAddForm(false);
-      toast.success('Product added successfully');
+      toast.success(`${newProdType === 'service' ? 'Service' : 'Product'} added successfully`);
     } catch (err) {
-      toast.error('Error adding product: ' + err.message);
+      toast.error('Error adding item: ' + err.message);
     }
   };
 
@@ -106,6 +112,7 @@ const Products = () => {
 
   const getStatusBadge = (product) => {
     if (product.is_blocked) return <span className="status-badge status-error">Blocked</span>;
+    if (product.type === 'service') return <span className="status-badge" style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>Service</span>;
     if (product.stock > 10)  return <span className="status-badge status-good">In Stock</span>;
     if (product.stock > 0)   return <span className="status-badge status-warning">Low Stock</span>;
     return <span className="status-badge status-error">Out of Stock</span>;
@@ -159,23 +166,49 @@ const Products = () => {
         {/* Add Product Modal */}
         {showAddForm && (
           <AppModal
-            title="Add New Product"
+            title="Add New Inventory Item"
             onClose={() => setShowAddForm(false)}
             width="460px"
             footer={
               <>
                 <button type="button" className="btn btn-secondary" onClick={() => setShowAddForm(false)}>Cancel</button>
-                <button type="button" className="btn btn-primary" onClick={handleAddProduct}>Save Product</button>
+                <button type="button" className="btn btn-primary" onClick={handleAddProduct}>Save {newProdType === 'service' ? 'Service' : 'Product'}</button>
               </>
             }
           >
             <div className="form-group">
-              <label>Name</label>
+              <label>Item Type</label>
+              <div style={{ display: 'flex', gap: '1rem', marginTop: '0.25rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                  <input
+                    type="radio"
+                    name="itemType"
+                    value="product"
+                    checked={newProdType === 'product'}
+                    onChange={() => setNewProdType('product')}
+                  />
+                  Physical Product (with Stock)
+                </label>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', cursor: 'pointer', fontSize: '0.9rem' }}>
+                  <input
+                    type="radio"
+                    name="itemType"
+                    value="service"
+                    checked={newProdType === 'service'}
+                    onChange={() => setNewProdType('service')}
+                  />
+                  Service (No Stock needed)
+                </label>
+              </div>
+            </div>
+
+            <div className="form-group">
+              <label>{newProdType === 'service' ? 'Service Name' : 'Product Name'}</label>
               <input type="text" className="input-field" value={newProdName}
-                onChange={e => setNewProdName(e.target.value)} required placeholder="e.g. A4 Paper Bundle" autoFocus />
+                onChange={e => setNewProdName(e.target.value)} required placeholder={newProdType === 'service' ? 'e.g. Color Xerox / Lamination' : 'e.g. A4 Paper Bundle'} autoFocus />
             </div>
             <div className="form-group">
-              <label>Cost Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you paid</span></label>
+              <label>Cost Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— your expense</span></label>
               <input type="number" className="input-field" value={newProdCost}
                 onChange={e => setNewProdCost(e.target.value)} min="0" step="0.01" placeholder="0.00" />
             </div>
@@ -184,20 +217,23 @@ const Products = () => {
               <input type="number" className="input-field" value={newProdPrice}
                 onChange={e => setNewProdPrice(e.target.value)} required min="0" step="0.01" placeholder="0.00" />
             </div>
-            <div className="form-group">
-              <label>Initial Stock</label>
-              <input type="number" className="input-field" value={newProdStock}
-                onChange={e => setNewProdStock(e.target.value)} required min="0" placeholder="0" />
-            </div>
+
+            {newProdType === 'product' && (
+              <div className="form-group">
+                <label>Initial Stock Level</label>
+                <input type="number" className="input-field" value={newProdStock}
+                  onChange={e => setNewProdStock(e.target.value)} required min="0" placeholder="e.g. 50" />
+              </div>
+            )}
           </AppModal>
         )}
 
         {/* Column labels — list view only */}
         {!loading && filteredProducts.length > 0 && viewMode === 'list' && (
           <div className="prod-list-header">
-            <span className="prod-col-identity">Product</span>
+            <span className="prod-col-identity">Product / Service</span>
             <span className="prod-col-price">Price</span>
-            <span className="prod-col-stock">Stock</span>
+            <span className="prod-col-stock">Stock / Type</span>
             <span className="prod-col-status">Status</span>
             <span className="prod-col-actions">Actions</span>
           </div>
@@ -216,7 +252,7 @@ const Products = () => {
                 {filteredProducts.length === 0 ? (
                   <div className="empty-inventory">
                     <Package size={40} className="text-muted" />
-                    <p className="text-muted">No products found.</p>
+                    <p className="text-muted">No items found.</p>
                   </div>
                 ) : (
                   paginatedProducts.map(product => (
@@ -236,9 +272,13 @@ const Products = () => {
                         {product.cost_price > 0 && <span className="prod-cost-price">Cost: ₹{Number(product.cost_price).toFixed(2)}</span>}
                       </div>
                       <div className="prod-col-stock">
-                        <span className={`prod-stock-val ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
-                          {product.stock} <span className="stock-unit">units</span>
-                        </span>
+                        {product.type === 'service' ? (
+                          <span style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 500 }}>Service (No Stock)</span>
+                        ) : (
+                          <span className={`prod-stock-val ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
+                            {product.stock} <span className="stock-unit">units</span>
+                          </span>
+                        )}
                       </div>
                       <div className="prod-col-status">{getStatusBadge(product)}</div>
                       <div className="prod-col-actions" onClick={e => e.stopPropagation()}>
@@ -311,10 +351,18 @@ const Products = () => {
 
                         {/* Stock */}
                         <div className="prod-card-stock-row">
-                          <span className={`prod-card-stock ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
-                            {product.stock}
-                          </span>
-                          <span className="prod-card-stock-label">units in stock</span>
+                          {product.type === 'service' ? (
+                            <span style={{ fontSize: '0.85rem', color: '#38bdf8', fontWeight: 600 }}>
+                              Service Item
+                            </span>
+                          ) : (
+                            <>
+                              <span className={`prod-card-stock ${product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
+                                {product.stock}
+                              </span>
+                              <span className="prod-card-stock-label">units in stock</span>
+                            </>
+                          )}
                         </div>
                       </div>
 

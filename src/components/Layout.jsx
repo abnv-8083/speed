@@ -6,7 +6,7 @@ import {
   CreditCard,
   PieChart,
   FileText,
-  ShieldCheck,
+  Users,
   Wrench,
   LogOut,
   ChevronLeft,
@@ -28,10 +28,10 @@ function LayoutInner() {
   const navItems = [
     { path: '/home',      icon: LayoutDashboard, label: 'Dashboard' },
     { path: '/billing',   icon: CreditCard,      label: 'Billing Portal' },
+    { path: '/customers', icon: Users,           label: 'Customer Management' },
     { path: '/printing',  icon: Printer,         label: 'Printing Hub' },
     { path: '/financial', icon: PieChart,        label: 'Financial Portal' },
     { path: '/cv',        icon: FileText,        label: 'CV Generator' },
-    { path: '/passwords', icon: ShieldCheck,     label: 'Password Manager' },
     { path: '/tools',     icon: Wrench,          label: 'Tools Portal' },
   ];
 

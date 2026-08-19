@@ -5,7 +5,6 @@ import { useSubNav } from '../../components/SubNavContext';
 import './BillingLayout.css';
 
 const BILLING_TABS = [
-  { to: '/billing/pos',        icon: ShoppingCart, label: 'New Sale (POS)' },
   { to: '/billing/quickbill',  icon: Zap,          label: 'Quick Bill'     },
   { to: '/billing/products',   icon: Package,      label: 'Inventory'      },
   { to: '/billing/invoices',   icon: Receipt,      label: 'Invoices'       },
