@@ -776,19 +776,6 @@ const WorkDetail = () => {
               </div>
             </div>
 
-            {showCustomerDocs && (
-              <div className="wd-customer-docs">
-                <div className="wd-customer-docs-header"><h4>Customer Documents — {work.customer_name}</h4><button onClick={() => setShowCustomerDocs(false)}><X size={14} /></button></div>
-                <div className="wd-customer-docs-list">
-                  {customerDocs.length === 0 ? <p className="wd-empty-inline">No documents found.</p> : customerDocs.map(doc => (
-                    <div key={doc.id || doc._id} className="wd-customer-doc-item"><FileText size={16} /><span>{doc.name}</span>
-                      <button onClick={() => attachCustomerDoc(doc.id || doc._id)} disabled={attachingDoc === (doc.id || doc._id)}>{attachingDoc === (doc.id || doc._id) ? <Spinner size={12} /> : <><LinkIcon size={12} /> Attach</>}</button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
             <div className="wd-docs-grid">
               {(work.documents || []).length === 0 ? (
                 <div className="wd-empty-inline"><FileText size={28} /><p>No documents yet.</p></div>
@@ -880,6 +867,50 @@ const WorkDetail = () => {
               <div className="wd-modal-footer">
                 <button className="wd-btn-cancel" onClick={() => setShowAddIssueModal(false)} disabled={addingIssue}>Cancel</button>
                 <button className="wd-btn-save" onClick={addIssue} disabled={addingIssue || !issueForm.title.trim()}>{addingIssue ? <Spinner /> : <Plus size={14} />} Add Issue</button>
+              </div>
+            </div>
+          </div>
+        </Portal>
+      )}
+
+      {/* ── Customer Documents Modal ──────────────────────── */}
+      {showCustomerDocs && (
+        <Portal>
+          <div className="wd-modal-overlay" onClick={() => setShowCustomerDocs(false)}>
+            <div className="wd-modal" onClick={e => e.stopPropagation()}>
+              <div className="wd-modal-header">
+                <h3><LinkIcon size={16} /> Customer Documents — {work.customer_name}</h3>
+                <button onClick={() => setShowCustomerDocs(false)}><X size={18} /></button>
+              </div>
+              <div className="wd-modal-body">
+                {customerDocs.length === 0 ? (
+                  <div className="wd-empty-inline"><FileText size={28} /><p>No documents found for this customer.</p></div>
+                ) : (
+                  <div className="wd-customer-docs-list">
+                    {customerDocs.map(doc => {
+                      const isImage = doc.file_type?.startsWith('image/');
+                      const isPdf = doc.file_type?.includes('pdf');
+                      const isAttaching = attachingDoc === (doc.id || doc._id);
+                      return (
+                        <div key={doc.id || doc._id} className="wd-cust-doc-item">
+                          <div className="wd-cust-doc-thumb">
+                            {isImage && doc.file_url ? <img src={doc.file_url} alt={doc.name} /> : isPdf ? <FileText size={20} className="pdf-icon" /> : <FileText size={20} />}
+                          </div>
+                          <div className="wd-cust-doc-info">
+                            <span className="wd-cust-doc-name" title={doc.name}>{doc.name}</span>
+                            <span className="wd-cust-doc-meta">{doc.file_size ? `${(doc.file_size / 1024).toFixed(1)} KB` : ''} {doc.file_type || ''}</span>
+                          </div>
+                          <button className="wd-cust-doc-attach" onClick={() => attachCustomerDoc(doc.id || doc._id)} disabled={isAttaching}>
+                            {isAttaching ? <Spinner size={13} /> : <><LinkIcon size={13} /> Attach</>}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+              <div className="wd-modal-footer">
+                <button className="wd-btn-cancel" onClick={() => setShowCustomerDocs(false)}>Close</button>
               </div>
             </div>
           </div>
