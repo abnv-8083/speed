@@ -156,6 +156,31 @@ export const api = {
   updateCustomerDocument: (id, docId, body) => request('PATCH',  `/api/customers/${id}/documents/${docId}`, body),
   deleteCustomerDocument: (id, docId)       => request('DELETE', `/api/customers/${id}/documents/${docId}`),
 
+  // ── Works ────────────────────────────────────────────────────
+  getWorks: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request('GET', `/api/works${qs ? `?${qs}` : ''}`);
+  },
+  getWorkStats: () => request('GET', '/api/works/stats'),
+  getWork:       (id)         => request('GET',    `/api/works/${id}`),
+  createWork:    (body)       => request('POST',   '/api/works', body),
+  updateWork:    (id, body)   => request('PATCH',  `/api/works/${id}`, body),
+  deleteWork:    (id)         => request('DELETE', `/api/works/${id}`),
+
+  // Work Notes
+  addWorkNote:    (id, body)        => request('POST',   `/api/works/${id}/notes`, body),
+  deleteWorkNote: (id, noteId)      => request('DELETE', `/api/works/${id}/notes/${noteId}`),
+
+  // Work Documents
+  addWorkDocument:         (id, body)        => request('POST',   `/api/works/${id}/documents`, body),
+  addWorkDocumentFromCustomer: (id, body)    => request('POST',   `/api/works/${id}/documents/from-customer`, body),
+  deleteWorkDocument:      (id, docId)       => request('DELETE', `/api/works/${id}/documents/${docId}`),
+
+  // Work Issues
+  addWorkIssue:    (id, body)        => request('POST',   `/api/works/${id}/issues`, body),
+  updateWorkIssue: (id, issueId, body) => request('PATCH', `/api/works/${id}/issues/${issueId}`, body),
+  deleteWorkIssue: (id, issueId)     => request('DELETE', `/api/works/${id}/issues/${issueId}`),
+
   // Customer Passwords / Credentials
   addCustomerPassword:    (id, body)        => request('POST',   `/api/customers/${id}/passwords`, body),
   updateCustomerPassword: (id, pwdId, body) => request('PATCH',  `/api/customers/${id}/passwords/${pwdId}`, body),

@@ -15,6 +15,8 @@ import Invoices from './pages/billing/Invoices';
 import SalesReport from './pages/billing/SalesReport';
 import QuickBill from './pages/billing/QuickBill';
 import QuickBillHistory from './pages/billing/QuickBillHistory';
+import WorkList from './pages/works/WorkList';
+import WorkDetail from './pages/works/WorkDetail';
 import CVGenerator from './pages/cv/CVGenerator';
 import SavedCVs from './pages/cv/SavedCVs';
 import CVLayout from './pages/cv/CVLayout';
@@ -48,6 +50,8 @@ function App() {
                   <Route path="products"   element={<Products />} />
                   <Route path="products/:id" element={<ProductDetail />} />
                   <Route path="invoices" element={<Invoices />} />
+                  <Route path="works" element={<WorkList />} />
+                  <Route path="works/:id" element={<WorkDetail />} />
                   <Route path="reports" element={<SalesReport />} />
                   <Route path="customers" element={<CustomerList />} />
                   <Route path="customers/:id" element={<CustomerDetail />} />

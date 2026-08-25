@@ -20,6 +20,7 @@ const cvSaveRoutes        = require('./routes/cvSaves');
 const agentRoutes         = require('./routes/agent');
 const quickBillRoutes     = require('./routes/quickBill');
 const expenseRoutes       = require('./routes/expenses');
+const workRoutes          = require('./routes/works');
 
 const app = express();
 
@@ -45,6 +46,7 @@ app.use('/api/cv-saves',        cvSaveRoutes);
 app.use('/api/agent',           agentRoutes);
 app.use('/api/quick-bill',      quickBillRoutes);
 app.use('/api/expenses',        expenseRoutes);
+app.use('/api/works',           workRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));
