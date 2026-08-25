@@ -617,53 +617,74 @@ export default function CustomerDetail() {
                 const isPdf = isPdfDoc(doc);
                 const isImg = isImageDoc(doc);
                 const docId = doc.id || doc._id;
+                const thumbSrc = isImg ? (doc.file_url || doc.data) : null;
                 return (
                   <div key={docId} className="cd-doc-card">
-                    <div className={`cd-doc-icon-wrap ${isPdf ? 'pdf' : 'img'}`}>
-                      {isPdf ? <File size={22} /> : <ImageIcon size={22} />}
+                    {/* Thumbnail area */}
+                    <div
+                      className={`cd-doc-thumb ${isPdf ? 'cd-doc-thumb--pdf' : 'cd-doc-thumb--img'}`}
+                      onClick={() => setPreviewDoc(doc)}
+                    >
+                      {isImg && thumbSrc ? (
+                        <img src={thumbSrc} alt={doc.name} className="cd-doc-thumb-img" />
+                      ) : isPdf ? (
+                        <div className="cd-doc-thumb-pdf">
+                          <File size={32} />
+                          <span>PDF</span>
+                        </div>
+                      ) : (
+                        <div className="cd-doc-thumb-pdf">
+                          <File size={32} />
+                        </div>
+                      )}
+                      <div className="cd-doc-thumb-overlay">
+                        <Eye size={18} /> Preview
+                      </div>
                     </div>
 
-                    <div className="cd-doc-info">
+                    {/* Info area */}
+                    <div className="cd-doc-card-body">
                       <div className="cd-doc-name" title={doc.name}>
                         {doc.name}
                       </div>
                       <div className="cd-doc-meta">
-                        {formatFileSize(doc.file_size)} • {doc.uploaded_at || doc.createdAt ? new Date(doc.uploaded_at || doc.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' }) : 'Uploaded'}
+                        {formatFileSize(doc.file_size)} • {doc.uploaded_at || doc.createdAt ? new Date(doc.uploaded_at || doc.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : 'Uploaded'}
                       </div>
-                    </div>
 
-                    <div className="cd-doc-actions">
-                      <button
-                        className="cust-icon-btn"
-                        title="Preview Document"
-                        onClick={() => setPreviewDoc(doc)}
-                      >
-                        <Eye size={15} />
-                      </button>
-                      <button
-                        className="cust-icon-btn"
-                        title="Download Document"
-                        onClick={() => handleDownloadDoc(doc)}
-                      >
-                        <Download size={15} />
-                      </button>
-                      <button
-                        className="cust-icon-btn"
-                        title="Rename"
-                        onClick={() => {
-                          setEditingDoc(doc);
-                          setDocNameInput(doc.name);
-                        }}
-                      >
-                        <Edit2 size={14} />
-                      </button>
-                      <button
-                        className="cust-icon-btn danger"
-                        title="Delete Document"
-                        onClick={() => handleDeleteDoc(doc)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
+                      {/* Action buttons */}
+                      <div className="cd-doc-actions">
+                        <button
+                          className="cd-doc-action-btn"
+                          title="Preview"
+                          onClick={() => setPreviewDoc(doc)}
+                        >
+                          <Eye size={14} />
+                        </button>
+                        <button
+                          className="cd-doc-action-btn"
+                          title="Download"
+                          onClick={() => handleDownloadDoc(doc)}
+                        >
+                          <Download size={14} />
+                        </button>
+                        <button
+                          className="cd-doc-action-btn"
+                          title="Rename"
+                          onClick={() => {
+                            setEditingDoc(doc);
+                            setDocNameInput(doc.name);
+                          }}
+                        >
+                          <Edit2 size={13} />
+                        </button>
+                        <button
+                          className="cd-doc-action-btn cd-doc-action-btn--danger"
+                          title="Delete"
+                          onClick={() => handleDeleteDoc(doc)}
+                        >
+                          <Trash2 size={13} />
+                        </button>
+                      </div>
                     </div>
                   </div>
                 );

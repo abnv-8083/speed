@@ -309,54 +309,140 @@
 /* ── Docs grid ────────────────────────────────────────────────── */
 .cd-docs-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 1rem;
 }
 
 .cd-doc-card {
-  background: var(--background);
+  background: var(--surface);
   border: 1px solid var(--border);
-  border-radius: 10px;
-  padding: 0.85rem 1rem;
+  border-radius: 14px;
+  overflow: hidden;
   display: flex;
-  align-items: center;
-  gap: 0.85rem;
-  transition: all 0.18s;
+  flex-direction: column;
+  transition: all 0.2s ease;
 }
 
 .cd-doc-card:hover {
-  border-color: rgba(139,92,246,0.3);
-  background: var(--surface-hover);
+  border-color: rgba(139,92,246,0.35);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  transform: translateY(-2px);
 }
 
-.cd-doc-icon-wrap {
-  width: 40px;
-  height: 40px;
-  border-radius: 9px;
+/* ── Thumbnail area ──────────────────────────────────────────── */
+.cd-doc-thumb {
+  position: relative;
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
+  border-bottom: 1px solid var(--border);
 }
 
-.cd-doc-icon-wrap.pdf { background: rgba(248,113,113,0.12); color: #f87171; }
-.cd-doc-icon-wrap.img { background: rgba(56,189,248,0.12);  color: #38bdf8; }
+.cd-doc-thumb--img {
+  background: var(--background);
+}
 
-.cd-doc-info { flex: 1; min-width: 0; }
+.cd-doc-thumb--pdf {
+  background: linear-gradient(135deg, rgba(248,113,113,0.08), rgba(248,113,113,0.02));
+}
+
+.cd-doc-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.cd-doc-thumb-pdf {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.4rem;
+  color: #f87171;
+}
+
+.cd-doc-thumb-pdf span {
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.cd-doc-thumb-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 600;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cd-doc-card:hover .cd-doc-thumb-overlay {
+  opacity: 1;
+}
+
+/* ── Card body below thumbnail ────────────────────────────────── */
+.cd-doc-card-body {
+  padding: 0.75rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  flex: 1;
+}
 
 .cd-doc-name {
-  font-size: 0.875rem;
+  font-size: 0.82rem;
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 0.15rem;
 }
 
-.cd-doc-meta { font-size: 0.72rem; color: var(--text-muted); }
+.cd-doc-meta { font-size: 0.7rem; color: var(--text-muted); }
 
-.cd-doc-actions { display: flex; align-items: center; gap: 0.25rem; }
+/* ── Card action buttons ─────────────────────────────────────── */
+.cd-doc-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.35rem;
+}
+
+.cd-doc-action-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cd-doc-action-btn:hover {
+  background: var(--primary-subtle);
+  color: var(--primary);
+  border-color: rgba(139,92,246,0.3);
+}
+
+.cd-doc-action-btn--danger:hover {
+  background: rgba(248,113,113,0.1);
+  color: #f87171;
+  border-color: rgba(248,113,113,0.3);
+}
 
 /* ── Document Preview Modal ──────────────────────────────────── */
 .cd-doc-preview-overlay {
