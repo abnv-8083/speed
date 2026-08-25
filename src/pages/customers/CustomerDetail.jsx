@@ -13,6 +13,7 @@ import { useModal } from '../../components/ModalContext';
 import AppModal from '../../components/AppModal';
 import PremiumLoader from '../../components/PremiumLoader';
 import InvoiceTemplate from '../../components/InvoiceTemplate';
+import Portal from '../../components/Portal';
 import './CustomerDetail.css';
 
 export default function CustomerDetail() {
@@ -31,6 +32,16 @@ export default function CustomerDetail() {
 
   // Document Preview
   const [previewDoc, setPreviewDoc] = useState(null);
+
+  // Lock body scroll when preview is open
+  useEffect(() => {
+    if (previewDoc) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [previewDoc]);
 
   // ── Customer Profile Edit Modal ──
   const [showEditCustModal, setShowEditCustModal] = useState(false);
@@ -821,64 +832,66 @@ export default function CustomerDetail() {
         </div>
       )}
 
-      {/* ── Document Preview Modal ── */}
+      {/* ── Document Preview Modal (via Portal) ── */}
       {previewDoc && (
-        <div className="cd-doc-preview-overlay" onClick={() => setPreviewDoc(null)}>
-          <div className="cd-doc-preview-modal" onClick={e => e.stopPropagation()}>
-            <div className="cd-doc-preview-header">
-              <div className="cd-doc-preview-title">
-                {isPdfDoc(previewDoc) ? <File size={18} /> : <ImageIcon size={18} />}
-                <span>{previewDoc.name}</span>
-              </div>
-              <div className="cd-doc-preview-actions">
-                <button
-                  className="cd-doc-preview-action-btn"
-                  title="Download"
-                  onClick={() => handleDownloadDoc(previewDoc)}
-                >
-                  <Download size={16} />
-                </button>
-                <button
-                  className="cd-doc-preview-action-btn"
-                  title="Close"
-                  onClick={() => setPreviewDoc(null)}
-                >
-                  <X size={18} />
-                </button>
-              </div>
-            </div>
-
-            <div className="cd-doc-preview-body">
-              {isImageDoc(previewDoc) ? (
-                <img
-                  src={previewDoc.file_url || previewDoc.data}
-                  alt={previewDoc.name}
-                  className="cd-doc-preview-image"
-                />
-              ) : isPdfDoc(previewDoc) ? (
-                <iframe
-                  src={previewDoc.file_url || previewDoc.data}
-                  title={previewDoc.name}
-                  className="cd-doc-preview-pdf"
-                />
-              ) : (
-                <div className="cd-doc-preview-unsupported">
-                  <AlertCircle size={48} />
-                  <p>Preview not available for this file type</p>
-                  <button className="btn btn-primary" onClick={() => handleDownloadDoc(previewDoc)}>
-                    <Download size={16} /> Download Instead
+        <Portal>
+          <div className="cd-doc-preview-overlay" onClick={() => setPreviewDoc(null)}>
+            <div className="cd-doc-preview-modal" onClick={e => e.stopPropagation()}>
+              <div className="cd-doc-preview-header">
+                <div className="cd-doc-preview-title">
+                  {isPdfDoc(previewDoc) ? <File size={18} /> : <ImageIcon size={18} />}
+                  <span>{previewDoc.name}</span>
+                </div>
+                <div className="cd-doc-preview-actions">
+                  <button
+                    className="cd-doc-preview-action-btn"
+                    title="Download"
+                    onClick={() => handleDownloadDoc(previewDoc)}
+                  >
+                    <Download size={16} />
+                  </button>
+                  <button
+                    className="cd-doc-preview-action-btn"
+                    title="Close"
+                    onClick={() => setPreviewDoc(null)}
+                  >
+                    <X size={18} />
                   </button>
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="cd-doc-preview-footer">
-              <span>{formatFileSize(previewDoc.file_size)}</span>
-              <span>•</span>
-              <span>{previewDoc.file_type || 'Unknown type'}</span>
+              <div className="cd-doc-preview-body">
+                {isImageDoc(previewDoc) ? (
+                  <img
+                    src={previewDoc.file_url || previewDoc.data}
+                    alt={previewDoc.name}
+                    className="cd-doc-preview-image"
+                  />
+                ) : isPdfDoc(previewDoc) ? (
+                  <iframe
+                    src={previewDoc.file_url || previewDoc.data}
+                    title={previewDoc.name}
+                    className="cd-doc-preview-pdf"
+                  />
+                ) : (
+                  <div className="cd-doc-preview-unsupported">
+                    <AlertCircle size={48} />
+                    <p>Preview not available for this file type</p>
+                    <button className="btn btn-primary" onClick={() => handleDownloadDoc(previewDoc)}>
+                      <Download size={16} /> Download Instead
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <div className="cd-doc-preview-footer">
+                <span>{formatFileSize(previewDoc.file_size)}</span>
+                <span>•</span>
+                <span>{previewDoc.file_type || 'Unknown type'}</span>
+              </div>
             </div>
           </div>
-        </div>
+        </Portal>
       )}
 
       {/* ── Edit Customer Profile Modal ── */}
