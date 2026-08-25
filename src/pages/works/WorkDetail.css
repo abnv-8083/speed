@@ -462,8 +462,8 @@
 
 /* Details */
 .wd-overview-details {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-direction: column;
   gap: 0.75rem;
 }
 
@@ -474,6 +474,113 @@
   padding: 0.4rem 0;
   border-bottom: 1px solid var(--border, rgba(255,255,255,0.04));
   font-size: 0.82rem;
+}
+
+/* Customer Card */
+.wd-customer-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.wd-customer-card.wd-walkin {
+  opacity: 0.7;
+}
+
+.wd-customer-card-header {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+}
+
+.wd-customer-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: var(--primary, #8b5cf6);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.wd-customer-avatar.walkin {
+  background: var(--text-muted, #6b7280);
+}
+
+.wd-customer-card-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.wd-customer-card-name {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--text, #e5e7eb);
+}
+
+.wd-customer-card-id {
+  font-size: 0.7rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.wd-customer-link {
+  padding: 0.3rem 0.6rem;
+  background: var(--primary-subtle, rgba(139,92,246,0.1));
+  border: 1px solid var(--primary, #8b5cf6);
+  border-radius: 6px;
+  color: var(--primary, #8b5cf6);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.wd-customer-link:hover {
+  background: var(--primary, #8b5cf6);
+  color: white;
+}
+
+.wd-customer-card-details {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.35rem 1rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.05));
+}
+
+.wd-customer-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+}
+
+.wd-customer-detail-label {
+  font-size: 0.65rem;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 600;
+}
+
+.wd-customer-detail-value {
+  font-size: 0.8rem;
+  color: var(--text, #e5e7eb);
+  font-weight: 500;
+}
+
+.wd-customer-card-footer {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--border, rgba(255,255,255,0.05));
 }
 
 .wd-detail-row:last-child { border-bottom: none; }

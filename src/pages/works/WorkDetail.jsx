@@ -654,12 +654,73 @@ const WorkDetail = () => {
 
                 {/* Details Grid */}
                 <div className="wd-overview-details">
+                  {/* Customer Card */}
                   <div className="wd-info-card">
-                    <div className="wd-detail-row">
-                      <Users size={14} />
-                      <span className="wd-detail-label">Customer</span>
-                      <span className="wd-detail-value">{work.customer_name || 'Walk-in'}</span>
-                    </div>
+                    {work.customer_id && work.customer_id.name ? (
+                      <div className="wd-customer-card">
+                        <div className="wd-customer-card-header">
+                          <div className="wd-customer-avatar">
+                            {work.customer_id.name.charAt(0).toUpperCase()}
+                          </div>
+                          <div className="wd-customer-card-info">
+                            <span className="wd-customer-card-name">{work.customer_id.name}</span>
+                            <span className="wd-customer-card-id">Customer</span>
+                          </div>
+                          <button
+                            className="wd-customer-link"
+                            onClick={() => navigate(`/billing/customers/${work.customer_id._id || work.customer_id.id}`)}
+                            title="View full customer profile"
+                          >
+                            View Profile →
+                          </button>
+                        </div>
+                        <div className="wd-customer-card-details">
+                          {work.customer_id.phone && (
+                            <div className="wd-customer-detail">
+                              <span className="wd-customer-detail-label">Phone</span>
+                              <span className="wd-customer-detail-value">{work.customer_id.phone}</span>
+                            </div>
+                          )}
+                          {work.customer_id.email && (
+                            <div className="wd-customer-detail">
+                              <span className="wd-customer-detail-label">Email</span>
+                              <span className="wd-customer-detail-value">{work.customer_id.email}</span>
+                            </div>
+                          )}
+                          {work.customer_id.address && (
+                            <div className="wd-customer-detail">
+                              <span className="wd-customer-detail-label">Address</span>
+                              <span className="wd-customer-detail-value">{work.customer_id.address}</span>
+                            </div>
+                          )}
+                          {work.customer_id.dob && (
+                            <div className="wd-customer-detail">
+                              <span className="wd-customer-detail-label">DOB</span>
+                              <span className="wd-customer-detail-value">{work.customer_id.dob}</span>
+                            </div>
+                          )}
+                        </div>
+                        {work.customer_id.documents?.length > 0 && (
+                          <div className="wd-customer-card-footer">
+                            📎 {work.customer_id.documents.length} document{work.customer_id.documents.length > 1 ? 's' : ''} on file
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="wd-customer-card wd-walkin">
+                        <div className="wd-customer-card-header">
+                          <div className="wd-customer-avatar walkin">W</div>
+                          <div className="wd-customer-card-info">
+                            <span className="wd-customer-card-name">{work.customer_name || 'Walk-in Customer'}</span>
+                            <span className="wd-customer-card-id">No customer linked</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Dates Card */}
+                  <div className="wd-info-card">
                     <div className="wd-detail-row">
                       <Calendar size={14} />
                       <span className="wd-detail-label">Created</span>
