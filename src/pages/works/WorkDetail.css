@@ -717,14 +717,12 @@
   stroke: var(--primary, #8b5cf6);
   stroke-width: 6;
   stroke-linecap: round;
-  stroke-dasharray: 326.7;
-  stroke-dashoffset: 0;
-  animation: ring-dash 2s ease-in-out infinite;
+  animation: ring-pulse 2s ease-in-out infinite;
 }
 
-@keyframes ring-dash {
-  0%, 100% { stroke-dashoffset: 0; opacity: 1; }
-  50% { stroke-dashoffset: 30; opacity: 0.7; }
+@keyframes ring-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
 }
 
 .wd-timer-center {
