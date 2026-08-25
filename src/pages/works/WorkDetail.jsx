@@ -6,7 +6,7 @@ import {
   MessageSquare, Clock, CheckCircle, XCircle, PauseCircle,
   Briefcase, Calendar, Tag, Users, Mic, MicOff, Play, Pause,
   Download, Eye, Upload, Link as LinkIcon, Loader2, Send,
-  Edit2, Check, Timer, TrendingUp, Activity
+  Edit2, Check, Timer, TrendingUp, Activity, Volume2
 } from 'lucide-react';
 import Portal from '../../components/Portal';
 import './WorkDetail.css';
