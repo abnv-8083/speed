@@ -3,7 +3,7 @@ import {
   Search, X, Check, Plus, Edit2, Trash2,
   ShoppingBag, Receipt, TrendingUp, Hash, Clock,
   History, Loader2, FileText, Smartphone,
-  Coins, CheckSquare, Square, ArrowRight,
+  Coins, CheckSquare, Square, ArrowRight, Users, ChevronDown,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
@@ -279,6 +279,14 @@ export default function QuickBill() {
   const [customerAddressInput, setCustomerAddressInput] = useState('');
   const [previewInvoice, setPreviewInvoice]           = useState(null);
 
+  // ── Customer list for dropdown ─────────────────────────────────
+  const [customers, setCustomers]                     = useState([]);
+  const [selectedCustomerId, setSelectedCustomerId]   = useState(null);
+  const [customerSearch, setCustomerSearch]           = useState('');
+  const [showCustDropdown, setShowCustDropdown]       = useState(false);
+  const custSearchRef = useRef(null);
+  const custDropdownRef = useRef(null);
+
   // ── Manage Advance Modal State ─────────────────────────────────
   const [advanceTargetBill, setAdvanceTargetBill]     = useState(null);
 
@@ -318,6 +326,7 @@ export default function QuickBill() {
   useEffect(() => {
     loadProducts();
     loadTodayBills();
+    loadCustomers();
   }, []);
 
   const loadProducts = async () => {
@@ -340,6 +349,47 @@ export default function QuickBill() {
       setSummary(summaryData || { totalAmount: 0, billCount: 0, itemCount: 0, upiAmount: 0, upiCount: 0 });
     } catch (err) { toast.error('Failed to load today\'s bills'); }
     setLoadingBills(false);
+  };
+
+  const loadCustomers = async () => {
+    try {
+      const data = await api.getCustomers();
+      setCustomers(data || []);
+    } catch (err) { /* silent — customers are optional */ }
+  };
+
+  // Close customer dropdown on outside click
+  useEffect(() => {
+    const handler = (e) => {
+      if (custDropdownRef.current && !custDropdownRef.current.contains(e.target) &&
+          custSearchRef.current && !custSearchRef.current.contains(e.target)) {
+        setShowCustDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  const filteredCustomers = customers.filter(c => {
+    const q = customerSearch.toLowerCase();
+    if (!q) return true;
+    return (c.name || '').toLowerCase().includes(q) || (c.phone || '').includes(q);
+  });
+
+  const selectCustomer = (cust) => {
+    setSelectedCustomerId(cust.id);
+    setCustomerNameInput(cust.name || '');
+    setCustomerAddressInput(
+      [cust.address, cust.phone, cust.email].filter(Boolean).join(' • ') || ''
+    );
+    setCustomerSearch('');
+    setShowCustDropdown(false);
+  };
+
+  const clearSelectedCustomer = () => {
+    setSelectedCustomerId(null);
+    setCustomerNameInput('');
+    setCustomerAddressInput('');
   };
 
   // ── Selection helpers ──────────────────────────────────────────
@@ -1053,11 +1103,11 @@ export default function QuickBill() {
       {showAddressModal && (
         <AppModal
           title="Create Invoice — Customer Details"
-          onClose={() => setShowAddressModal(false)}
-          width="440px"
+          onClose={() => { setShowAddressModal(false); clearSelectedCustomer(); }}
+          width="460px"
           footer={
             <>
-              <button className="btn btn-secondary" onClick={() => setShowAddressModal(false)}>Cancel</button>
+              <button className="btn btn-secondary" onClick={() => { setShowAddressModal(false); clearSelectedCustomer(); }}>Cancel</button>
               <button
                 className="btn btn-primary"
                 onClick={handleGenerateInvoicePreview}
@@ -1068,6 +1118,7 @@ export default function QuickBill() {
           }
         >
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {/* Bill summary */}
             <div style={{ background: 'var(--surface-hover)', padding: '0.75rem 1rem', borderRadius: '8px', fontSize: '0.85rem' }}>
               <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '0.25rem' }}>
                 {selectedBillIds.size} Bill{selectedBillIds.size !== 1 ? 's' : ''} Selected
@@ -1081,20 +1132,76 @@ export default function QuickBill() {
               </div>
             </div>
 
+            {/* Customer selector dropdown */}
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
-                Customer / To Name (Optional)
+                <Users size={13} style={{ display: 'inline', verticalAlign: '-2px', marginRight: '0.25rem' }} />
+                Select Customer (Optional)
+              </label>
+              <div className="qb-cust-select-wrap" ref={custSearchRef}>
+                <input
+                  type="text"
+                  className="input-field qb-cust-select-input"
+                  placeholder={selectedCustomerId ? '' : 'Search customers or leave blank for Walk-in...'}
+                  value={customerSearch || customerNameInput}
+                  onChange={e => {
+                    setCustomerSearch(e.target.value);
+                    setShowCustDropdown(true);
+                    if (selectedCustomerId) clearSelectedCustomer();
+                  }}
+                  onFocus={() => { if (customers.length > 0) setShowCustDropdown(true); }}
+                />
+                {selectedCustomerId && (
+                  <button type="button" className="qb-cust-select-clear" onClick={clearSelectedCustomer}>
+                    <X size={14} />
+                  </button>
+                )}
+
+                {showCustDropdown && filteredCustomers.length > 0 && (
+                  <div className="qb-cust-dropdown" ref={custDropdownRef}>
+                    {filteredCustomers.slice(0, 8).map(cust => (
+                      <div
+                        key={cust.id}
+                        className={`qb-cust-dropdown-item ${selectedCustomerId === cust.id ? 'qb-cust-dropdown-item--active' : ''}`}
+                        onClick={() => selectCustomer(cust)}
+                      >
+                        <div className="qb-cust-dropdown-avatar">
+                          {(cust.name || 'C').charAt(0).toUpperCase()}
+                        </div>
+                        <div className="qb-cust-dropdown-info">
+                          <span className="qb-cust-dropdown-name">{cust.name}</span>
+                          <span className="qb-cust-dropdown-sub">
+                            {cust.phone}{cust.address ? ` • ${cust.address}` : ''}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                    {customers.length > 8 && filteredCustomers.length === 0 && (
+                      <div className="qb-cust-dropdown-hint">Type to search customers...</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Customer Name (manual override) */}
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
+                Customer / To Name {selectedCustomerId ? '' : '(Optional)'}
               </label>
               <input
                 type="text"
                 className="input-field"
                 placeholder="Walk-in Customer"
                 value={customerNameInput}
-                onChange={e => setCustomerNameInput(e.target.value)}
-                autoFocus
+                onChange={e => {
+                  setCustomerNameInput(e.target.value);
+                  if (selectedCustomerId) setSelectedCustomerId(null);
+                }}
               />
             </div>
 
+            {/* Customer Address */}
             <div>
               <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-muted)', marginBottom: '0.35rem' }}>
                 Customer Address / Details (Optional)
