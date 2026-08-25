@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Zap,
@@ -15,9 +15,12 @@ import {
   Printer,
   Sun,
   Moon,
+  Bell,
+  Briefcase,
 } from 'lucide-react';
 import { SubNavProvider, useSubNav } from './SubNavContext';
 import { useTheme } from './ThemeContext';
+import { api } from '../api';
 import './Layout.css';
 
 // ── Inner layout reads sub-nav from context ───────────────────
@@ -28,6 +31,37 @@ function LayoutInner() {
   const location  = useLocation();
   const { tabs }  = useSubNav();
   const { theme, toggleTheme } = useTheme();
+
+  // Notifications
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [showNotifPanel, setShowNotifPanel] = useState(false);
+
+  const fetchNotifications = async () => {
+    try {
+      const data = await api.getNotifications();
+      setNotifications(data.notifications || []);
+      setUnreadCount(data.unread_count || 0);
+    } catch (err) {
+      // silent
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000); // poll every 30s
+    return () => clearInterval(interval);
+  }, []);
+
+  const markAllRead = async () => {
+    try {
+      await api.markAllNotificationsRead();
+      setUnreadCount(0);
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    } catch (err) {
+      // silent
+    }
+  };
 
   const navItems = [
     { path: '/home',      icon: LayoutDashboard, label: 'Dashboard' },
@@ -113,8 +147,52 @@ function LayoutInner() {
             )}
           </div>
 
-          {/* Right: theme toggle + user + logout */}
+          {/* Right: notifications + theme toggle + user + logout */}
           <div className="header-right">
+            {/* Notification Bell */}
+            <div className="notif-container">
+              <button
+                className="btn-icon notif-bell"
+                onClick={() => setShowNotifPanel(!showNotifPanel)}
+                title="Notifications"
+              >
+                <Bell size={18} />
+                {unreadCount > 0 && <span className="notif-badge">{unreadCount > 9 ? '9+' : unreadCount}</span>}
+              </button>
+              {showNotifPanel && (
+                <div className="notif-panel">
+                  <div className="notif-panel-header">
+                    <h4>Notifications</h4>
+                    {unreadCount > 0 && (
+                      <button onClick={markAllRead} className="notif-mark-read">Mark all read</button>
+                    )}
+                  </div>
+                  <div className="notif-list">
+                    {notifications.length === 0 ? (
+                      <div className="notif-empty">No notifications yet</div>
+                    ) : (
+                      notifications.slice(0, 20).map((n) => (
+                        <div key={n.id || n._id} className={`notif-item ${n.read ? '' : 'unread'}`}>
+                          <div className="notif-icon">
+                            {n.type === 'created' && <Briefcase size={14} />}
+                            {n.type === 'status_changed' && <Briefcase size={14} />}
+                            {n.type === 'issue_added' && <Briefcase size={14} />}
+                            {n.type === 'issue_updated' && <Briefcase size={14} />}
+                          </div>
+                          <div className="notif-content">
+                            <span className="notif-message">{n.message}</span>
+                            <span className="notif-time">
+                              {new Date(n.createdAt).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true, day: '2-digit', month: 'short' })}
+                            </span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+
             <button
               className="btn-icon theme-toggle"
               onClick={toggleTheme}

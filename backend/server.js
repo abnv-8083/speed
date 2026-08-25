@@ -21,6 +21,7 @@ const agentRoutes         = require('./routes/agent');
 const quickBillRoutes     = require('./routes/quickBill');
 const expenseRoutes       = require('./routes/expenses');
 const workRoutes          = require('./routes/works');
+const notificationRoutes  = require('./routes/notifications');
 
 const app = express();
 
@@ -47,6 +48,7 @@ app.use('/api/agent',           agentRoutes);
 app.use('/api/quick-bill',      quickBillRoutes);
 app.use('/api/expenses',        expenseRoutes);
 app.use('/api/works',           workRoutes);
+app.use('/api/notifications',   notificationRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

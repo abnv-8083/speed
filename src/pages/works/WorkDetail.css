@@ -765,6 +765,290 @@
 }
 
 /* ═══════════════════════════════════════════════════════════════
+   TIME TRACKING TAB
+   ═══════════════════════════════════════════════════════════════ */
+
+.wd-timelog {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: 700px;
+}
+
+.wd-timer-widget {
+  background: var(--surface, #1e1e24);
+  border: 1px solid var(--border, #2a2a35);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+/* Active timer */
+.wd-timer-active {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.wd-timer-display {
+  text-align: center;
+}
+
+.wd-timer-digits {
+  font-size: 2.5rem;
+  font-weight: 700;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  color: var(--primary, #8b5cf6);
+  letter-spacing: 2px;
+  animation: timer-pulse 2s ease-in-out infinite;
+}
+
+@keyframes timer-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+.wd-timer-label {
+  font-size: 0.75rem;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-top: 0.25rem;
+}
+
+.wd-timer-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.wd-timer-desc {
+  font-size: 0.82rem;
+  color: var(--text, #e5e7eb);
+}
+
+.wd-timer-started {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+}
+
+/* Idle timer */
+.wd-timer-idle {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.wd-timer-idle input {
+  flex: 1;
+  background: var(--input-bg, #141417);
+  border: 1px solid var(--border, #2a2a35);
+  border-radius: 8px;
+  color: var(--text, #e5e7eb);
+  padding: 0.6rem 0.85rem;
+  font-size: 0.85rem;
+}
+
+.wd-timer-idle input:focus {
+  outline: none;
+  border-color: var(--primary, #8b5cf6);
+}
+
+.wd-timer-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.6rem 1.25rem;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+.wd-timer-btn.start {
+  background: #22c55e;
+  color: white;
+}
+
+.wd-timer-btn.start:hover:not(:disabled) {
+  background: #16a34a;
+}
+
+.wd-timer-btn.start:disabled {
+  opacity: 0.5;
+}
+
+.wd-timer-btn.stop {
+  background: #ef4444;
+  color: white;
+  width: 100%;
+  justify-content: center;
+  padding: 0.7rem;
+  font-size: 0.95rem;
+}
+
+.wd-timer-btn.stop:hover {
+  background: #dc2626;
+}
+
+/* Time summary */
+.wd-time-summary {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.5rem;
+}
+
+.wd-time-stat {
+  background: var(--surface, #1e1e24);
+  border: 1px solid var(--border, #2a2a35);
+  border-radius: 10px;
+  padding: 0.65rem;
+  text-align: center;
+}
+
+.wd-time-stat-label {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--text-muted, #6b7280);
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 0.2rem;
+}
+
+.wd-time-stat-value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text, #e5e7eb);
+}
+
+/* Time logs header */
+.wd-time-logs-header h3 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+/* Time logs list */
+.wd-time-logs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.wd-time-logs-empty {
+  text-align: center;
+  padding: 2rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.wd-time-logs-empty p {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+}
+
+.wd-time-log {
+  display: flex;
+  align-items: center;
+  background: var(--surface, #1e1e24);
+  border: 1px solid var(--border, #2a2a35);
+  border-radius: 10px;
+  padding: 0.65rem 0.85rem;
+  position: relative;
+}
+
+.wd-time-log.running {
+  border-color: rgba(34,197,94,0.4);
+  background: rgba(34,197,94,0.04);
+}
+
+.wd-time-log-main {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 0;
+}
+
+.wd-time-log-duration {
+  min-width: 80px;
+}
+
+.wd-time-log-done {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text, #e5e7eb);
+}
+
+.wd-time-log-running {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #22c55e;
+  animation: timer-pulse 2s ease-in-out infinite;
+}
+
+.wd-time-log-info {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  min-width: 0;
+}
+
+.wd-time-log-desc {
+  font-size: 0.82rem;
+  color: var(--text, #e5e7eb);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.wd-time-log-times {
+  font-size: 0.72rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.wd-time-log-date {
+  font-size: 0.68rem;
+  color: var(--text-muted, #9ca3af);
+}
+
+.wd-time-log-badges {
+  display: flex;
+  gap: 0.3rem;
+}
+
+.wd-badge.billable {
+  font-size: 0.68rem;
+  padding: 0.15rem 0.4rem;
+  border-radius: 4px;
+  background: rgba(59,130,246,0.12);
+  color: #3b82f6;
+  font-weight: 500;
+}
+
+.wd-time-log-delete {
+  background: none;
+  border: none;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+  padding: 4px;
+  opacity: 0;
+  transition: all 0.2s;
+}
+
+.wd-time-log:hover .wd-time-log-delete {
+  opacity: 1;
+}
+
+.wd-time-log-delete:hover {
+  color: #ef4444;
+}
+
+/* ═══════════════════════════════════════════════════════════════
    DOCUMENTS TAB
    ═══════════════════════════════════════════════════════════════ */
 

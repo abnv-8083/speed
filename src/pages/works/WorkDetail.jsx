@@ -72,6 +72,13 @@ const WorkDetail = () => {
   // Preview
   const [previewDoc, setPreviewDoc] = useState(null);
 
+  // Time tracking
+  const [activeTimeLog, setActiveTimeLog] = useState(null);
+  const [elapsedTime, setElapsedTime] = useState(0);
+  const [timeLogDesc, setTimeLogDesc] = useState('');
+  const [startingTimer, setStartingTimer] = useState(false);
+  const timerIntervalRef = useRef(null);
+
   const fetchWork = useCallback(async () => {
     try {
       const data = await api.getWork(id);
@@ -97,6 +104,82 @@ const WorkDetail = () => {
   useEffect(() => {
     fetchWork();
   }, [fetchWork]);
+
+  // ── Check for active time log on load ──────────────────────────
+  useEffect(() => {
+    if (work && work.time_logs) {
+      const running = work.time_logs.find(t => !t.end_time);
+      if (running) {
+        setActiveTimeLog(running);
+        const elapsed = Math.floor((Date.now() - new Date(running.start_time).getTime()) / 1000);
+        setElapsedTime(elapsed);
+        timerIntervalRef.current = setInterval(() => {
+          setElapsedTime(prev => prev + 1);
+        }, 1000);
+      }
+    }
+    return () => clearInterval(timerIntervalRef.current);
+  }, [work?.time_logs?.length]);
+
+  // ── Time Tracking ──────────────────────────────────────────────
+
+  const startTimeLog = async () => {
+    try {
+      setStartingTimer(true);
+      const log = await api.startTimeLog(id, { description: timeLogDesc.trim(), billable: true });
+      setActiveTimeLog(log);
+      setTimeLogDesc('');
+      setElapsedTime(0);
+      timerIntervalRef.current = setInterval(() => {
+        setElapsedTime(prev => prev + 1);
+      }, 1000);
+      fetchWork();
+    } catch (err) {
+      alert('Failed to start timer: ' + err.message);
+    } finally {
+      setStartingTimer(false);
+    }
+  };
+
+  const stopTimeLog = async () => {
+    if (!activeTimeLog) return;
+    try {
+      clearInterval(timerIntervalRef.current);
+      await api.stopTimeLog(id, activeTimeLog.id || activeTimeLog._id, {});
+      setActiveTimeLog(null);
+      setElapsedTime(0);
+      fetchWork();
+    } catch (err) {
+      alert('Failed to stop timer: ' + err.message);
+    }
+  };
+
+  const deleteTimeLog = async (logId) => {
+    if (!confirm('Delete this time log?')) return;
+    try {
+      await api.deleteTimeLog(id, logId);
+      fetchWork();
+    } catch (err) {
+      alert('Failed to delete time log: ' + err.message);
+    }
+  };
+
+  const formatTimer = (totalSec) => {
+    const h = Math.floor(totalSec / 3600);
+    const m = Math.floor((totalSec % 3600) / 60);
+    const s = totalSec % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+  };
+
+  const formatLogDuration = (sec) => {
+    if (!sec) return '0:00';
+    const h = Math.floor(sec / 3600);
+    const m = Math.floor((sec % 3600) / 60);
+    const s = sec % 60;
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
 
   // ── Voice Recording ────────────────────────────────────────────
 
@@ -386,6 +469,7 @@ const WorkDetail = () => {
       <div className="wd-tabs">
         {[
           { key: 'overview', label: 'Overview', icon: Briefcase },
+          { key: 'timelog', label: `Time Tracking`, icon: Clock },
           { key: 'notes', label: `Notes (${(work.notes || []).length})`, icon: MessageSquare },
           { key: 'issues', label: `Issues (${openIssues})`, icon: AlertTriangle },
           { key: 'documents', label: `Documents (${(work.documents || []).length})`, icon: FileText },
@@ -510,6 +594,114 @@ const WorkDetail = () => {
                 )}
               </div>
             )}
+          </div>
+        )}
+
+        {/* ── TIME TRACKING TAB ────────────────────────────── */}
+        {activeTab === 'timelog' && (
+          <div className="wd-timelog">
+            {/* Active Timer */}
+            <div className="wd-timer-widget">
+              {activeTimeLog ? (
+                <div className="wd-timer-active">
+                  <div className="wd-timer-display">
+                    <div className="wd-timer-digits">{formatTimer(elapsedTime)}</div>
+                    <div className="wd-timer-label">Time Elapsed</div>
+                  </div>
+                  <div className="wd-timer-meta">
+                    {activeTimeLog.description && (
+                      <span className="wd-timer-desc">📝 {activeTimeLog.description}</span>
+                    )}
+                    <span className="wd-timer-started">
+                      Started: {new Date(activeTimeLog.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
+                    </span>
+                  </div>
+                  <button className="wd-timer-btn stop" onClick={stopTimeLog}>
+                    <Pause size={18} /> Stop Timer
+                  </button>
+                </div>
+              ) : (
+                <div className="wd-timer-idle">
+                  <input
+                    type="text"
+                    placeholder="What are you working on? (optional)"
+                    value={timeLogDesc}
+                    onChange={e => setTimeLogDesc(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Enter') startTimeLog(); }}
+                  />
+                  <button className="wd-timer-btn start" onClick={startTimeLog} disabled={startingTimer}>
+                    {startingTimer ? <Loader2 size={18} className="spin" /> : <Play size={18} />} Start Timer
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Summary */}
+            <div className="wd-time-summary">
+              <div className="wd-time-stat">
+                <span className="wd-time-stat-label">Estimated</span>
+                <span className="wd-time-stat-value">{work.estimated_hours || 0}h</span>
+              </div>
+              <div className="wd-time-stat">
+                <span className="wd-time-stat-label">Actual</span>
+                <span className="wd-time-stat-value">{work.actual_hours || 0}h</span>
+              </div>
+              <div className="wd-time-stat">
+                <span className="wd-time-stat-label">Logs</span>
+                <span className="wd-time-stat-value">{(work.time_logs || []).filter(t => t.end_time).length}</span>
+              </div>
+              <div className="wd-time-stat">
+                <span className="wd-time-stat-label">Billable</span>
+                <span className="wd-time-stat-value">{(work.time_logs || []).filter(t => t.billable && t.end_time).length}</span>
+              </div>
+            </div>
+
+            {/* Time Logs List */}
+            <div className="wd-time-logs-header">
+              <h3>Time Logs</h3>
+            </div>
+            <div className="wd-time-logs-list">
+              {(work.time_logs || []).length === 0 ? (
+                <div className="wd-time-logs-empty">
+                  <Clock size={32} />
+                  <p>No time logged yet. Start the timer above to begin tracking.</p>
+                </div>
+              ) : (
+                work.time_logs.map((log) => (
+                  <div key={log.id || log._id} className={`wd-time-log ${log.end_time ? '' : 'running'}`}>
+                    <div className="wd-time-log-main">
+                      <div className="wd-time-log-duration">
+                        {log.end_time ? (
+                          <span className="wd-time-log-done">{formatLogDuration(log.duration)}</span>
+                        ) : (
+                          <span className="wd-time-log-running">● Running</span>
+                        )}
+                      </div>
+                      <div className="wd-time-log-info">
+                        {log.description && <span className="wd-time-log-desc">{log.description}</span>}
+                        <span className="wd-time-log-times">
+                          {new Date(log.start_time).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                          {log.end_time && (
+                            <> → {new Date(log.end_time).toLocaleString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</>
+                          )}
+                        </span>
+                        <span className="wd-time-log-date">
+                          {new Date(log.start_time).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
+                        </span>
+                      </div>
+                      <div className="wd-time-log-badges">
+                        {log.billable && <span className="wd-badge billable">Billable</span>}
+                      </div>
+                    </div>
+                    {log.end_time && (
+                      <button className="wd-time-log-delete" onClick={() => deleteTimeLog(log.id || log._id)}>
+                        <Trash2 size={12} />
+                      </button>
+                    )}
+                  </div>
+                ))
+              )}
+            </div>
           </div>
         )}
 

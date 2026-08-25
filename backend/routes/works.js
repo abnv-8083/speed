@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Work = require('../models/Work');
 const Customer = require('../models/Customer');
+const Notification = require('../models/Notification');
 const requireAuth = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
 
@@ -14,6 +15,20 @@ if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && proce
     api_key:    process.env.CLOUDINARY_API_KEY,
     api_secret: process.env.CLOUDINARY_API_SECRET,
   });
+}
+
+// Helper: create notification for a work event
+async function createNotification(workId, workTitle, type, message) {
+  try {
+    await Notification.create({
+      work_id: workId,
+      work_title: workTitle,
+      type,
+      message,
+    });
+  } catch (err) {
+    console.warn('Notification create failed:', err.message);
+  }
 }
 
 // ── GET /api/works — List all works with search, filter, pagination ─────────
@@ -50,6 +65,7 @@ router.get('/', async (req, res, next) => {
 });
 
 // ── GET /api/works/stats — Dashboard stats ─────────────────────────────────
+// IMPORTANT: /stats MUST come before /:id to avoid Express matching "stats" as an id
 router.get('/stats', async (req, res, next) => {
   try {
     const stats = await Work.aggregate([
@@ -68,10 +84,17 @@ router.get('/stats', async (req, res, next) => {
       { $count: 'total' },
     ]);
 
+    const totalTimeLogs = await Work.aggregate([
+      { $unwind: '$time_logs' },
+      { $match: { 'time_logs.end_time': { $ne: null } } },
+      { $group: { _id: null, total: { $sum: '$time_logs.duration' } } },
+    ]);
+
     res.json({
       total,
       by_status: stats.reduce((acc, s) => { acc[s._id] = s.count; return acc; }, {}),
       open_issues: openIssues[0]?.total || 0,
+      total_tracked_seconds: totalTimeLogs[0]?.total || 0,
     });
   } catch (err) {
     next(err);
@@ -121,6 +144,10 @@ router.post('/', async (req, res, next) => {
     }
 
     const work = await Work.create(workData);
+
+    // Notify
+    createNotification(work._id, work.title, 'created', `Work "${work.title}" was created`);
+
     res.status(201).json(work);
   } catch (err) {
     next(err);
@@ -136,9 +163,16 @@ router.patch('/:id', async (req, res, next) => {
     if (title !== undefined) updateData.title = title.trim();
     if (description !== undefined) updateData.description = description.trim();
     if (status !== undefined) {
+      const oldWork = await Work.findById(req.params.id);
       updateData.status = status;
       if (status === 'completed' && !completed_at) {
         updateData.completed_at = new Date().toISOString().slice(0, 10);
+      }
+      // Notify on status change
+      if (oldWork && oldWork.status !== status) {
+        const STATUS_LABELS = { new: 'New', pending: 'Pending', in_progress: 'In Progress', on_hold: 'On Hold', completed: 'Completed', closed: 'Closed' };
+        createNotification(oldWork._id, oldWork.title, 'status_changed',
+          `"${oldWork.title}" status changed from ${STATUS_LABELS[oldWork.status] || oldWork.status} to ${STATUS_LABELS[status] || status}`);
       }
     }
     if (priority !== undefined) updateData.priority = priority;
@@ -379,6 +413,9 @@ router.post('/:id/issues', async (req, res, next) => {
     work.issues.unshift(issueObj);
     await work.save();
 
+    // Notify
+    createNotification(work._id, work.title, 'issue_added', `New issue "${title.trim()}" added to "${work.title}"`);
+
     res.status(201).json(work.issues[0]);
   } catch (err) {
     next(err);
@@ -398,7 +435,14 @@ router.patch('/:id/issues/:issueId', async (req, res, next) => {
 
     if (title !== undefined) issue.title = title.trim();
     if (description !== undefined) issue.description = description.trim();
-    if (status !== undefined) issue.status = status;
+    if (status !== undefined) {
+      const oldStatus = issue.status;
+      issue.status = status;
+      if (oldStatus !== status) {
+        createNotification(work._id, work.title, 'issue_updated',
+          `Issue "${issue.title}" status changed from ${oldStatus} to ${status} in "${work.title}"`);
+      }
+    }
     if (priority !== undefined) issue.priority = priority;
 
     await work.save();
@@ -421,6 +465,93 @@ router.delete('/:id/issues/:issueId', async (req, res, next) => {
     await work.save();
 
     res.json({ message: 'Issue deleted successfully' });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ── TIME LOG SUB-ROUTES ─────────────────────────────────────────────────────
+// ─────────────────────────────────────────────────────────────────────────────
+
+// POST /api/works/:id/time-logs — Start a time log
+router.post('/:id/time-logs', async (req, res, next) => {
+  try {
+    const { description, billable } = req.body;
+
+    const work = await Work.findById(req.params.id);
+    if (!work) return res.status(404).json({ error: 'Work not found' });
+
+    // Check if there's already an active (running) time log
+    const activeLog = work.time_logs.find(t => !t.end_time);
+    if (activeLog) {
+      return res.status(400).json({ error: 'A time log is already running. Stop it first.' });
+    }
+
+    const logObj = {
+      description: (description || '').trim(),
+      start_time: new Date(),
+      billable: billable !== false,
+    };
+
+    work.time_logs.unshift(logObj);
+    await work.save();
+
+    res.status(201).json(work.time_logs[0]);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// PATCH /api/works/:id/time-logs/:logId — Stop a running time log
+router.patch('/:id/time-logs/:logId', async (req, res, next) => {
+  try {
+    const { description } = req.body;
+
+    const work = await Work.findById(req.params.id);
+    if (!work) return res.status(404).json({ error: 'Work not found' });
+
+    const log = work.time_logs.id(req.params.logId);
+    if (!log) return res.status(404).json({ error: 'Time log not found' });
+
+    if (log.end_time) {
+      return res.status(400).json({ error: 'Time log already stopped' });
+    }
+
+    log.end_time = new Date();
+    log.duration = Math.floor((log.end_time - log.start_time) / 1000);
+    if (description !== undefined) log.description = description.trim();
+
+    // Update actual_hours on the work
+    const totalSeconds = work.time_logs.reduce((sum, t) => sum + (t.duration || 0), 0);
+    work.actual_hours = Math.round((totalSeconds / 3600) * 100) / 100;
+
+    await work.save();
+
+    res.json(log);
+  } catch (err) {
+    next(err);
+  }
+});
+
+// DELETE /api/works/:id/time-logs/:logId — Delete a time log
+router.delete('/:id/time-logs/:logId', async (req, res, next) => {
+  try {
+    const work = await Work.findById(req.params.id);
+    if (!work) return res.status(404).json({ error: 'Work not found' });
+
+    const log = work.time_logs.id(req.params.logId);
+    if (!log) return res.status(404).json({ error: 'Time log not found' });
+
+    log.deleteOne();
+
+    // Recalculate actual_hours
+    const totalSeconds = work.time_logs.reduce((sum, t) => sum + (t.duration || 0), 0);
+    work.actual_hours = Math.round((totalSeconds / 3600) * 100) / 100;
+
+    await work.save();
+
+    res.json({ message: 'Time log deleted successfully' });
   } catch (err) {
     next(err);
   }

@@ -181,6 +181,21 @@ export const api = {
   updateWorkIssue: (id, issueId, body) => request('PATCH', `/api/works/${id}/issues/${issueId}`, body),
   deleteWorkIssue: (id, issueId)     => request('DELETE', `/api/works/${id}/issues/${issueId}`),
 
+  // Work Time Logs
+  startTimeLog:    (id, body)        => request('POST',   `/api/works/${id}/time-logs`, body),
+  stopTimeLog:     (id, logId, body) => request('PATCH',  `/api/works/${id}/time-logs/${logId}`, body),
+  deleteTimeLog:   (id, logId)       => request('DELETE', `/api/works/${id}/time-logs/${logId}`),
+
+  // Notifications
+  getNotifications: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request('GET', `/api/notifications${qs ? `?${qs}` : ''}`);
+  },
+  markNotificationRead:   (id)   => request('PATCH',  `/api/notifications/${id}/read`),
+  markAllNotificationsRead: ()    => request('PATCH',  '/api/notifications/read-all'),
+  deleteNotification:     (id)   => request('DELETE', `/api/notifications/${id}`),
+  clearNotifications:     ()     => request('DELETE', '/api/notifications'),
+
   // Customer Passwords / Credentials
   addCustomerPassword:    (id, body)        => request('POST',   `/api/customers/${id}/passwords`, body),
   updateCustomerPassword: (id, pwdId, body) => request('PATCH',  `/api/customers/${id}/passwords/${pwdId}`, body),

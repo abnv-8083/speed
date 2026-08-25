@@ -63,6 +63,25 @@ workIssueSchema.set('toJSON', {
   },
 });
 
+const timeLogSchema = new mongoose.Schema(
+  {
+    description: { type: String, default: '' },
+    start_time:  { type: Date, required: true },
+    end_time:    { type: Date, default: null },
+    duration:    { type: Number, default: 0 },             // duration in seconds
+    billable:    { type: Boolean, default: true },
+  },
+  { timestamps: true }
+);
+
+timeLogSchema.set('toJSON', {
+  virtuals: true,
+  transform: (_doc, ret) => {
+    ret.id = ret._id;
+    return ret;
+  },
+});
+
 // ── Main Work Schema ────────────────────────────────────────
 
 const workSchema = new mongoose.Schema(
@@ -96,6 +115,7 @@ const workSchema = new mongoose.Schema(
     notes:       { type: [workNoteSchema], default: [] },
     documents:   { type: [workDocumentSchema], default: [] },
     issues:      { type: [workIssueSchema], default: [] },
+    time_logs:   { type: [timeLogSchema], default: [] },
 
     // Metadata
     tags:        { type: [String], default: [] },
