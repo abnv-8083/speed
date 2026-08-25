@@ -64,6 +64,24 @@ router.get('/', async (req, res, next) => {
   }
 });
 
+// ── GET /api/works/due-soon — Works due within specified hours ──────────────
+router.get('/due-soon', async (req, res, next) => {
+  try {
+    const hours = parseInt(req.query.hours) || 24;
+    const now = new Date();
+    const deadline = new Date(now.getTime() + hours * 60 * 60 * 1000);
+
+    const works = await Work.find({
+      due_date: { $ne: '', $lte: deadline.toISOString().slice(0, 10) },
+      status: { $nin: ['completed', 'closed'] },
+    }).select('work_id title due_date status priority customer_name').sort({ due_date: 1 });
+
+    res.json(works);
+  } catch (err) {
+    next(err);
+  }
+});
+
 // ── GET /api/works/stats — Dashboard stats ─────────────────────────────────
 // IMPORTANT: /stats MUST come before /:id to avoid Express matching "stats" as an id
 router.get('/stats', async (req, res, next) => {

@@ -162,6 +162,7 @@ export const api = {
     return request('GET', `/api/works${qs ? `?${qs}` : ''}`);
   },
   getWorkStats: () => request('GET', '/api/works/stats'),
+  getWorksDueSoon: (hours = 24) => request('GET', `/api/works/due-soon?hours=${hours}`),
   getWork:       (id)         => request('GET',    `/api/works/${id}`),
   createWork:    (body)       => request('POST',   '/api/works', body),
   updateWork:    (id, body)   => request('PATCH',  `/api/works/${id}`, body),
