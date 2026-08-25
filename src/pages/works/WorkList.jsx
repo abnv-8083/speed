@@ -113,7 +113,7 @@ const WorkList = () => {
       setShowCreate(false);
       setCreateForm({ title: '', description: '', customer_name: '', priority: 'medium', start_date: '', due_date: '', tags: '' });
       setSelectedCustomer(null);
-      navigate(`/billing/works/${work.id || work._id}`);
+      navigate(`/admin/billing/works/${work.id || work._id}`);
     } catch (err) {
       alert('Failed to create work: ' + err.message);
     } finally {
@@ -275,7 +275,7 @@ const WorkList = () => {
               <div
                 key={work.id || work._id}
                 className={`wl-card ${overdue ? 'overdue' : ''}`}
-                onClick={() => navigate(`/billing/works/${work.id || work._id}`)}
+                onClick={() => navigate(`/admin/billing/works/${work.id || work._id}`)}
               >
                 <div className="wl-card-header">
                   <span className="wl-card-id">{work.work_id}</span>
@@ -362,7 +362,7 @@ const WorkList = () => {
                   <tr
                     key={work.id || work._id}
                     className={overdue ? 'overdue' : ''}
-                    onClick={() => navigate(`/billing/works/${work.id || work._id}`)}
+                    onClick={() => navigate(`/admin/billing/works/${work.id || work._id}`)}
                   >
                     <td><span className="wl-table-id">{work.work_id}</span></td>
                     <td><strong>{work.title}</strong></td>

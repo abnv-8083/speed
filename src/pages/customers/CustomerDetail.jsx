@@ -90,7 +90,7 @@ export default function CustomerDetail() {
       setInvoices(invData || []);
     } catch (err) {
       toast.error('Failed to load customer: ' + err.message);
-      navigate('/billing/customers');
+      navigate('/admin/billing/customers');
     }
     setLoading(false);
   };
@@ -139,7 +139,7 @@ export default function CustomerDetail() {
     try {
       await api.deleteCustomer(id);
       toast.success('Customer deleted');
-      navigate('/billing/customers');
+      navigate('/admin/billing/customers');
     } catch (err) {
       toast.error('Failed to delete customer: ' + err.message);
     }
@@ -440,7 +440,7 @@ export default function CustomerDetail() {
         </div>
 
         <div className="cd-header-actions">
-          <button className="cd-back-btn" onClick={() => navigate('/billing/customers')}>
+          <button className="cd-back-btn" onClick={() => navigate('/admin/billing/customers')}>
             <ArrowLeft size={16} /> All Customers
           </button>
           <button className="btn btn-secondary" onClick={openEditCustomerModal}>
@@ -511,7 +511,7 @@ export default function CustomerDetail() {
             <div className="cd-empty-tab">
               <Receipt size={40} style={{ opacity: 0.4 }} />
               <p>No invoices generated for this customer yet.</p>
-              <button className="btn btn-primary" onClick={() => navigate('/billing/quickbill')}>
+              <button className="btn btn-primary" onClick={() => navigate('/admin/billing/quickbill')}>
                 Create Quick Bill
               </button>
             </div>

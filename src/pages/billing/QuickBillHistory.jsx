@@ -275,7 +275,7 @@ export default function QuickBillHistory() {
       {/* ── Header ── */}
       <div className="qbh-header glass-panel">
         <div className="qbh-header-left">
-          <button className="qbh-back-btn" onClick={() => navigate('/billing/quickbill')}>
+          <button className="qbh-back-btn" onClick={() => navigate('/admin/billing/quickbill')}>
             <ArrowLeft size={16} /> Quick Bill
           </button>
           <div>

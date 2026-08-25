@@ -17,6 +17,7 @@ import {
   Moon,
   Bell,
   Briefcase,
+  Globe,
 } from 'lucide-react';
 import { SubNavProvider, useSubNav } from './SubNavContext';
 import { useTheme } from './ThemeContext';
@@ -65,12 +66,13 @@ function LayoutInner() {
   };
 
   const navItems = [
-    { path: '/home',      icon: LayoutDashboard, label: 'Dashboard' },
-    { path: '/billing',   icon: CreditCard,      label: 'Billing Portal' },
-    { path: '/printing',  icon: Printer,         label: 'Printing Hub' },
-    { path: '/financial', icon: PieChart,        label: 'Financial Portal' },
-    { path: '/cv',        icon: FileText,        label: 'CV Generator' },
-    { path: '/tools',     icon: Wrench,          label: 'Tools Portal' },
+    { path: '/admin/home',      icon: LayoutDashboard, label: 'Dashboard' },
+    { path: '/admin/billing',   icon: CreditCard,      label: 'Billing Portal' },
+    { path: '/admin/printing',  icon: Printer,         label: 'Printing Hub' },
+    { path: '/admin/financial', icon: PieChart,        label: 'Financial Portal' },
+    { path: '/admin/cv',        icon: FileText,        label: 'CV Generator' },
+    { path: '/admin/tools',     icon: Wrench,          label: 'Tools Portal' },
+    { path: '/admin/website',   icon: Globe,           label: 'Website Settings' },
   ];
 
   const getPageTitle = () => {
@@ -205,7 +207,7 @@ function LayoutInner() {
               <div className="avatar">AD</div>
               <span className="user-name hidden-mobile">Admin User</span>
             </div>
-            <button className="btn-icon" onClick={() => navigate('/login')} title="Logout">
+            <button className="btn-icon" onClick={() => navigate('/admin/login')} title="Logout">
               <LogOut size={18} />
             </button>
           </div>

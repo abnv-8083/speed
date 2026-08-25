@@ -920,7 +920,7 @@ export default function QuickBill() {
               )}
               <button
                 className="qb-history-btn"
-                onClick={() => navigate('/billing/quickbill/history')}
+                onClick={() => navigate('/admin/billing/quickbill/history')}
               >
                 <History size={14} /> History
               </button>
@@ -1083,7 +1083,7 @@ export default function QuickBill() {
             )}
           </div>
 
-          <button className="qb-view-history-btn" onClick={() => navigate('/billing/quickbill/history')}>
+          <button className="qb-view-history-btn" onClick={() => navigate('/admin/billing/quickbill/history')}>
             <History size={14} /> View Full History
           </button>
         </div>

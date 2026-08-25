@@ -259,9 +259,9 @@ const Products = () => {
                     <div
                       key={product.id}
                       className={`prod-row ${product.is_blocked ? 'prod-row-blocked' : ''}`}
-                      onClick={() => navigate(`/billing/products/${product.id}`)}
+                      onClick={() => navigate(`/admin/billing/products/${product.id}`)}
                       role="button" tabIndex={0}
-                      onKeyDown={e => e.key === 'Enter' && navigate(`/billing/products/${product.id}`)}
+                      onKeyDown={e => e.key === 'Enter' && navigate(`/admin/billing/products/${product.id}`)}
                     >
                       <div className="prod-col-identity">
                         <span className="prod-id-badge" title={product.id}>{shortId(product.id)}</span>
@@ -292,7 +292,7 @@ const Products = () => {
                           <Trash2 size={14} />
                         </button>
                         <button className="prod-action-btn action-primary" title="View Details"
-                          onClick={e => { e.stopPropagation(); navigate(`/billing/products/${product.id}`); }}>
+                          onClick={e => { e.stopPropagation(); navigate(`/admin/billing/products/${product.id}`); }}>
                           <ChevronRight size={14} />
                         </button>
                       </div>
@@ -315,9 +315,9 @@ const Products = () => {
                     <div
                       key={product.id}
                       className={`prod-card ${product.is_blocked ? 'prod-card--blocked' : ''}`}
-                      onClick={() => navigate(`/billing/products/${product.id}`)}
+                      onClick={() => navigate(`/admin/billing/products/${product.id}`)}
                       role="button" tabIndex={0}
-                      onKeyDown={e => e.key === 'Enter' && navigate(`/billing/products/${product.id}`)}
+                      onKeyDown={e => e.key === 'Enter' && navigate(`/admin/billing/products/${product.id}`)}
                     >
                       {/* Card top bar color */}
                       <div className={`prod-card-bar ${product.stock === 0 ? 'prod-card-bar--oos' : product.stock < 10 ? 'prod-card-bar--low' : 'prod-card-bar--ok'}`} />
@@ -378,7 +378,7 @@ const Products = () => {
                           <Trash2 size={13} />
                         </button>
                         <button className="prod-action-btn action-primary" title="View Details"
-                          onClick={e => { e.stopPropagation(); navigate(`/billing/products/${product.id}`); }}
+                          onClick={e => { e.stopPropagation(); navigate(`/admin/billing/products/${product.id}`); }}
                           style={{ marginLeft: 'auto' }}>
                           <ChevronRight size={13} />
                         </button>

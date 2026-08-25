@@ -44,7 +44,7 @@ const ProductDetail = () => {
       setProduct(found);
     } catch (err) {
       toast.error('Failed to load product: ' + err.message);
-      navigate('/billing/products');
+      navigate('/admin/billing/products');
     }
     setLoading(false);
   };
@@ -112,13 +112,13 @@ const ProductDetail = () => {
     try {
       await api.deleteProduct(id);
       toast.success('Product deleted');
-      navigate('/billing/products');
+      navigate('/admin/billing/products');
     } catch (err) {
       if (err.message?.includes('foreign key constraint')) {
         try {
           await api.updateProduct(id, { is_blocked: true, name: `[DELETED] ${product.name}` });
           toast.success('Product soft-deleted (has past invoices).');
-          navigate('/billing/products');
+          navigate('/admin/billing/products');
         } catch (ae) {
           toast.error('Failed to archive: ' + ae.message);
         }
@@ -155,7 +155,7 @@ const ProductDetail = () => {
 
       {/* ── Top bar ── */}
       <div className="pd-topbar glass-panel">
-        <button className="pd-back-btn" onClick={() => navigate('/billing/products')}>
+        <button className="pd-back-btn" onClick={() => navigate('/admin/billing/products')}>
           <ArrowLeft size={17} /> Inventory
         </button>
         <div className="pd-topbar-actions">

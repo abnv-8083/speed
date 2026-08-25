@@ -27,6 +27,8 @@ import CustomerDetail from './pages/customers/CustomerDetail';
 import PrintingHistory from './pages/printing/PrintingHistory';
 import PrintingLayout from './pages/printing/PrintingLayout';
 import Layout from './components/Layout';
+import PublicWebsite from './website/PublicWebsite';
+import WebsiteSettings from './pages/admin/WebsiteSettings';
 
 function App() {
   return (
@@ -35,16 +37,19 @@ function App() {
         <ToastProvider>
           <Router>
             <Routes>
-              <Route path="/login" element={<Login />} />
-              
-              {/* Protected Routes wrapped in Layout */}
-              <Route element={<Layout />}>
-                <Route path="/home" element={<Home />} />
+              {/* ═══════ PUBLIC WEBSITE (root) ══════════════════ */}
+              <Route path="/" element={<PublicWebsite />} />
+
+              {/* ═══════ ADMIN / POS SYSTEM (/admin/*) ══════════ */}
+              <Route path="/admin/login" element={<Login />} />
+              <Route path="/admin" element={<Layout />}>
+                <Route index element={<Navigate to="/admin/home" replace />} />
+                <Route path="home" element={<Home />} />
                 
-                {/* Billing Module Nested Routes */}
-                <Route path="/billing" element={<BillingLayout />}>
+                {/* Billing Module */}
+                <Route path="billing" element={<BillingLayout />}>
                   <Route index element={<Navigate to="quickbill" replace />} />
-                  <Route path="pos"        element={<Navigate to="/billing/quickbill" replace />} />
+                  <Route path="pos"        element={<Navigate to="/admin/billing/quickbill" replace />} />
                   <Route path="quickbill"  element={<QuickBill />} />
                   <Route path="quickbill/history" element={<QuickBillHistory />} />
                   <Route path="products"   element={<Products />} />
@@ -57,28 +62,32 @@ function App() {
                   <Route path="customers/:id" element={<CustomerDetail />} />
                 </Route>
                 
-                <Route path="/financial" element={<Financial />} />
-                <Route path="/financial/loan/:id" element={<LoanDetails />} />
-                <Route path="/cv" element={<CVLayout />}>
+                <Route path="financial" element={<Financial />} />
+                <Route path="financial/loan/:id" element={<LoanDetails />} />
+                <Route path="cv" element={<CVLayout />}>
                   <Route index element={<CVGenerator />} />
                   <Route path="saved" element={<SavedCVs />} />
                 </Route>
-                <Route path="/tools" element={<ToolsLayout />}>
+                <Route path="tools" element={<ToolsLayout />}>
                   <Route index element={<ToolsPortal />} />
                   <Route path="convert" element={<ToolsPortal />} />
                   <Route path="size"    element={<ToolsPortal />} />
                   <Route path="image"   element={<ToolsPortal />} />
                 </Route>
-                <Route path="/printing" element={<PrintingLayout />}>
+                <Route path="printing" element={<PrintingLayout />}>
                   <Route index element={<Navigate to="stock" replace />} />
                   <Route path="stock"   element={<PrintingHistory />} />
                   <Route path="log"     element={<PrintingHistory />} />
                   <Route path="history" element={<PrintingHistory />} />
                   <Route path="setup"   element={<PrintingHistory />} />
                 </Route>
+                <Route path="website" element={<WebsiteSettings />} />
               </Route>
 
-              <Route path="/" element={<Navigate to="/login" replace />} />
+              {/* Legacy redirects */}
+              <Route path="/login" element={<Navigate to="/admin/login" replace />} />
+              <Route path="/home" element={<Navigate to="/admin/home" replace />} />
+              <Route path="/billing/*" element={<Navigate to="/admin/billing" replace />} />
             </Routes>
           </Router>
         </ToastProvider>

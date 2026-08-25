@@ -28,8 +28,10 @@ async function request(method, path, body = null) {
   // Handle 401 globally — clear token and redirect to login (except on login route itself)
   if (res.status === 401 && path !== '/api/auth/login') {
     removeToken();
-    if (window.location.pathname !== '/login' && window.location.pathname !== '/') {
-      window.location.href = '/login';
+    if (!window.location.pathname.startsWith('/admin') && window.location.pathname !== '/') {
+      // Public site — just clear token
+    } else if (window.location.pathname !== '/admin/login') {
+      window.location.href = '/admin/login';
     }
     throw new Error('Session expired. Please log in again.');
   }
@@ -196,6 +198,11 @@ export const api = {
   markAllNotificationsRead: ()    => request('PATCH',  '/api/notifications/read-all'),
   deleteNotification:     (id)   => request('DELETE', `/api/notifications/${id}`),
   clearNotifications:     ()     => request('DELETE', '/api/notifications'),
+
+  // ── Website Settings (Public) ─────────────────────────────
+  getWebsiteSettings: () => request('GET', '/api/website/settings'),
+  getWebsiteServices: () => request('GET', '/api/website/services'),
+  updateWebsiteSettings: (body) => request('PATCH', '/api/website/settings', body),
 
   // Customer Passwords / Credentials
   addCustomerPassword:    (id, body)        => request('POST',   `/api/customers/${id}/passwords`, body),

@@ -366,7 +366,7 @@ const WorkDetail = () => {
       <div className="wd-root">
         <div className="wd-empty">
           <Briefcase size={48} /><h3>Work not found</h3><p>This work may have been deleted.</p>
-          <button className="wd-btn-back" onClick={() => navigate('/billing/works')}><ArrowLeft size={16} /> Back to Works</button>
+          <button className="wd-btn-back" onClick={() => navigate('/admin/billing/works')}><ArrowLeft size={16} /> Back to Works</button>
         </div>
       </div>
     );
@@ -384,7 +384,7 @@ const WorkDetail = () => {
           HEADER
          ═══════════════════════════════════════════════════════════════ */}
       <div className="wd-header">
-        <button className="wd-back" onClick={() => navigate('/billing/works')}>
+        <button className="wd-back" onClick={() => navigate('/admin/billing/works')}>
           <ArrowLeft size={18} /> Works
         </button>
         <div className="wd-header-center">
@@ -450,7 +450,7 @@ const WorkDetail = () => {
                         <span className="wd-customer-card-name">{work.customer_id.name}</span>
                         <span className="wd-customer-card-id">Customer</span>
                       </div>
-                      <button className="wd-customer-link" onClick={() => navigate(`/billing/customers/${work.customer_id._id || work.customer_id.id}`)}>
+                      <button className="wd-customer-link" onClick={() => navigate(`/admin/billing/customers/${work.customer_id._id || work.customer_id.id}`)}>
                         View Profile →
                       </button>
                     </div>

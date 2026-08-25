@@ -9,6 +9,10 @@ const productSchema = new mongoose.Schema(
     stock:      { type: Number, min: 0, default: 0 },
     is_print:   { type: Boolean, default: false },
     is_blocked: { type: Boolean, default: false },
+    show_on_website: { type: Boolean, default: false },
+    selling_price: { type: Number, default: 0 },
+    description:   { type: String, default: '' },
+    images:        [{ url: String, alt: String }],
   },
   { timestamps: true }
 );

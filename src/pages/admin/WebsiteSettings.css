@@ -1,0 +1,339 @@
+/* ═══════════════════════════════════════════════════════════════
+   WEBSITE SETTINGS ADMIN
+   ═══════════════════════════════════════════════════════════════ */
+
+.ws-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
+.ws-loading {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  color: var(--text-muted, #6b7280);
+}
+
+.ws-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.65rem 1rem;
+  border-bottom: 1px solid var(--border, #1e2d4a);
+  flex-shrink: 0;
+}
+
+.ws-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ws-header-left h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.ws-header-right {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.ws-btn-preview {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--surface, #131c2e);
+  border: 1px solid var(--border, #1e2d4a);
+  border-radius: 8px;
+  color: var(--text, #e2e8f0);
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.ws-btn-preview:hover {
+  border-color: var(--primary, #06b6d4);
+}
+
+.ws-btn-save {
+  display: flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.85rem;
+  background: var(--primary, #06b6d4);
+  color: white;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ws-btn-save:hover:not(:disabled) {
+  background: var(--primary-hover, #0891b2);
+}
+
+.ws-btn-save:disabled {
+  opacity: 0.5;
+}
+
+/* ── Tabs ───────────────────────────────────────────────────── */
+
+.ws-tabs {
+  display: flex;
+  gap: 0;
+  padding: 0 1rem;
+  border-bottom: 1px solid var(--border, #1e2d4a);
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+
+.ws-tab {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.55rem 0.85rem;
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-muted, #64748b);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+
+.ws-tab:hover {
+  color: var(--text, #e2e8f0);
+}
+
+.ws-tab.active {
+  color: var(--primary, #06b6d4);
+  border-bottom-color: var(--primary, #06b6d4);
+}
+
+/* ── Content ────────────────────────────────────────────────── */
+
+.ws-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.25rem;
+}
+
+.ws-section {
+  max-width: 700px;
+}
+
+.ws-section h3 {
+  font-size: 1rem;
+  margin: 0 0 1rem;
+  color: var(--text, #e2e8f0);
+}
+
+.ws-hint {
+  font-size: 0.8rem;
+  color: var(--text-muted, #64748b);
+  background: var(--surface, #131c2e);
+  border: 1px solid var(--border, #1e2d4a);
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  margin-bottom: 1rem;
+}
+
+/* ── Fields ─────────────────────────────────────────────────── */
+
+.ws-field {
+  margin-bottom: 1rem;
+}
+
+.ws-field label {
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text, #e2e8f0);
+  margin-bottom: 0.3rem;
+}
+
+.ws-field input,
+.ws-field textarea,
+.ws-field select {
+  width: 100%;
+  background: var(--input-bg, #0a0f1a);
+  border: 1px solid var(--border, #1e2d4a);
+  border-radius: 8px;
+  color: var(--text, #e2e8f0);
+  padding: 0.55rem 0.75rem;
+  font-size: 0.85rem;
+  transition: border-color 0.2s;
+}
+
+.ws-field input:focus,
+.ws-field textarea:focus {
+  outline: none;
+  border-color: var(--primary, #06b6d4);
+}
+
+.ws-field textarea {
+  resize: vertical;
+  font-family: inherit;
+}
+
+.ws-checkbox-label {
+  display: flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.ws-checkbox-label input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--primary, #06b6d4);
+}
+
+/* ── Image Upload ───────────────────────────────────────────── */
+
+.ws-image-upload {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.ws-image-preview {
+  max-width: 200px;
+  max-height: 120px;
+  border-radius: 8px;
+  border: 1px solid var(--border, #1e2d4a);
+  object-fit: cover;
+}
+
+.ws-upload-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  padding: 0.4rem 0.75rem;
+  background: var(--surface, #131c2e);
+  border: 1px solid var(--border, #1e2d4a);
+  border-radius: 8px;
+  color: var(--text, #e2e8f0);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ws-upload-btn:hover {
+  border-color: var(--primary, #06b6d4);
+  color: var(--primary, #06b6d4);
+}
+
+.ws-upload-btn.small {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.72rem;
+}
+
+/* ── Gallery Grid ───────────────────────────────────────────── */
+
+.ws-gallery-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.ws-gallery-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.ws-gallery-thumb {
+  position: relative;
+  height: 120px;
+  background: var(--surface, #131c2e);
+  border: 1px solid var(--border, #1e2d4a);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  color: var(--text-muted, #64748b);
+}
+
+.ws-gallery-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.ws-gallery-remove {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: rgba(244, 63, 94, 0.9);
+  color: white;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.ws-gallery-item:hover .ws-gallery-remove {
+  opacity: 1;
+}
+
+.ws-gallery-item input {
+  width: 100%;
+  background: var(--input-bg, #0a0f1a);
+  border: 1px solid var(--border, #1e2d4a);
+  border-radius: 6px;
+  color: var(--text, #e2e8f0);
+  padding: 0.35rem 0.5rem;
+  font-size: 0.78rem;
+}
+
+.ws-gallery-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  height: 120px;
+  background: var(--surface, #131c2e);
+  border: 2px dashed var(--border, #1e2d4a);
+  border-radius: 8px;
+  color: var(--text-muted, #64748b);
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.ws-gallery-add:hover {
+  border-color: var(--primary, #06b6d4);
+  color: var(--primary, #06b6d4);
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
