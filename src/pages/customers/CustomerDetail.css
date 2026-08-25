@@ -90,7 +90,7 @@
   transition: all 0.15s;
 }
 
-.cd-back-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+.cd-back-btn:hover { color: var(--text); border-color: var(--border); }
 
 .btn-danger {
   background: rgba(248,113,113,0.1);
@@ -138,7 +138,7 @@
   white-space: nowrap;
 }
 
-.cd-tab-btn:hover { color: var(--text); background: rgba(255,255,255,0.05); }
+.cd-tab-btn:hover { color: var(--text); background: var(--row-hover); }
 
 .cd-tab-btn--active {
   background: var(--primary-gradient);
@@ -244,12 +244,12 @@
 
 .cd-invoices-table td {
   padding: 0.75rem 0.85rem;
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--row-border);
   color: var(--text);
 }
 
 .cd-invoices-table tr:last-child td { border-bottom: none; }
-.cd-invoices-table tr:hover td { background: rgba(255,255,255,0.025); }
+.cd-invoices-table tr:hover td { background: var(--row-hover); }
 
 /* ── Upload dropzone ──────────────────────────────────────────── */
 .cd-upload-dropzone {
@@ -285,7 +285,7 @@
 .cd-uploading-bar-wrap {
   width: 100%;
   max-width: 360px;
-  background: rgba(255,255,255,0.08);
+  background: var(--progress-bg);
   border-radius: 999px;
   height: 6px;
   overflow: hidden;
@@ -357,6 +357,141 @@
 .cd-doc-meta { font-size: 0.72rem; color: var(--text-muted); }
 
 .cd-doc-actions { display: flex; align-items: center; gap: 0.25rem; }
+
+/* ── Document Preview Modal ──────────────────────────────────── */
+.cd-doc-preview-overlay {
+  position: fixed;
+  inset: 0;
+  background: var(--overlay-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9998;
+  padding: 1.5rem;
+  animation: fadeIn 0.15s ease;
+}
+
+.cd-doc-preview-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  width: 100%;
+  max-width: 900px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.4);
+  animation: modalIn 0.2s ease;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95) translateY(10px); }
+  to   { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.cd-doc-preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.cd-doc-preview-title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--text);
+  min-width: 0;
+}
+
+.cd-doc-preview-title span {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.cd-doc-preview-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.cd-doc-preview-action-btn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.cd-doc-preview-action-btn:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+  border-color: var(--border);
+}
+
+.cd-doc-preview-body {
+  flex: 1;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--background);
+  min-height: 400px;
+}
+
+.cd-doc-preview-image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  border-radius: 4px;
+}
+
+.cd-doc-preview-pdf {
+  width: 100%;
+  height: 100%;
+  min-height: 500px;
+  border: none;
+}
+
+.cd-doc-preview-unsupported {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  color: var(--text-muted);
+  padding: 3rem;
+  text-align: center;
+}
+
+.cd-doc-preview-unsupported p {
+  font-size: 0.9rem;
+}
+
+.cd-doc-preview-footer {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1.25rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
 
 /* ── Passwords grid ───────────────────────────────────────────── */
 .cd-passwords-grid {
@@ -436,7 +571,7 @@
 }
 
 .cd-copy-btn {
-  background: rgba(255,255,255,0.06);
+  background: var(--badge-bg);
   border: 1px solid var(--border);
   color: var(--text-muted);
   border-radius: 6px;
@@ -478,7 +613,7 @@
   cursor: pointer;
   transition: all 0.15s;
 }
-.cust-icon-btn:hover { background: rgba(255,255,255,0.08); color: var(--text); border-color: var(--border); }
+.cust-icon-btn:hover { background: var(--surface-hover); color: var(--text); border-color: var(--border); }
 .cust-icon-btn.danger:hover { background: rgba(248,113,113,0.12); color: #f87171; border-color: rgba(248,113,113,0.3); }
 
 /* ── Empty tab state ──────────────────────────────────────────── */
@@ -515,4 +650,6 @@
   .cd-header-actions { width: 100%; flex-wrap: wrap; }
   .cd-tabs-bar { flex-wrap: wrap; }
   .cd-passwords-grid, .cd-docs-grid { grid-template-columns: 1fr; }
+  .cd-doc-preview-modal { max-width: 100%; border-radius: 12px; }
+  .cd-doc-preview-body { min-height: 300px; }
 }

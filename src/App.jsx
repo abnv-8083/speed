@@ -49,6 +49,8 @@ function App() {
                   <Route path="products/:id" element={<ProductDetail />} />
                   <Route path="invoices" element={<Invoices />} />
                   <Route path="reports" element={<SalesReport />} />
+                  <Route path="customers" element={<CustomerList />} />
+                  <Route path="customers/:id" element={<CustomerDetail />} />
                 </Route>
                 
                 <Route path="/financial" element={<Financial />} />
@@ -63,9 +65,6 @@ function App() {
                   <Route path="size"    element={<ToolsPortal />} />
                   <Route path="image"   element={<ToolsPortal />} />
                 </Route>
-                <Route path="/customers" element={<CustomerList />} />
-                <Route path="/customers/:id" element={<CustomerDetail />} />
-                <Route path="/passwords" element={<Navigate to="/customers" replace />} />
                 <Route path="/printing" element={<PrintingLayout />}>
                   <Route index element={<Navigate to="stock" replace />} />
                   <Route path="stock"   element={<PrintingHistory />} />

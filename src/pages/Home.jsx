@@ -82,7 +82,7 @@ const Home = () => {
         <div 
           className="portal-card card-pass animate-fade-in" 
           style={{ animationDelay: '0.4s' }}
-          onClick={() => navigate('/customers')}
+          onClick={() => navigate('/billing/customers')}
         >
           <div className="portal-icon-wrapper" style={{ background: 'rgba(99, 102, 241, 0.15)', color: '#818cf8' }}>
             <Users size={32} />

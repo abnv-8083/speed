@@ -206,7 +206,7 @@ export default function CustomerList() {
                 <div
                   key={customer.id}
                   className="cust-card"
-                  onClick={() => navigate(`/customers/${customer.id}`)}
+                  onClick={() => navigate(`/billing/customers/${customer.id}`)}
                 >
                   <div className="cust-card-top">
                     <div className="cust-avatar">

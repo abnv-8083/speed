@@ -4,7 +4,8 @@ import {
   ArrowLeft, Edit2, Trash2, Phone, Mail, MapPin,
   Calendar, Receipt, FileText, KeyRound, UploadCloud,
   Download, Eye, EyeOff, Copy, Check, Plus, ExternalLink,
-  Loader2, AlertCircle, File, Image as ImageIcon, CheckCircle2
+  Loader2, AlertCircle, File, Image as ImageIcon, CheckCircle2,
+  X, ZoomIn, ZoomOut
 } from 'lucide-react';
 import { api } from '../../api';
 import { useToast } from '../../components/ToastContext';
@@ -27,6 +28,9 @@ export default function CustomerDetail() {
 
   // Invoice Preview Modal / Full View
   const [previewInvoice, setPreviewInvoice] = useState(null);
+
+  // Document Preview
+  const [previewDoc, setPreviewDoc] = useState(null);
 
   // ── Customer Profile Edit Modal ──
   const [showEditCustModal, setShowEditCustModal] = useState(false);
@@ -75,7 +79,7 @@ export default function CustomerDetail() {
       setInvoices(invData || []);
     } catch (err) {
       toast.error('Failed to load customer: ' + err.message);
-      navigate('/customers');
+      navigate('/billing/customers');
     }
     setLoading(false);
   };
@@ -124,7 +128,7 @@ export default function CustomerDetail() {
     try {
       await api.deleteCustomer(id);
       toast.success('Customer deleted');
-      navigate('/customers');
+      navigate('/billing/customers');
     } catch (err) {
       toast.error('Failed to delete customer: ' + err.message);
     }
@@ -235,6 +239,10 @@ export default function CustomerDetail() {
         ...prev,
         documents: prev.documents.filter(d => (d.id !== docId && d._id !== docId)),
       }));
+      // Close preview if we're previewing the deleted doc
+      if (previewDoc && (previewDoc.id === docId || previewDoc._id === docId)) {
+        setPreviewDoc(null);
+      }
       toast.success('Document deleted');
     } catch (err) {
       toast.error('Failed to delete document: ' + err.message);
@@ -353,6 +361,16 @@ export default function CustomerDetail() {
     return name.slice(0, 2).toUpperCase();
   };
 
+  const isImageDoc = (doc) => {
+    return doc.file_type?.startsWith('image/') || 
+           /\.(jpg|jpeg|png)$/i.test(doc.name || '');
+  };
+
+  const isPdfDoc = (doc) => {
+    return doc.file_type?.includes('pdf') || 
+           /\.pdf$/i.test(doc.name || '');
+  };
+
   if (loading) {
     return (
       <div style={{ padding: '4rem 0' }}>
@@ -411,7 +429,7 @@ export default function CustomerDetail() {
         </div>
 
         <div className="cd-header-actions">
-          <button className="cd-back-btn" onClick={() => navigate('/customers')}>
+          <button className="cd-back-btn" onClick={() => navigate('/billing/customers')}>
             <ArrowLeft size={16} /> All Customers
           </button>
           <button className="btn btn-secondary" onClick={openEditCustomerModal}>
@@ -596,7 +614,8 @@ export default function CustomerDetail() {
           ) : (
             <div className="cd-docs-grid">
               {customer.documents.map(doc => {
-                const isPdf = doc.file_type?.includes('pdf') || doc.name?.toLowerCase().endsWith('.pdf');
+                const isPdf = isPdfDoc(doc);
+                const isImg = isImageDoc(doc);
                 const docId = doc.id || doc._id;
                 return (
                   <div key={docId} className="cd-doc-card">
@@ -614,6 +633,13 @@ export default function CustomerDetail() {
                     </div>
 
                     <div className="cd-doc-actions">
+                      <button
+                        className="cust-icon-btn"
+                        title="Preview Document"
+                        onClick={() => setPreviewDoc(doc)}
+                      >
+                        <Eye size={15} />
+                      </button>
                       <button
                         className="cust-icon-btn"
                         title="Download Document"
@@ -771,6 +797,66 @@ export default function CustomerDetail() {
               })}
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── Document Preview Modal ── */}
+      {previewDoc && (
+        <div className="cd-doc-preview-overlay" onClick={() => setPreviewDoc(null)}>
+          <div className="cd-doc-preview-modal" onClick={e => e.stopPropagation()}>
+            <div className="cd-doc-preview-header">
+              <div className="cd-doc-preview-title">
+                {isPdfDoc(previewDoc) ? <File size={18} /> : <ImageIcon size={18} />}
+                <span>{previewDoc.name}</span>
+              </div>
+              <div className="cd-doc-preview-actions">
+                <button
+                  className="cd-doc-preview-action-btn"
+                  title="Download"
+                  onClick={() => handleDownloadDoc(previewDoc)}
+                >
+                  <Download size={16} />
+                </button>
+                <button
+                  className="cd-doc-preview-action-btn"
+                  title="Close"
+                  onClick={() => setPreviewDoc(null)}
+                >
+                  <X size={18} />
+                </button>
+              </div>
+            </div>
+
+            <div className="cd-doc-preview-body">
+              {isImageDoc(previewDoc) ? (
+                <img
+                  src={previewDoc.file_url || previewDoc.data}
+                  alt={previewDoc.name}
+                  className="cd-doc-preview-image"
+                />
+              ) : isPdfDoc(previewDoc) ? (
+                <iframe
+                  src={previewDoc.file_url || previewDoc.data}
+                  title={previewDoc.name}
+                  className="cd-doc-preview-pdf"
+                />
+              ) : (
+                <div className="cd-doc-preview-unsupported">
+                  <AlertCircle size={48} />
+                  <p>Preview not available for this file type</p>
+                  <button className="btn btn-primary" onClick={() => handleDownloadDoc(previewDoc)}>
+                    <Download size={16} /> Download Instead
+                  </button>
+                </div>
+              )}
+            </div>
+
+            <div className="cd-doc-preview-footer">
+              <span>{formatFileSize(previewDoc.file_size)}</span>
+              <span>•</span>
+              <span>{previewDoc.file_type || 'Unknown type'}</span>
+            </div>
+          </div>
         </div>
       )}
 
