@@ -523,64 +523,151 @@ const WorkDetail = () => {
         {/* ═══════ TIME TRACKING TAB ═══════════════════════ */}
         {activeTab === 'timelog' && (
           <div className="wd-timelog">
-            <div className="wd-timer-widget">
+            {/* ── Timer Hero ────────────────────────────── */}
+            <div className="wd-timer-hero">
               {activeTimeLog ? (
                 <div className="wd-timer-active">
-                  <div className="wd-timer-display">
-                    <div className="wd-timer-digits">{formatTimer(elapsedTime)}</div>
-                    <div className="wd-timer-label">Time Elapsed</div>
+                  <div className="wd-timer-ring">
+                    <svg viewBox="0 0 120 120" className="wd-timer-svg">
+                      <circle cx="60" cy="60" r="52" className="wd-timer-ring-bg" />
+                      <circle cx="60" cy="60" r="52" className="wd-timer-ring-fg" />
+                    </svg>
+                    <div className="wd-timer-center">
+                      <div className="wd-timer-digits">{formatTimer(elapsedTime)}</div>
+                      <div className="wd-timer-label">TRACKING</div>
+                    </div>
                   </div>
-                  {activeTimeLog.description && <div className="wd-timer-desc">📝 {activeTimeLog.description}</div>}
-                  <div className="wd-timer-started">Started at {new Date(activeTimeLog.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</div>
+                  <div className="wd-timer-meta-row">
+                    {activeTimeLog.description && <span className="wd-timer-desc-badge">📝 {activeTimeLog.description}</span>}
+                    <span className="wd-timer-start-badge"><Clock size={12} /> Started {new Date(activeTimeLog.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
+                  </div>
                   <button className="wd-timer-btn stop" onClick={stopTimeLog} disabled={stoppingTimer}>
                     {stoppingTimer ? <Spinner size={18} /> : <Pause size={18} />} {stoppingTimer ? 'Stopping...' : 'Stop Timer'}
                   </button>
                 </div>
               ) : (
                 <div className="wd-timer-idle">
-                  <input type="text" placeholder="What are you working on? (optional)" value={timeLogDesc} onChange={e => setTimeLogDesc(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') startTimeLog(); }} disabled={startingTimer} />
-                  <button className="wd-timer-btn start" onClick={startTimeLog} disabled={startingTimer}>
-                    {startingTimer ? <Spinner size={18} /> : <Play size={18} />} {startingTimer ? 'Starting...' : 'Start'}
-                  </button>
+                  <div className="wd-timer-idle-icon"><Play size={28} /></div>
+                  <div className="wd-timer-idle-content">
+                    <h4>Start Tracking</h4>
+                    <p>Begin a new time session for this work</p>
+                  </div>
+                  <div className="wd-timer-idle-form">
+                    <input type="text" placeholder="What are you working on?" value={timeLogDesc} onChange={e => setTimeLogDesc(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') startTimeLog(); }} disabled={startingTimer} />
+                    <button className="wd-timer-btn start" onClick={startTimeLog} disabled={startingTimer}>
+                      {startingTimer ? <Spinner size={18} /> : <Play size={18} />} {startingTimer ? 'Starting...' : 'Start Timer'}
+                    </button>
+                  </div>
                 </div>
               )}
             </div>
 
+            {/* ── Summary Cards ─────────────────────────── */}
             <div className="wd-time-summary">
-              <div className="wd-time-stat"><span className="wd-time-stat-label">Estimated</span><span className="wd-time-stat-value">{work.estimated_hours || 0}h</span></div>
-              <div className="wd-time-stat"><span className="wd-time-stat-label">Actual</span><span className="wd-time-stat-value">{work.actual_hours || 0}h</span></div>
-              <div className="wd-time-stat"><span className="wd-time-stat-label">Sessions</span><span className="wd-time-stat-value">{totalLogs}</span></div>
-              <div className="wd-time-stat"><span className="wd-time-stat-label">Billable</span><span className="wd-time-stat-value">{(work.time_logs || []).filter(t => t.billable && t.end_time).length}</span></div>
+              <div className="wd-time-stat">
+                <div className="wd-time-stat-icon"><Clock size={16} /></div>
+                <div className="wd-time-stat-body">
+                  <span className="wd-time-stat-label">Estimated</span>
+                  <span className="wd-time-stat-value">{work.estimated_hours || 0}h</span>
+                </div>
+              </div>
+              <div className="wd-time-stat">
+                <div className="wd-time-stat-icon green"><Timer size={16} /></div>
+                <div className="wd-time-stat-body">
+                  <span className="wd-time-stat-label">Actual</span>
+                  <span className="wd-time-stat-value">{work.actual_hours || 0}h</span>
+                </div>
+              </div>
+              <div className="wd-time-stat">
+                <div className="wd-time-stat-icon blue"><Activity size={16} /></div>
+                <div className="wd-time-stat-body">
+                  <span className="wd-time-stat-label">Sessions</span>
+                  <span className="wd-time-stat-value">{totalLogs}</span>
+                </div>
+              </div>
+              <div className="wd-time-stat">
+                <div className="wd-time-stat-icon yellow"><TrendingUp size={16} /></div>
+                <div className="wd-time-stat-body">
+                  <span className="wd-time-stat-label">Billable</span>
+                  <span className="wd-time-stat-value">{(work.time_logs || []).filter(t => t.billable && t.end_time).length}</span>
+                </div>
+              </div>
             </div>
 
-            <h4 className="wd-card-section-title">Session History</h4>
-            <div className="wd-time-logs-list">
-              {(work.time_logs || []).length === 0 ? (
-                <div className="wd-empty-inline"><Clock size={28} /><p>No time logged yet. Start the timer above.</p></div>
-              ) : work.time_logs.map((log) => (
-                <div key={log.id || log._id} className={`wd-time-log ${log.end_time ? '' : 'running'}`}>
-                  <div className="wd-time-log-main">
-                    <div className="wd-time-log-duration">
-                      {log.end_time ? <span className="wd-time-log-done">{formatLogDuration(log.duration)}</span> : <span className="wd-time-log-running">● Running</span>}
-                    </div>
-                    <div className="wd-time-log-info">
-                      {log.description && <span className="wd-time-log-desc">{log.description}</span>}
-                      <span className="wd-time-log-times">
-                        {new Date(log.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                        {log.end_time && <> → {new Date(log.end_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</>}
-                      </span>
-                      <span className="wd-time-log-date">{new Date(log.start_time).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
-                    </div>
-                    {log.billable && <span className="wd-badge-pill blue">Billable</span>}
-                  </div>
-                  {log.end_time && (
-                    <button className="wd-delete-btn" onClick={() => deleteTimeLog(log.id || log._id)} disabled={deletingTimeLog === (log.id || log._id)}>
-                      {deletingTimeLog === (log.id || log._id) ? <Spinner size={12} /> : <Trash2 size={12} />}
-                    </button>
-                  )}
+            {/* ── Progress Bar ──────────────────────────── */}
+            {work.estimated_hours > 0 && (
+              <div className="wd-time-progress-card">
+                <div className="wd-time-progress-header">
+                  <span>Time Budget</span>
+                  <span className="wd-time-progress-pct" style={{ color: progress > 100 ? '#ef4444' : '#8b5cf6' }}>{progress}%</span>
                 </div>
-              ))}
+                <div className="wd-time-progress-track">
+                  <div className="wd-time-progress-fill" style={{ width: `${Math.min(progress, 100)}%`, background: progress > 100 ? '#ef4444' : '#8b5cf6' }} />
+                </div>
+                <div className="wd-time-progress-footer">
+                  <span>{work.actual_hours || 0}h used</span>
+                  <span>{work.estimated_hours || 0}h estimated</span>
+                </div>
+              </div>
+            )}
+
+            {/* ── Session History ───────────────────────── */}
+            <div className="wd-time-history">
+              <h4 className="wd-card-section-title"><Clock size={14} /> Session History ({(work.time_logs || []).length})</h4>
+              <div className="wd-time-logs-list">
+                {(work.time_logs || []).length === 0 ? (
+                  <div className="wd-empty-inline"><Clock size={28} /><p>No time logged yet. Start the timer above to begin tracking.</p></div>
+                ) : (
+                  /* Group logs by date */
+                  Object.entries(
+                    (work.time_logs || []).reduce((groups, log) => {
+                      const d = new Date(log.start_time).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+                      if (!groups[d]) groups[d] = [];
+                      groups[d].push(log);
+                      return groups;
+                    }, {})
+                  ).map(([date, logs]) => {
+                    const dayTotal = logs.filter(t => t.end_time).reduce((s, t) => s + (t.duration || 0), 0);
+                    return (
+                      <div key={date} className="wd-time-day-group">
+                        <div className="wd-time-day-header">
+                          <span className="wd-time-day-date">{date}</span>
+                          <span className="wd-time-day-count">{logs.length} session{logs.length > 1 ? 's' : ''}</span>
+                          {dayTotal > 0 && <span className="wd-time-day-total">{formatLogDuration(dayTotal)}</span>}
+                        </div>
+                        {logs.map((log) => (
+                          <div key={log.id || log._id} className={`wd-time-log ${log.end_time ? '' : 'running'}`}>
+                            <div className="wd-time-log-left">
+                              <div className="wd-time-log-dot" style={{ background: log.end_time ? '#8b5cf6' : '#22c55e' }} />
+                              <div className="wd-time-log-line" />
+                            </div>
+                            <div className="wd-time-log-body">
+                              <div className="wd-time-log-row1">
+                                <span className="wd-time-log-duration-badge">
+                                  {log.end_time ? formatLogDuration(log.duration) : <span className="wd-time-log-running-text">● Running</span>}
+                                </span>
+                                {log.description && <span className="wd-time-log-desc">{log.description}</span>}
+                                {log.billable && <span className="wd-badge-pill blue">Billable</span>}
+                              </div>
+                              <div className="wd-time-log-row2">
+                                <span className="wd-time-log-clock"><Clock size={11} /></span>
+                                {new Date(log.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
+                                {log.end_time && <> → {new Date(log.end_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</>}
+                              </div>
+                            </div>
+                            {log.end_time && (
+                              <button className="wd-delete-btn" onClick={() => deleteTimeLog(log.id || log._id)} disabled={deletingTimeLog === (log.id || log._id)}>
+                                {deletingTimeLog === (log.id || log._id) ? <Spinner size={12} /> : <Trash2 size={12} />}
+                              </button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
             </div>
           </div>
         )}
