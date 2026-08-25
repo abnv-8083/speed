@@ -90,7 +90,7 @@
   align-items: center;
   justify-content: center;
   margin-bottom: 1.5rem;
-  background: rgba(139, 92, 246, 0.1);
+  background: var(--tag-bg);
   color: var(--primary);
   transition: all 0.3s ease;
 }

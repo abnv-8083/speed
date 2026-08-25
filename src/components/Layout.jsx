@@ -13,8 +13,11 @@ import {
   ChevronRight,
   Menu,
   Printer,
+  Sun,
+  Moon,
 } from 'lucide-react';
 import { SubNavProvider, useSubNav } from './SubNavContext';
+import { useTheme } from './ThemeContext';
 import './Layout.css';
 
 // ── Inner layout reads sub-nav from context ───────────────────
@@ -24,6 +27,7 @@ function LayoutInner() {
   const navigate  = useNavigate();
   const location  = useLocation();
   const { tabs }  = useSubNav();
+  const { theme, toggleTheme } = useTheme();
 
   const navItems = [
     { path: '/home',      icon: LayoutDashboard, label: 'Dashboard' },
@@ -110,8 +114,15 @@ function LayoutInner() {
             )}
           </div>
 
-          {/* Right: user + logout */}
+          {/* Right: theme toggle + user + logout */}
           <div className="header-right">
+            <button
+              className="btn-icon theme-toggle"
+              onClick={toggleTheme}
+              title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+            >
+              {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+            </button>
             <div className="user-profile">
               <div className="avatar">AD</div>
               <span className="user-name hidden-mobile">Admin User</span>

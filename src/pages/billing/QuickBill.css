@@ -214,7 +214,7 @@
   padding: 0.65rem 1rem;
   cursor: pointer;
   transition: background 0.12s;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+  border-bottom: 1px solid var(--row-border);
 }
 
 .qb-dropdown-item:last-of-type { border-bottom: none; }
@@ -351,7 +351,7 @@
   font-family: inherit;
   transition: all 0.15s;
 }
-.qb-history-btn:hover { color: var(--text); border-color: rgba(255,255,255,0.2); }
+.qb-history-btn:hover { color: var(--text); border-color: var(--border); }
 
 .qb-center-loader {
   display: flex;
@@ -383,7 +383,7 @@
 
 /* ── Bill row ─────────────────────────────────────────────────── */
 .qb-bill-row {
-  border-bottom: 1px solid rgba(255,255,255,0.04);
+  border-bottom: 1px solid var(--row-border);
   transition: background 0.12s;
 }
 
@@ -415,7 +415,7 @@
   transition: background 0.1s;
 }
 
-.qb-bill-item-row:hover { background: rgba(255,255,255,0.03); }
+.qb-bill-item-row:hover { background: var(--row-hover); }
 
 .qb-bill-item-name  { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--text); }
 .qb-bill-item-qty   { color: var(--text-muted); min-width: 28px; text-align: right; }
@@ -826,7 +826,7 @@
 
 .qb-single-bill-row:hover {
   border-color: rgba(139, 92, 246, 0.3);
-  background: rgba(255, 255, 255, 0.02);
+  background: var(--row-hover);
 }
 
 .qb-bill-badge {
@@ -975,7 +975,7 @@
 .qb-bill-items-count {
   font-size: 0.72rem;
   color: var(--text-muted);
-  background: rgba(255,255,255,0.05);
+  background: var(--badge-bg);
   border: 1px solid var(--border);
   padding: 0.1rem 0.45rem;
   border-radius: 999px;
@@ -1084,8 +1084,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.35rem;
-  background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: var(--badge-bg);
+  border: 1px solid var(--badge-border);
   color: var(--text, #f1f5f9);
   padding: 0.3rem 0.65rem;
   border-radius: 6px;
@@ -1096,7 +1096,7 @@
 }
 
 .qb-select-all-btn:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: var(--surface-hover);
 }
 
 .qb-selection-count {
@@ -1139,7 +1139,7 @@
 }
 
 .qb-bill-container--selectable:hover {
-  background: rgba(255, 255, 255, 0.05);
+  background: var(--row-hover);
   border-color: rgba(139, 92, 246, 0.3);
 }
 

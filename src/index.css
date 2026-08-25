@@ -1,48 +1,122 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Inter:wght@400;500;600&display=swap');
 
 :root {
-  /* Vibrant Colors */
-  --primary: #8b5cf6; /* Violet */
+  /* ── Accent Colors ──────────────────────────────────────── */
+  --primary: #8b5cf6;
   --primary-hover: #7c3aed;
   --primary-gradient: linear-gradient(135deg, #8b5cf6 0%, #d946ef 100%);
   --primary-gradient-hover: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
-  
-  --secondary: #10B981; /* Emerald */
+  --primary-subtle: rgba(139, 92, 246, 0.1);
+
+  --secondary: #10B981;
   --secondary-gradient: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  
-  /* Premium Deep Dark Mode */
-  --background: #09090b; /* Very dark zinc */
-  --surface: #18181b;    /* Dark zinc for cards */
-  --surface-hover: #27272a;
-  
-  --text: #f8fafc;
-  --text-muted: #a1a1aa;
-  
-  --border: #27272a;
-  --border-light: rgba(39, 39, 42, 0.5);
-  
+
   --error: #ef4444;
   --warning: #f59e0b;
   --success: #10b981;
-  
+
+  /* ── Spacing / Radius ───────────────────────────────────── */
   --radius: 16px;
   --radius-sm: 8px;
   --radius-full: 9999px;
-  
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
-  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
-  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.4), 0 4px 6px -2px rgba(0, 0, 0, 0.2);
-  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
-  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.15);
-  
+
   --font-sans: 'Outfit', 'Inter', sans-serif;
   --sidebar-width: 260px;
   --sidebar-collapsed-width: 80px;
-  
-  --glass-bg: rgba(24, 24, 27, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.08);
 }
 
+/* ═══════════════════════════════════════════════════════════════
+   DARK THEME (default)
+   Deep, rich dark palette with refined depth
+═══════════════════════════════════════════════════════════════ */
+:root,
+[data-theme="dark"] {
+  --background: #09090b;
+  --surface: #141417;
+  --surface-hover: #1e1e23;
+  --surface-elevated: #1a1a1f;
+
+  --text: #f1f5f9;
+  --text-secondary: #cbd5e1;
+  --text-muted: #71717a;
+
+  --border: #27272a;
+  --border-light: rgba(39, 39, 42, 0.5);
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.6), 0 10px 10px -5px rgba(0, 0, 0, 0.35);
+  --shadow-glow: 0 0 30px rgba(139, 92, 246, 0.12);
+
+  --glass-bg: rgba(20, 20, 23, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.06);
+
+  /* Theme-aware overlays */
+  --overlay-bg: rgba(0, 0, 0, 0.6);
+  --row-hover: rgba(255, 255, 255, 0.03);
+  --row-border: rgba(255, 255, 255, 0.04);
+  --badge-bg: rgba(255, 255, 255, 0.06);
+  --badge-border: rgba(255, 255, 255, 0.1);
+  --scrollbar-thumb: #3f3f46;
+  --scrollbar-track-hover: rgba(255, 255, 255, 0.03);
+  --scrollbar-active: var(--primary);
+  --input-bg: var(--background);
+  --card-action-bg: rgba(0, 0, 0, 0.03);
+  --progress-bg: rgba(255, 255, 255, 0.08);
+  --tag-bg: rgba(139, 92, 246, 0.1);
+  --tag-border: rgba(139, 92, 246, 0.2);
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   LIGHT THEME
+   Clean, airy palette with warm neutrals
+═══════════════════════════════════════════════════════════════ */
+[data-theme="light"] {
+  --background: #f8fafc;
+  --surface: #ffffff;
+  --surface-hover: #f1f5f9;
+  --surface-elevated: #ffffff;
+
+  --text: #0f172a;
+  --text-secondary: #334155;
+  --text-muted: #64748b;
+
+  --border: #e2e8f0;
+  --border-light: rgba(226, 232, 240, 0.6);
+
+  --primary: #7c3aed;
+  --primary-hover: #6d28d9;
+  --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #c026d3 100%);
+  --primary-gradient-hover: linear-gradient(135deg, #6d28d9 0%, #a21caf 100%);
+  --primary-subtle: rgba(124, 58, 237, 0.08);
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.06);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -2px rgba(0, 0, 0, 0.05);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-glow: 0 0 20px rgba(124, 58, 237, 0.08);
+
+  --glass-bg: rgba(255, 255, 255, 0.8);
+  --glass-border: rgba(0, 0, 0, 0.06);
+
+  /* Theme-aware overlays */
+  --overlay-bg: rgba(15, 23, 42, 0.3);
+  --row-hover: rgba(124, 58, 237, 0.03);
+  --row-border: rgba(0, 0, 0, 0.05);
+  --badge-bg: rgba(100, 116, 139, 0.06);
+  --badge-border: rgba(100, 116, 139, 0.12);
+  --scrollbar-thumb: #cbd5e1;
+  --scrollbar-track-hover: rgba(0, 0, 0, 0.03);
+  --scrollbar-active: var(--primary);
+  --input-bg: #ffffff;
+  --card-action-bg: rgba(0, 0, 0, 0.015);
+  --progress-bg: rgba(0, 0, 0, 0.06);
+  --tag-bg: rgba(124, 58, 237, 0.07);
+  --tag-border: rgba(124, 58, 237, 0.15);
+}
+
+/* ── Base Reset ─────────────────────────────────────────────── */
 * {
   box-sizing: border-box;
   margin: 0;
@@ -55,6 +129,7 @@ body {
   color: var(--text);
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.3s ease, color 0.3s ease;
   overflow-x: clip;
 }
@@ -81,7 +156,7 @@ input, select, textarea {
   font-family: inherit;
 }
 
-/* Glassmorphism Classes */
+/* ── Glassmorphism ──────────────────────────────────────────── */
 .glass-panel {
   background: var(--surface);
   border: 1px solid var(--border);
@@ -95,7 +170,7 @@ input, select, textarea {
   border-color: rgba(139, 92, 246, 0.3);
 }
 
-/* Animations */
+/* ── Animations ─────────────────────────────────────────────── */
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
@@ -105,7 +180,7 @@ input, select, textarea {
   animation: fadeIn 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
 
-/* Utility Classes */
+/* ── Buttons ────────────────────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -146,7 +221,7 @@ input, select, textarea {
 .btn-outline:hover {
   border-color: var(--primary);
   color: var(--primary);
-  background: rgba(139, 92, 246, 0.05);
+  background: var(--primary-subtle);
 }
 
 .btn-icon {
@@ -169,12 +244,13 @@ input, select, textarea {
   box-shadow: var(--shadow-sm);
 }
 
+/* ── Inputs ─────────────────────────────────────────────────── */
 .input-field {
   width: 100%;
   padding: 0.875rem 1rem;
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  background-color: var(--surface);
+  background-color: var(--input-bg);
   color: var(--text);
   font-size: 0.95rem;
   transition: all 0.2s ease;
@@ -183,8 +259,8 @@ input, select, textarea {
 .input-field:focus {
   outline: none;
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.15);
-  background-color: var(--background);
+  box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.12);
+  background-color: var(--surface);
 }
 
 .form-group {
@@ -199,7 +275,7 @@ input, select, textarea {
   color: var(--text-muted);
 }
 
-/* Gradient Text */
+/* ── Gradient Text ──────────────────────────────────────────── */
 .text-gradient {
   background: var(--primary-gradient);
   -webkit-background-clip: text;
@@ -208,7 +284,7 @@ input, select, textarea {
   display: inline-block;
 }
 
-/* Global Layout App Structure */
+/* ── Layout ─────────────────────────────────────────────────── */
 .app-container {
   display: flex;
   min-height: 100vh;
@@ -223,18 +299,7 @@ input, select, textarea {
   transition: margin-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Global Mobile Overrides */
-@media (max-width: 768px) {
-  :root {
-    --radius: 12px;
-  }
-  
-  .btn {
-    padding: 0.5rem 1rem;
-  }
-}
-
-/* Spinner */
+/* ── Spinner ────────────────────────────────────────────────── */
 .spin {
   animation: globalSpin 0.8s linear infinite;
 }
@@ -243,20 +308,13 @@ input, select, textarea {
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   CUSTOM SCROLLBAR — matches app dark theme
-   Works in Chrome, Edge, Safari (WebKit).
-   Firefox uses scrollbar-width + scrollbar-color (standard).
+   SCROLLBAR — theme-aware
 ═══════════════════════════════════════════════════════════════ */
-
-/* ── Firefox ──────────────────────────────────────────────────── */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #3f3f46 transparent;
+  scrollbar-color: var(--scrollbar-thumb) transparent;
 }
 
-/* ── WebKit (Chrome, Edge, Safari) ───────────────────────────── */
-
-/* Track — the channel the thumb slides in */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -268,12 +326,11 @@ input, select, textarea {
 }
 
 ::-webkit-scrollbar-track:hover {
-  background: rgba(255, 255, 255, 0.03);
+  background: var(--scrollbar-track-hover);
 }
 
-/* Thumb — the draggable handle */
 ::-webkit-scrollbar-thumb {
-  background: #3f3f46;
+  background: var(--scrollbar-thumb);
   border-radius: 999px;
   border: 1px solid transparent;
   background-clip: content-box;
@@ -281,27 +338,34 @@ input, select, textarea {
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #52525b;
+  background: var(--text-muted);
   background-clip: content-box;
 }
 
 ::-webkit-scrollbar-thumb:active {
-  background: var(--primary);
+  background: var(--scrollbar-active);
   background-clip: content-box;
 }
 
-/* Corner — where horizontal and vertical scrollbars meet */
 ::-webkit-scrollbar-corner {
   background: transparent;
 }
 
-/* ── Slim variant for panels / modals ─────────────────────────── */
 .scroll-thin::-webkit-scrollbar { width: 4px; height: 4px; }
 .scroll-thin { scrollbar-width: thin; }
 
-/* ── Invisible scrollbar (scroll still works) ─────────────────── */
 .scroll-hidden {
   scrollbar-width: none;
   -ms-overflow-style: none;
 }
 .scroll-hidden::-webkit-scrollbar { display: none; }
+
+/* ── Global Mobile Overrides ────────────────────────────────── */
+@media (max-width: 768px) {
+  :root {
+    --radius: 12px;
+  }
+  .btn {
+    padding: 0.5rem 1rem;
+  }
+}

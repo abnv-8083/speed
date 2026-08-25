@@ -202,7 +202,7 @@
 }
 
 .cust-icon-btn:hover {
-  background: rgba(255,255,255,0.08);
+  background: var(--surface-hover);
   color: var(--text);
   border-color: var(--border);
 }
