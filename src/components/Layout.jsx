@@ -25,7 +25,7 @@ import './Layout.css';
 
 // ── Inner layout reads sub-nav from context ───────────────────
 function LayoutInner() {
-  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCollapsed, setIsCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen]   = useState(false);
   const navigate  = useNavigate();
   const location  = useLocation();
