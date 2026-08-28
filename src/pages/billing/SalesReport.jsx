@@ -595,8 +595,58 @@ const SalesReport = () => {
                 />
                 <MetricCard label="Profit Margin" value={`${metrics.profitPct.toFixed(1)}%`}
                   accent={metrics.profitPct >= 0 ? 'success' : 'danger'} icon={<PieChart size={18}/>} />
-                <MetricCard label="UPI Payments" value={`₹${metrics.upiRevenue.toFixed(2)}`} accent="primary" icon={<Smartphone size={18}/>} hint={`${metrics.upiCount} transaction${metrics.upiCount !== 1 ? 's' : ''}`} />
-                <MetricCard label="Cash Payments" value={`₹${metrics.cashRevenue.toFixed(2)}`} accent="success" icon={<Wallet size={18}/>} hint={`${metrics.cashCount} transaction${metrics.cashCount !== 1 ? 's' : ''}`} />
+                <div style={{ gridColumn: '1 / -1' }}>
+                  <div className="sr-pay-methods-section">
+                    <h3 className="sr-pay-section-title">
+                      <Wallet size={16} /> Payment Methods
+                      <span className="sr-pay-section-hint">Click a card to filter transactions</span>
+                    </h3>
+                    <div className="sr-pay-methods-grid">
+                      {[
+                        { key: 'Cash', label: 'Cash', icon: '💵', count: metrics.cashCount, revenue: metrics.cashRevenue, color: '#10b981', bgColor: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.25)', activeColor: '#059669' },
+                        { key: 'UPI', label: 'UPI', icon: '📱', count: metrics.upiCount, revenue: metrics.upiRevenue, color: '#8b5cf6', bgColor: 'rgba(139,92,246,0.08)', borderColor: 'rgba(139,92,246,0.25)', activeColor: '#7c3aed' },
+                        { key: 'UPI - Bank', label: 'UPI - Bank', icon: '🏦', count: metrics.upiBankCount, revenue: metrics.upiBankRevenue, color: '#6366f1', bgColor: 'rgba(99,102,241,0.08)', borderColor: 'rgba(99,102,241,0.25)', activeColor: '#4f46e5' },
+                        { key: 'Cash - Bank', label: 'Cash - Bank', icon: '🏧', count: metrics.cashBankCount, revenue: metrics.cashBankRevenue, color: '#059669', bgColor: 'rgba(5,150,105,0.08)', borderColor: 'rgba(5,150,105,0.25)', activeColor: '#047857' },
+                      ].map(m => (
+                        <div
+                          key={m.key}
+                          className={`sr-pay-method-card ${paymentFilter === m.key ? 'sr-pay-method-card--active' : ''}`}
+                          style={{
+                            '--pm-color': m.color,
+                            '--pm-bg': m.bgColor,
+                            '--pm-border': m.borderColor,
+                            '--pm-active-color': m.activeColor,
+                            borderColor: paymentFilter === m.key ? m.activeColor : undefined,
+                            background: paymentFilter === m.key ? m.bgColor : undefined,
+                          }}
+                          onClick={() => {
+                            setPaymentFilter(m.key);
+                            setActiveTab('P&L Report');
+                            setTablePage(1);
+                          }}
+                          role="button"
+                          tabIndex={0}
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                              e.preventDefault();
+                              setPaymentFilter(m.key);
+                              setActiveTab('P&L Report');
+                              setTablePage(1);
+                            }
+                          }}
+                        >
+                          <div className="sr-pay-method-icon">{m.icon}</div>
+                          <div className="sr-pay-method-info">
+                            <span className="sr-pay-method-label">{m.label}</span>
+                            <span className="sr-pay-method-count">{m.count} transaction{m.count !== 1 ? 's' : ''}</span>
+                          </div>
+                          <span className="sr-pay-method-value">₹{m.revenue.toFixed(2)}</span>
+                          <ChevronRight size={14} className="sr-pay-method-arrow" />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
                 <MetricCard label="Invoices" value={metrics.invoiceCount} accent="primary" icon={<Receipt size={18}/>} />
                 <MetricCard label="Items Sold" value={metrics.itemsCount} accent="warning" icon={<Package size={18}/>} />
                 <MetricCard label="Avg. Order" value={`₹${metrics.avgOrder.toFixed(2)}`} accent="neutral" icon={<Activity size={18}/>} />
