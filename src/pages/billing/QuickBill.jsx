@@ -20,9 +20,10 @@ function isToday(billedDate) {
 }
 
 // ── Edit Bill Item Modal ───────────────────────────────────────
-function EditItemModal({ item, onSave, onClose }) {
+function EditItemModal({ item, bill, onSave, onClose }) {
   const [qty, setQty]           = useState(item.quantity);
   const [discount, setDiscount] = useState(item.discount || 0);
+  const [payMethod, setPayMethod] = useState((bill.payment_method || 'Cash').toUpperCase() === 'UPI' ? 'UPI' : 'Cash');
 
   const lineTotal = Math.max(0, (qty * Number(item.price)) - (parseFloat(discount) || 0));
 
@@ -34,7 +35,7 @@ function EditItemModal({ item, onSave, onClose }) {
       footer={
         <>
           <button className="btn btn-secondary" onClick={onClose}>Cancel</button>
-          <button className="btn btn-primary" onClick={() => onSave(qty, parseFloat(discount) || 0)} disabled={qty < 1}>
+          <button className="btn btn-primary" onClick={() => onSave(qty, parseFloat(discount) || 0, payMethod)} disabled={qty < 1}>
             <Check size={14} /> Update
           </button>
         </>
@@ -72,10 +73,18 @@ function EditItemModal({ item, onSave, onClose }) {
               onKeyDown={e => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
-                  if (qty >= 1) onSave(qty, parseFloat(discount) || 0);
+                  if (qty >= 1) onSave(qty, parseFloat(discount) || 0, payMethod);
                 }
               }}
             />
+          </div>
+        </div>
+
+        <div className="qb-qty-pay-row">
+          <label className="qb-qty-note-label">Payment Method</label>
+          <div className="qb-qty-pay-options">
+            <button type="button" className={`qb-qty-pay-btn ${payMethod === 'Cash' ? 'active cash' : ''}`} onClick={() => setPayMethod('Cash')}>💵 Cash</button>
+            <button type="button" className={`qb-qty-pay-btn ${payMethod === 'UPI' ? 'active upi' : ''}`} onClick={() => setPayMethod('UPI')}>📱 UPI</button>
           </div>
         </div>
 
@@ -681,7 +690,7 @@ export default function QuickBill() {
   // ── Edit item quantity / discount ──────────────────────────────
   const openEditItem = (bill, itemIdx) => setEditTarget({ bill, itemIdx });
 
-  const handleEditItemSave = async (newQty, newDiscount = 0) => {
+  const handleEditItemSave = async (newQty, newDiscount = 0, newPayMethod) => {
     const { bill, itemIdx } = editTarget;
     const updatedItems = bill.items.map((item, i) => {
       if (i !== itemIdx) return item;
@@ -696,8 +705,10 @@ export default function QuickBill() {
       };
     });
     const newTotal = updatedItems.reduce((s, i) => s + i.line_total, 0);
+    const payload = { items: updatedItems, total: newTotal };
+    if (newPayMethod) payload.payment_method = newPayMethod;
     try {
-      const updated = await api.updateQuickBill(bill.id, { items: updatedItems, total: newTotal });
+      const updated = await api.updateQuickBill(bill.id, payload);
       setBills(prev => prev.map(b => b.id === bill.id ? updated : b));
       // Refresh summary
       const [summaryData] = await Promise.all([api.getQuickBillSummary()]);
@@ -1223,6 +1234,7 @@ export default function QuickBill() {
       {editTarget && (
         <EditItemModal
           item={editTarget.bill.items[editTarget.itemIdx]}
+          bill={editTarget.bill}
           onSave={handleEditItemSave}
           onClose={() => setEditTarget(null)}
         />
