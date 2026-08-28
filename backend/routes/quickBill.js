@@ -52,7 +52,8 @@ router.post('/', async (req, res) => {
   try {
     const { items, total, advance, note, payment_method } = req.body;
     const today = todayStr();
-    const payMethod = (payment_method && payment_method.toUpperCase() === 'UPI') ? 'UPI' : 'Cash';
+    const allowedMethods = ['Cash', 'UPI', 'UPI - Bank', 'Cash - Bank'];
+    const payMethod = allowedMethods.includes(payment_method) ? payment_method : 'Cash';
     const advAmount = Number(advance || 0);
 
     // Auto-number bills per day
@@ -204,14 +205,34 @@ router.get('/summary', async (req, res) => {
               $cond: [{ $eq: ['$payment_method', 'UPI'] }, 1, 0]
             }
           },
+          upiBankAmount: {
+            $sum: {
+              $cond: [{ $eq: ['$payment_method', 'UPI - Bank'] }, '$total', 0]
+            }
+          },
+          upiBankCount: {
+            $sum: {
+              $cond: [{ $eq: ['$payment_method', 'UPI - Bank'] }, 1, 0]
+            }
+          },
+          cashBankAmount: {
+            $sum: {
+              $cond: [{ $eq: ['$payment_method', 'Cash - Bank'] }, '$total', 0]
+            }
+          },
+          cashBankCount: {
+            $sum: {
+              $cond: [{ $eq: ['$payment_method', 'Cash - Bank'] }, 1, 0]
+            }
+          },
           cashAmount: {
             $sum: {
-              $cond: [{ $ne: ['$payment_method', 'UPI'] }, '$total', 0]
+              $cond: [{ $eq: ['$payment_method', 'Cash'] }, '$total', 0]
             }
           },
           cashCount: {
             $sum: {
-              $cond: [{ $ne: ['$payment_method', 'UPI'] }, 1, 0]
+              $cond: [{ $eq: ['$payment_method', 'Cash'] }, 1, 0]
             }
           },
         },
