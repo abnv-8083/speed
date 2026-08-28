@@ -386,7 +386,6 @@ const SalesReport = () => {
     const html = `
       <style>
         .pdf-section { page-break-inside: avoid; }
-        .pdf-break { page-break-before: always; }
         .pdf-tbl { width:100%;border-collapse:collapse;border:1px solid #e2e8f0 }
         .pdf-tbl thead { display:table-header-group }
         .pdf-tbl tr { page-break-inside:avoid }
@@ -462,8 +461,8 @@ const SalesReport = () => {
         </div>
 
         <!-- ── Transactions ── -->
-        <div class="pdf-break">
-          <h2 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 6px">
+        <div style="margin-top:12px">
+          <h2 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 6px;page-break-before:always;padding-top:0">
             Sales Transactions ${salesData.length > 100 ? `(showing first 100 of ${salesData.length})` : ''}
           </h2>
           <table class="pdf-tbl" style="border-radius:6px;overflow:hidden">
@@ -484,10 +483,13 @@ const SalesReport = () => {
         </p>
       </div>`;
 
-    const el = document.createElement('div');
-    el.innerHTML = html;
-    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff';
-    document.body.appendChild(el);
+    const wrapper = document.createElement('div');
+    wrapper.innerHTML = html;
+    wrapper.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff';
+    document.body.appendChild(wrapper);
+
+    // Find the content div (skip the <style> element)
+    const contentEl = wrapper.querySelector('div') || wrapper.firstElementChild;
 
     await html2pdf()
       .set({
@@ -496,12 +498,12 @@ const SalesReport = () => {
         image:       { type: 'jpeg', quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 794, windowWidth: 794 },
         jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:   { mode: ['css', 'legacy'], before: '.pdf-break', avoid: '.pdf-section' },
+        pagebreak:   { mode: 'css' },
       })
-      .from(el.firstElementChild)
+      .from(contentEl)
       .save();
 
-    document.body.removeChild(el);
+    document.body.removeChild(wrapper);
     toast.success('PDF downloaded');
   };
 
