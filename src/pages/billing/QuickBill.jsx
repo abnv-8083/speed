@@ -844,20 +844,19 @@ export default function QuickBill() {
               </select>
             </div>
 
-            {/* 3b. Service Price (for services only) */}
-            {selectedProduct?.type === 'service' && (
-              <div className="qb-inline-field qb-field-price">
-                <label className="qb-inline-label">Service Price</label>
+            {/* 3b. Service Price hint (services only) — auto-filled from product, not editable */}
+            {selectedProduct?.type === 'service' && costPrice > 0 && (
+              <div className="qb-inline-field qb-field-price" style={{ opacity: 0.6 }}>
+                <label className="qb-inline-label">Service Price (cost)</label>
                 <div className="qb-currency-input-wrap">
                   <span className="qb-currency-symbol">₹</span>
                   <input
-                    type="number"
-                    step="0.01"
+                    type="text"
                     className="input-field qb-inline-input qb-currency-input"
-                    placeholder="0.00"
-                    value={costPrice}
-                    onChange={e => setCostPrice(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && priceInputRef.current?.focus()}
+                    value={Number(costPrice).toFixed(2)}
+                    readOnly
+                    tabIndex={-1}
+                    style={{ cursor: 'default' }}
                   />
                 </div>
               </div>
@@ -865,7 +864,7 @@ export default function QuickBill() {
 
             {/* 4. Selling Price / Service Charge (Editable) */}
             <div className="qb-inline-field qb-field-price">
-              <label className="qb-inline-label">{selectedProduct?.type === 'service' ? 'Service Charge' : 'Selling Price'}</label>
+              <label className="qb-inline-label">{selectedProduct?.type === 'service' ? 'Service Charge' : 'Selling Price'} <span className="qb-req">*</span></label>
               <div className="qb-currency-input-wrap">
                 <span className="qb-currency-symbol">₹</span>
                 <input
@@ -902,7 +901,9 @@ export default function QuickBill() {
 
             {/* 6. Total Amount (Editable) */}
             <div className="qb-inline-field qb-field-total">
-              <label className="qb-inline-label">Total Amount</label>
+              <label className="qb-inline-label">
+                {selectedProduct?.type === 'service' ? 'Total (Service Charge × Qty − Discount)' : 'Total Amount'}
+              </label>
               <div className="qb-currency-input-wrap">
                 <span className="qb-currency-symbol">₹</span>
                 <input

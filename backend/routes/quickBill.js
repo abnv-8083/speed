@@ -86,6 +86,7 @@ router.post('/', async (req, res) => {
         product_id:    item.product_id,
         quantity:      item.quantity,
         price_at_time: item.price,
+        cost_price:    item.cost_price || 0,
       }));
 
       await InvoiceItem.insertMany(invoiceItems);
@@ -136,6 +137,7 @@ router.patch('/:id', async (req, res) => {
         product_id:    item.product_id,
         quantity:      item.quantity,
         price_at_time: item.price,
+        cost_price:    item.cost_price || 0,
       }));
       await InvoiceItem.insertMany(newItems);
     }

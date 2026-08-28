@@ -241,7 +241,7 @@ const SalesReport = () => {
       if (inv.invoice_items) {
         inv.invoice_items.forEach(item => {
           const sellPrice = Number(item.price_at_time);
-          const costPrice = Number(item.products?.cost_price || 0);
+          const costPrice = Number(item.cost_price || item.products?.cost_price || 0);
           const qty       = item.quantity;
           invRevenue += sellPrice * qty;
           invCogs    += costPrice * qty;

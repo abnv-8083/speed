@@ -44,24 +44,33 @@ function BillHistoryRow({ bill }) {
           <div className="qbh-items-header">
             <span>Product</span>
             <span>Qty</span>
-            <span>Unit Price</span>
+            <span>Service Price</span>
+            <span>Service Charge</span>
             <span>Line Total</span>
           </div>
-          {bill.items.map((item, i) => (
-            <div key={i} className="qbh-item-row">
-              <span className="qbh-item-name">
-                {item.product_name}
-                {item.note && (
-                  <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '1px' }}>
-                    Note: {item.note}
-                  </span>
-                )}
-              </span>
-              <span className="qbh-item-qty">×{item.quantity}</span>
-              <span className="qbh-item-price">₹{Number(item.price).toFixed(2)}</span>
-              <span className="qbh-item-total">₹{Number(item.line_total).toFixed(2)}</span>
-            </div>
-          ))}
+          {bill.items.map((item, i) => {
+            const isService = Number(item.cost_price) > 0;
+            return (
+              <div key={i} className="qbh-item-row">
+                <span className="qbh-item-name">
+                  {item.product_name}
+                  {item.note && (
+                    <span style={{ display: 'block', fontSize: '0.72rem', color: 'var(--text-muted)', fontStyle: 'italic', marginTop: '1px' }}>
+                      Note: {item.note}
+                    </span>
+                  )}
+                </span>
+                <span className="qbh-item-qty">×{item.quantity}</span>
+                <span className="qbh-item-price" style={{ color: isService ? '#f59e0b' : 'var(--text-muted)' }}>
+                  {isService ? `₹${Number(item.cost_price).toFixed(2)}` : '—'}
+                </span>
+                <span className="qbh-item-price" style={{ color: isService ? '#8b5cf6' : 'var(--text-muted)', fontWeight: isService ? 700 : 400 }}>
+                  ₹{Number(item.price).toFixed(2)}
+                </span>
+                <span className="qbh-item-total">₹{Number(item.line_total).toFixed(2)}</span>
+              </div>
+            );
+          })}
           <div className="qbh-items-total-row">
             <span>Bill Total</span>
             <span>₹{Number(bill.total).toFixed(2)}</span>
@@ -167,7 +176,7 @@ export default function QuickBillHistory() {
   const exportCSV = () => {
     setExporting('csv');
     try {
-      let csv = 'Date,Bill #,Payment Method,Product,Quantity,Unit Price,Line Total,Bill Total\n';
+      let csv = 'Date,Bill #,Payment Method,Product,Quantity,Service Price,Service Charge,Line Total,Bill Total\n';
       filteredBills.forEach(bill => {
         const payMethod = bill.payment_method || 'Cash';
         bill.items.forEach((item, idx) => {
@@ -177,6 +186,7 @@ export default function QuickBillHistory() {
             payMethod,
             `"${item.product_name.replace(/"/g, '""')}"`,
             item.quantity,
+            item.cost_price ? Number(item.cost_price).toFixed(2) : '',
             Number(item.price).toFixed(2),
             Number(item.line_total).toFixed(2),
             idx === 0 ? Number(bill.total).toFixed(2) : '',
@@ -210,12 +220,14 @@ export default function QuickBillHistory() {
       filteredBills.forEach(bill => {
         bill.items.forEach((item, idx) => {
           const payMethod = bill.payment_method || 'Cash';
+          const hasCost = Number(item.cost_price) > 0;
           rows += `<tr>
             <td>${idx === 0 ? bill.billed_date : ''}</td>
             <td>${idx === 0 ? '#' + bill.bill_number : ''}</td>
             <td>${item.product_name}</td>
             <td style="text-align:center">${item.quantity}</td>
-            <td style="text-align:right">₹${Number(item.price).toFixed(2)}</td>
+            <td style="text-align:right;color:${hasCost ? '#d97706' : '#999'}">${hasCost ? '₹' + Number(item.cost_price).toFixed(2) : '—'}</td>
+            <td style="text-align:right;font-weight:600;color:#7c3aed">₹${Number(item.price).toFixed(2)}</td>
             <td style="text-align:right">₹${Number(item.line_total).toFixed(2)}</td>
             <td style="text-align:center;font-weight:700;${payMethod === 'UPI' ? 'color:#7c3aed' : payMethod === 'UPI - Bank' ? 'color:#6366f1' : payMethod === 'Cash - Bank' ? 'color:#059669' : 'color:#16a34a'}">${idx === 0 ? (bill.payment_method || 'Cash') : ''}</td>
             <td style="text-align:right;font-weight:700">${idx === 0 ? '₹' + Number(bill.total).toFixed(2) : ''}</td>
@@ -238,7 +250,8 @@ export default function QuickBillHistory() {
                 <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e2e8f0">Bill #</th>
                 <th style="text-align:left;padding:6px 8px;border-bottom:2px solid #e2e8f0">Product</th>
                 <th style="text-align:center;padding:6px 8px;border-bottom:2px solid #e2e8f0">Qty</th>
-                <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e2e8f0">Unit Price</th>
+                <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e2e8f0">Service Price</th>
+                <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e2e8f0">Service Charge</th>
                 <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e2e8f0">Line Total</th>
                 <th style="text-align:center;padding:6px 8px;border-bottom:2px solid #e2e8f0">Payment</th>
                 <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e2e8f0">Bill Total</th>
@@ -247,7 +260,7 @@ export default function QuickBillHistory() {
             <tbody>${rows}</tbody>
             <tfoot>
               <tr style="background:#f8fafc;font-weight:700">
-                <td colspan="6" style="padding:8px;border-top:2px solid #e2e8f0">Grand Total</td>
+                <td colspan="7" style="padding:8px;border-top:2px solid #e2e8f0">Grand Total</td>
                 <td style="padding:8px;border-top:2px solid #e2e8f0;text-align:right">
                   ₹${filteredBills.reduce((s,b) => s + b.items.reduce((si,i) => si + Number(i.line_total),0), 0).toFixed(2)}
                 </td>
