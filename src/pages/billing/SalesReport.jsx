@@ -1130,18 +1130,34 @@ const SalesReport = () => {
                         <th>Invoice</th>
                         <th>Customer</th>
                         <th style={{ textAlign: 'center' }}>Method</th>
+                        {filteredSalesData.some(inv => (inv.payment_method || '') === 'UPI - Bank' || (inv.payment_method || '') === 'Cash - Bank') && (
+                          <>
+                            <th className="text-right">Service Total</th>
+                            <th className="text-right">Service Price</th>
+                          </>
+                        )}
                         <th className="text-right">Discount</th>
                         <th className="text-right">Amount</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredSalesData.length === 0 ? (
-                        <tr><td colSpan="6" className="table-empty-cell">No transactions found.</td></tr>
+                        <tr><td colSpan={filteredSalesData.some(inv => (inv.payment_method || '') === 'UPI - Bank' || (inv.payment_method || '') === 'Cash - Bank') ? 8 : 6} className="table-empty-cell">No transactions found.</td></tr>
                       ) : (
                         filteredSalesData
                           .slice((tablePage - 1) * TABLE_PAGE_SIZE, tablePage * TABLE_PAGE_SIZE)
                           .map((inv, idx) => {
                             const payM = inv.payment_method || 'Cash';
+                            const isBank = payM === 'UPI - Bank' || payM === 'Cash - Bank';
+                            // For bank methods, sum service total & price from invoice items
+                            let serviceTotal = 0;
+                            let servicePrice = 0;
+                            if (isBank && inv.invoice_items) {
+                              inv.invoice_items.forEach(item => {
+                                serviceTotal += Number(item.price_at_time || 0) * Number(item.quantity || 1);
+                                servicePrice += Number(item.cost_price || 0) * Number(item.quantity || 1);
+                              });
+                            }
                             return (
                               <tr key={inv.id} className={idx % 2 === 0 ? 'row-even' : 'row-odd'}>
                                 <td>{new Date(inv.created_at).toLocaleDateString()}</td>
@@ -1152,6 +1168,12 @@ const SalesReport = () => {
                                     {payM}
                                   </span>
                                 </td>
+                                {isBank && (
+                                  <>
+                                    <td className="text-right" style={{ color: '#f59e0b', fontWeight: 600 }}>₹{serviceTotal.toFixed(2)}</td>
+                                    <td className="text-right" style={{ color: '#8b5cf6', fontWeight: 600 }}>₹{servicePrice.toFixed(2)}</td>
+                                  </>
+                                )}
                                 <td className="text-right text-error">{inv.discount > 0 ? `-₹${Number(inv.discount).toFixed(2)}` : '—'}</td>
                                 <td className="text-right text-success font-bold">₹{Number(inv.total_amount).toFixed(2)}</td>
                               </tr>
