@@ -812,73 +812,209 @@ const SalesReport = () => {
           {/* ═══ P&L REPORT TAB ═══ */}
           {activeTab === 'P&L Report' && (
             <div className="sr-content">
+
+              {/* ── Top KPI Strip ── */}
+              <div className="sr-pl-kpi-strip">
+                {[
+                  { label: 'Revenue', value: metrics.revenue, color: '#10b981', icon: <DollarSign size={16}/> },
+                  { label: 'COGS', value: metrics.cogs, color: '#f59e0b', icon: <Package size={16}/> },
+                  { label: 'Gross Profit', value: metrics.grossProfit, color: metrics.grossProfit >= 0 ? '#10b981' : '#f87171', icon: <TrendingUp size={16}/> },
+                  { label: 'Expenses', value: metrics.totalExp, color: '#f87171', icon: <TrendingDown size={16}/> },
+                  { label: isProfit ? 'Net Profit' : 'Net Loss', value: metrics.netProfit, color: isProfit ? '#10b981' : '#f87171', icon: isProfit ? <TrendingUp size={16}/> : <TrendingDown size={16}/> },
+                  { label: 'Margin', value: null, color: metrics.profitPct >= 0 ? '#10b981' : '#f87171', icon: <PieChart size={16}/>, display: `${Math.abs(metrics.profitPct).toFixed(1)}%` },
+                ].map(k => (
+                  <div key={k.label} className="sr-pl-kpi" style={{ '--kpi-color': k.color }}>
+                    <div className="sr-pl-kpi-icon">{k.icon}</div>
+                    <div className="sr-pl-kpi-info">
+                      <span className="sr-pl-kpi-label">{k.label}</span>
+                      <span className="sr-pl-kpi-value">{k.display || `₹${Math.abs(k.value).toFixed(2)}`}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* ── Two Column Layout ── */}
               <div className="sr-pl-grid">
 
-                {/* P&L summary card */}
-                <div className={`sr-pl-summary glass-panel ${isProfit ? 'sr-pl-profit' : 'sr-pl-loss'}`}>
-                  <div className="sr-pl-summary-icon">
-                    {isProfit ? <TrendingUp size={28}/> : <TrendingDown size={28}/>}
-                  </div>
-                  <div>
-                    <h3>{isProfit ? 'Net Profit' : 'Net Loss'}</h3>
-                    <p className="sr-pl-value">₹{Math.abs(metrics.netProfit).toFixed(2)}</p>
-                    <p className="sr-pl-pct">{Math.abs(metrics.profitPct).toFixed(1)}% {isProfit ? 'profit margin' : 'loss margin'}</p>
-                  </div>
-                </div>
-
-                {/* Breakdown */}
+                {/* Left: Income Statement */}
                 <div className="sr-pl-breakdown glass-panel">
                   <h3 className="sr-pl-section-title">Income Statement</h3>
 
-                  <div className="sr-pl-line sr-pl-line--header">
-                    <span>Revenue (Gross Sales)</span>
-                    <span className="sr-pl-green">+₹{metrics.revenue.toFixed(2)}</span>
+                  {/* Revenue Section */}
+                  <div className="sr-pl-section">
+                    <div className="sr-pl-section-header">
+                      <span className="sr-pl-section-dot" style={{ background: '#10b981' }} />
+                      <span>Revenue</span>
+                      <span className="sr-pl-green">+₹{metrics.revenue.toFixed(2)}</span>
+                    </div>
+                    <div className="sr-pl-section-body">
+                      <div className="sr-pl-line sr-pl-line--sub">
+                        <span>↳ Cash Sales</span>
+                        <span className="sr-pl-green">₹{metrics.cashRevenue.toFixed(2)}</span>
+                      </div>
+                      <div className="sr-pl-line sr-pl-line--sub">
+                        <span>↳ UPI Sales</span>
+                        <span style={{ color: '#a78bfa', fontWeight: 600 }}>₹{metrics.upiRevenue.toFixed(2)}</span>
+                      </div>
+                      <div className="sr-pl-line sr-pl-line--sub">
+                        <span>↳ UPI - Bank Sales</span>
+                        <span style={{ color: '#a5b4fc', fontWeight: 600 }}>₹{metrics.upiBankRevenue.toFixed(2)}</span>
+                      </div>
+                      <div className="sr-pl-line sr-pl-line--sub">
+                        <span>↳ Cash - Bank Sales</span>
+                        <span style={{ color: '#6ee7b7', fontWeight: 600 }}>₹{metrics.cashBankRevenue.toFixed(2)}</span>
+                      </div>
+                    </div>
                   </div>
-                  <div className="sr-pl-line sr-pl-line--sub">
-                    <span>↳ Cash Sales</span>
-                    <span className="sr-pl-green">₹{metrics.cashRevenue.toFixed(2)}</span>
-                  </div>
-                  <div className="sr-pl-line sr-pl-line--sub">
-                    <span>↳ UPI Sales</span>
-                    <span style={{ color: '#a78bfa', fontWeight: 600 }}>₹{metrics.upiRevenue.toFixed(2)}</span>
-                  </div>
-                  <div className="sr-pl-line sr-pl-line--sub">
+
+                  {/* Discounts */}
+                  <div className="sr-pl-line sr-pl-line--sub sr-pl-line--indent">
                     <span>Discounts Given</span>
                     <span className="sr-pl-red">-₹{metrics.discounts.toFixed(2)}</span>
                   </div>
-                  <div className="sr-pl-line sr-pl-line--subtotal">
-                    <span>Net Revenue</span>
-                    <span className="sr-pl-green">₹{(metrics.revenue).toFixed(2)}</span>
-                  </div>
 
                   <div className="sr-pl-divider" />
 
-                  <div className="sr-pl-line sr-pl-line--header">
-                    <span>Total Expenses</span>
-                    <span className="sr-pl-red">-₹{metrics.totalExp.toFixed(2)}</span>
-                  </div>
-                  {Object.entries(
-                    expenses.reduce((acc, e) => {
-                      acc[e.category] = (acc[e.category] || 0) + Number(e.amount);
-                      return acc;
-                    }, {})
-                  ).map(([cat, amt]) => (
-                    <div key={cat} className="sr-pl-line sr-pl-line--sub">
-                      <span>{cat}</span>
-                      <span className="sr-pl-red">-₹{amt.toFixed(2)}</span>
+                  {/* COGS Section */}
+                  <div className="sr-pl-section">
+                    <div className="sr-pl-section-header">
+                      <span className="sr-pl-section-dot" style={{ background: '#f59e0b' }} />
+                      <span>Cost of Goods Sold</span>
+                      <span style={{ color: '#f59e0b', fontWeight: 700 }}>-₹{metrics.cogs.toFixed(2)}</span>
                     </div>
-                  ))}
+                  </div>
+
+                  {/* Gross Profit */}
+                  <div className="sr-pl-line sr-pl-line--subtotal">
+                    <span>Gross Profit</span>
+                    <span style={{ color: metrics.grossProfit >= 0 ? '#10b981' : '#f87171', fontWeight: 700 }}>
+                      ₹{metrics.grossProfit.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* Gross Margin Bar */}
+                  <div className="sr-pl-margin-bar">
+                    <div className="sr-pl-margin-bar-track">
+                      <div
+                        className="sr-pl-margin-bar-fill"
+                        style={{
+                          width: `${Math.min(100, Math.abs(metrics.profitPct))}%`,
+                          background: metrics.profitPct >= 0 ? '#10b981' : '#f87171',
+                        }}
+                      />
+                    </div>
+                    <span className="sr-pl-margin-bar-label">
+                      {Math.abs(metrics.profitPct).toFixed(1)}% gross margin
+                    </span>
+                  </div>
 
                   <div className="sr-pl-divider" />
 
+                  {/* Expenses Section */}
+                  <div className="sr-pl-section">
+                    <div className="sr-pl-section-header">
+                      <span className="sr-pl-section-dot" style={{ background: '#f87171' }} />
+                      <span>Operating Expenses</span>
+                      <span className="sr-pl-red">-₹{metrics.totalExp.toFixed(2)}</span>
+                    </div>
+                    <div className="sr-pl-section-body">
+                      {Object.entries(
+                        expenses.reduce((acc, e) => {
+                          acc[e.category] = (acc[e.category] || 0) + Number(e.amount);
+                          return acc;
+                        }, {})
+                      ).sort(([, a], [, b]) => b - a).map(([cat, amt]) => {
+                        const pct = metrics.totalExp > 0 ? (amt / metrics.totalExp) * 100 : 0;
+                        return (
+                          <div key={cat} className="sr-pl-exp-line">
+                            <div className="sr-pl-exp-top">
+                              <span className="sr-pl-exp-name">{cat}</span>
+                              <span className="sr-pl-red">-₹{amt.toFixed(2)}</span>
+                            </div>
+                            <div className="sr-pl-exp-bar">
+                              <div
+                                className="sr-pl-exp-bar-fill"
+                                style={{ width: `${pct}%`, background: CATEGORY_COLORS[cat] || '#94a3b8' }}
+                              />
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <div className="sr-pl-divider" />
+
+                  {/* Net Profit */}
                   <div className={`sr-pl-line sr-pl-line--total ${isProfit ? 'sr-pl-total-profit' : 'sr-pl-total-loss'}`}>
                     <span>{isProfit ? 'Net Profit' : 'Net Loss'}</span>
                     <span>₹{Math.abs(metrics.netProfit).toFixed(2)}</span>
                   </div>
                 </div>
+
+                {/* Right: Quick Summary + Payment Breakdown */}
+                <div className="sr-pl-right-col">
+
+                  {/* Net Profit Hero Card */}
+                  <div className={`sr-pl-hero glass-panel ${isProfit ? 'sr-pl-hero--profit' : 'sr-pl-hero--loss'}`}>
+                    <div className="sr-pl-hero-icon">
+                      {isProfit ? <TrendingUp size={32}/> : <TrendingDown size={32}/>}
+                    </div>
+                    <h3>{isProfit ? 'Net Profit' : 'Net Loss'}</h3>
+                    <p className="sr-pl-hero-value">₹{Math.abs(metrics.netProfit).toFixed(2)}</p>
+                    <p className="sr-pl-hero-pct">{Math.abs(metrics.profitPct).toFixed(1)}% {isProfit ? 'profit margin' : 'loss margin'}</p>
+                    <div className="sr-pl-hero-stats">
+                      <div className="sr-pl-hero-stat">
+                        <span className="sr-pl-hero-stat-label">Invoices</span>
+                        <span className="sr-pl-hero-stat-value">{metrics.invoiceCount}</span>
+                      </div>
+                      <div className="sr-pl-hero-stat">
+                        <span className="sr-pl-hero-stat-label">Items Sold</span>
+                        <span className="sr-pl-hero-stat-value">{metrics.itemsCount}</span>
+                      </div>
+                      <div className="sr-pl-hero-stat">
+                        <span className="sr-pl-hero-stat-label">Avg. Order</span>
+                        <span className="sr-pl-hero-stat-value">₹{metrics.avgOrder.toFixed(2)}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Method Breakdown */}
+                  <div className="sr-pl-payment-breakdown glass-panel">
+                    <h3 className="sr-pl-section-title">Payment Breakdown</h3>
+                    {[
+                      { key: 'Cash', label: 'Cash', count: metrics.cashCount, revenue: metrics.cashRevenue, color: '#10b981' },
+                      { key: 'UPI', label: 'UPI', count: metrics.upiCount, revenue: metrics.upiRevenue, color: '#8b5cf6' },
+                      { key: 'UPI - Bank', label: 'UPI - Bank', count: metrics.upiBankCount, revenue: metrics.upiBankRevenue, color: '#6366f1' },
+                      { key: 'Cash - Bank', label: 'Cash - Bank', count: metrics.cashBankCount, revenue: metrics.cashBankRevenue, color: '#059669' },
+                    ].filter(m => m.count > 0).map(m => {
+                      const pct = metrics.revenue > 0 ? (m.revenue / metrics.revenue) * 100 : 0;
+                      return (
+                        <div key={m.key} className="sr-pl-pay-row">
+                          <div className="sr-pl-pay-top">
+                            <div className="sr-pl-pay-left">
+                              <span className="sr-pl-pay-dot" style={{ background: m.color }} />
+                              <span className="sr-pl-pay-name">{m.label}</span>
+                            </div>
+                            <div className="sr-pl-pay-right">
+                              <span className="sr-pl-pay-count">{m.count}</span>
+                              <span className="sr-pl-pay-amt">₹{m.revenue.toFixed(2)}</span>
+                            </div>
+                          </div>
+                          <div className="sr-pl-pay-bar">
+                            <div
+                              className="sr-pl-pay-bar-fill"
+                              style={{ width: `${pct}%`, background: m.color }}
+                            />
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
-              {/* Transactions table */}
+              {/* ── Transactions Table ── */}
               <div className="sr-chart-card glass-panel">
                 <div className="sr-chart-header sr-tx-header">
                   <h3>Sales Transactions</h3>
