@@ -106,6 +106,7 @@ export default function QuickBillHistory() {
   const [loading, setLoading]     = useState(false);
   const [activePreset, setActivePreset] = useState('Last 7 days');
   const [searchTerm, setSearchTerm]     = useState('');
+  const [paymentFilter, setPaymentFilter] = useState('ALL'); // ALL | Cash | UPI | Card | Bank Transfer
   const [exporting, setExporting]       = useState('');  // 'csv' | 'pdf' | ''
 
   useEffect(() => { fetchBills(); }, [startDate, endDate]);
@@ -127,15 +128,21 @@ export default function QuickBillHistory() {
     setEndDate(preset.end());
   };
 
-  // ── Filter by search ──────────────────────────────────────────
+  // ── Filter by search + payment method ────────────────────────
   const filteredBills = useMemo(() => {
-    if (!searchTerm.trim()) return bills;
-    const q = searchTerm.toLowerCase();
-    return bills.filter(b =>
-      String(b.bill_number).includes(q) ||
-      b.items.some(i => i.product_name.toLowerCase().includes(q))
-    );
-  }, [bills, searchTerm]);
+    let result = bills;
+    if (paymentFilter !== 'ALL') {
+      result = result.filter(b => (b.payment_method || 'Cash') === paymentFilter);
+    }
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase();
+      result = result.filter(b =>
+        String(b.bill_number).includes(q) ||
+        b.items.some(i => i.product_name.toLowerCase().includes(q))
+      );
+    }
+    return result;
+  }, [bills, searchTerm, paymentFilter]);
 
   // ── Group by billed_date ──────────────────────────────────────
   const grouped = useMemo(() => {
@@ -159,7 +166,7 @@ export default function QuickBillHistory() {
     try {
       let csv = 'Date,Bill #,Payment Method,Product,Quantity,Unit Price,Line Total,Bill Total\n';
       filteredBills.forEach(bill => {
-        const payMethod = (bill.payment_method || '').toUpperCase() === 'UPI' ? 'UPI' : 'Cash';
+        const payMethod = bill.payment_method || 'Cash';
         bill.items.forEach((item, idx) => {
           csv += [
             bill.billed_date,
@@ -199,7 +206,7 @@ export default function QuickBillHistory() {
       let rows = '';
       filteredBills.forEach(bill => {
         bill.items.forEach((item, idx) => {
-          const payMethod = (bill.payment_method || 'Cash').toUpperCase();
+          const payMethod = bill.payment_method || 'Cash';
           rows += `<tr>
             <td>${idx === 0 ? bill.billed_date : ''}</td>
             <td>${idx === 0 ? '#' + bill.bill_number : ''}</td>
@@ -207,7 +214,7 @@ export default function QuickBillHistory() {
             <td style="text-align:center">${item.quantity}</td>
             <td style="text-align:right">₹${Number(item.price).toFixed(2)}</td>
             <td style="text-align:right">₹${Number(item.line_total).toFixed(2)}</td>
-            <td style="text-align:center;font-weight:700;${payMethod === 'UPI' ? 'color:#7c3aed' : 'color:#16a34a'}">${idx === 0 ? (bill.payment_method || 'Cash') : ''}</td>
+            <td style="text-align:center;font-weight:700;${payMethod === 'UPI' ? 'color:#7c3aed' : payMethod === 'Card' ? 'color:#2563eb' : payMethod === 'Bank Transfer' ? 'color:#d97706' : 'color:#16a34a'}">${idx === 0 ? (bill.payment_method || 'Cash') : ''}</td>
             <td style="text-align:right;font-weight:700">${idx === 0 ? '₹' + Number(bill.total).toFixed(2) : ''}</td>
           </tr>`;
         });
@@ -342,6 +349,19 @@ export default function QuickBillHistory() {
             max={format(new Date(), 'yyyy-MM-dd')}
             onChange={e => { setEndDate(e.target.value); setActivePreset(''); }}
           />
+        </div>
+
+        {/* Payment method filter */}
+        <div className="qbh-pay-filters">
+          {['ALL', 'Cash', 'UPI', 'Card', 'Bank Transfer'].map(m => (
+            <button
+              key={m}
+              className={`qbh-pay-pill ${paymentFilter === m ? 'qbh-pay-pill--active' : ''}`}
+              onClick={() => setPaymentFilter(m)}
+            >
+              {m === 'ALL' ? 'All' : m}
+            </button>
+          ))}
         </div>
 
         {/* Search */}

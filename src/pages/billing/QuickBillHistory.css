@@ -134,6 +134,35 @@
 }
 .qbh-date-input::-webkit-calendar-picker-indicator { filter: invert(0.5); cursor: pointer; }
 
+.qbh-pay-filters {
+  display: flex;
+  gap: 0.3rem;
+  flex-wrap: wrap;
+}
+
+.qbh-pay-pill {
+  padding: 0.3rem 0.7rem;
+  border-radius: 20px;
+  border: 1px solid var(--border, #2a2a35);
+  background: var(--surface, #1e1e24);
+  color: var(--text-muted, #6b7280);
+  font-size: 0.78rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.qbh-pay-pill:hover {
+  border-color: var(--primary, #06b6d4);
+  color: var(--text-primary, #e5e7eb);
+}
+
+.qbh-pay-pill--active {
+  background: var(--primary, #06b6d4);
+  color: white;
+  border-color: var(--primary, #06b6d4);
+}
+
 .qbh-search-wrap {
   flex: 1;
   min-width: 180px;
