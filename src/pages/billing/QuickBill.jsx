@@ -545,47 +545,76 @@ export default function QuickBill() {
   // ── Auto Calculations ─────────────────────────────────────────
   // Bank service: total = (serviceTotal − servicePrice − discount) × qty
   // Others: total = price × qty − discount
-  const calcTotal = (serviceTotal, servicePrice, qty, disc) => {
-    if (isService) {
-      return Math.max(0, (serviceTotal - servicePrice - disc) * qty);
+  const recalcTotal = () => {
+    const p = parseFloat(sellingPrice) || 0;
+    const c = parseFloat(costPrice) || 0;
+    const q = parseFloat(quantity) || 0;
+    const d = parseFloat(discount) || 0;
+    if (selectedProduct?.type === 'service') {
+      return Math.max(0, (p - c - d) * q);
     }
-    return Math.max(0, (serviceTotal * qty) - disc);
+    return Math.max(0, (p * q) - d);
   };
 
   const handlePriceChange = (val) => {
     setSellingPrice(val);
-    const p = parseFloat(val) || 0;
-    const c = parseFloat(costPrice) || 0;
-    const q = parseFloat(quantity) || 0;
-    const d = parseFloat(discount) || 0;
-    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
+    // Use nextTick to ensure state is fresh
+    setTimeout(() => {
+      const sv = parseFloat(val) || 0;
+      const cv = parseFloat(costPrice) || 0;
+      const qv = parseFloat(quantity) || 0;
+      const dv = parseFloat(discount) || 0;
+      const isSvc = selectedProduct?.type === 'service';
+      const total = isSvc
+        ? Math.max(0, (sv - cv - dv) * qv)
+        : Math.max(0, (sv * qv) - dv);
+      setTotalAmount(total.toFixed(2));
+    }, 0);
   };
 
   const handleCostChange = (val) => {
     setCostPrice(val);
-    const p = parseFloat(sellingPrice) || 0;
-    const c = parseFloat(val) || 0;
-    const q = parseFloat(quantity) || 0;
-    const d = parseFloat(discount) || 0;
-    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
+    setTimeout(() => {
+      const sv = parseFloat(sellingPrice) || 0;
+      const cv = parseFloat(val) || 0;
+      const qv = parseFloat(quantity) || 0;
+      const dv = parseFloat(discount) || 0;
+      const isSvc = selectedProduct?.type === 'service';
+      const total = isSvc
+        ? Math.max(0, (sv - cv - dv) * qv)
+        : Math.max(0, (sv * qv) - dv);
+      setTotalAmount(total.toFixed(2));
+    }, 0);
   };
 
   const handleQtyChange = (val) => {
     setQuantity(val);
-    const q = parseFloat(val) || 0;
-    const p = parseFloat(sellingPrice) || 0;
-    const c = parseFloat(costPrice) || 0;
-    const d = parseFloat(discount) || 0;
-    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
+    setTimeout(() => {
+      const sv = parseFloat(sellingPrice) || 0;
+      const cv = parseFloat(costPrice) || 0;
+      const qv = parseFloat(val) || 0;
+      const dv = parseFloat(discount) || 0;
+      const isSvc = selectedProduct?.type === 'service';
+      const total = isSvc
+        ? Math.max(0, (sv - cv - dv) * qv)
+        : Math.max(0, (sv * qv) - dv);
+      setTotalAmount(total.toFixed(2));
+    }, 0);
   };
 
   const handleDiscountChange = (val) => {
     setDiscount(val);
-    const d = parseFloat(val) || 0;
-    const p = parseFloat(sellingPrice) || 0;
-    const c = parseFloat(costPrice) || 0;
-    const q = parseFloat(quantity) || 0;
-    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
+    setTimeout(() => {
+      const sv = parseFloat(sellingPrice) || 0;
+      const cv = parseFloat(costPrice) || 0;
+      const qv = parseFloat(quantity) || 0;
+      const dv = parseFloat(val) || 0;
+      const isSvc = selectedProduct?.type === 'service';
+      const total = isSvc
+        ? Math.max(0, (sv - cv - dv) * qv)
+        : Math.max(0, (sv * qv) - dv);
+      setTotalAmount(total.toFixed(2));
+    }, 0);
   };
 
   const handleTotalChange = (val) => {
