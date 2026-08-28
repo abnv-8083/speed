@@ -940,7 +940,8 @@ export default function QuickBill() {
             {/* 6. Total Amount (Editable) */}
             <div className="qb-inline-field qb-field-total">
               <label className="qb-inline-label">
-                {isService ? 'Total (Service Total − Service Price − Discount) × Qty' : 'Total Amount'}
+                Total
+                {isService && <span style={{ fontWeight: 400, fontSize: '0.6rem', color: 'var(--text-muted)', marginLeft: '0.25rem' }}>= (S.Total − S.Price − Disc) × Qty</span>}
               </label>
               <div className="qb-currency-input-wrap">
                 <span className="qb-currency-symbol">₹</span>
