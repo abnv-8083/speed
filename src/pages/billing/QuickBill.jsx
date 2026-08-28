@@ -517,6 +517,9 @@ export default function QuickBill() {
   }, []);
 
   // ── Select product from dropdown ──────────────────────────────
+  const isBankMethod = payMethod === 'UPI - Bank' || payMethod === 'Cash - Bank';
+  const isBankService = isBankMethod && selectedProduct?.type === 'service';
+
   const selectProduct = (product) => {
     setSelectedProduct(product);
     setSearchQuery(product.name);
@@ -526,7 +529,11 @@ export default function QuickBill() {
     setCostPrice(Number(product.cost_price) || 0);
     setQuantity(1);
     setDiscount('');
-    setTotalAmount(p);
+    // For bank service: total = (serviceTotal - servicePrice) × qty
+    // For others: total = serviceCharge × qty
+    const isBank = (payMethod === 'UPI - Bank' || payMethod === 'Cash - Bank') && product.type === 'service';
+    const cp = Number(product.cost_price) || 0;
+    setTotalAmount(isBank ? Math.max(0, p - cp).toFixed(2) : p);
     setTimeout(() => {
       qtyInputRef.current?.focus();
       qtyInputRef.current?.select();
@@ -534,38 +541,54 @@ export default function QuickBill() {
   };
 
   // ── Auto Calculations ─────────────────────────────────────────
+  // Bank service: total = (serviceTotal − servicePrice − discount) × qty
+  // Others: total = price × qty − discount
+  const calcTotal = (price, cost, qty, disc) => {
+    if (isBankService) {
+      return Math.max(0, (price - cost - disc) * qty);
+    }
+    return Math.max(0, (price * qty) - disc);
+  };
+
   const handlePriceChange = (val) => {
     setSellingPrice(val);
     const p = parseFloat(val) || 0;
+    const c = parseFloat(costPrice) || 0;
     const q = parseFloat(quantity) || 0;
     const d = parseFloat(discount) || 0;
-    setTotalAmount(Math.max(0, (p * q) - d).toFixed(2));
+    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
+  };
+
+  const handleCostChange = (val) => {
+    setCostPrice(val);
+    const p = parseFloat(sellingPrice) || 0;
+    const c = parseFloat(val) || 0;
+    const q = parseFloat(quantity) || 0;
+    const d = parseFloat(discount) || 0;
+    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
   };
 
   const handleQtyChange = (val) => {
     setQuantity(val);
     const q = parseFloat(val) || 0;
     const p = parseFloat(sellingPrice) || 0;
+    const c = parseFloat(costPrice) || 0;
     const d = parseFloat(discount) || 0;
-    setTotalAmount(Math.max(0, (p * q) - d).toFixed(2));
+    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
   };
 
   const handleDiscountChange = (val) => {
     setDiscount(val);
     const d = parseFloat(val) || 0;
     const p = parseFloat(sellingPrice) || 0;
+    const c = parseFloat(costPrice) || 0;
     const q = parseFloat(quantity) || 0;
-    setTotalAmount(Math.max(0, (p * q) - d).toFixed(2));
+    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
   };
 
   const handleTotalChange = (val) => {
     setTotalAmount(val);
-    const tot = parseFloat(val) || 0;
-    const d = parseFloat(discount) || 0;
-    const q = parseFloat(quantity) || 1;
-    if (q > 0) {
-      setSellingPrice(Math.max(0, (tot + d) / q).toFixed(2));
-    }
+    // Reverse calculation not supported for bank service (profit-based)
   };
 
   // ── Keyboard handling for Product Search field ────────────────
@@ -617,14 +640,15 @@ export default function QuickBill() {
     }
 
     const priceNum = parseFloat(sellingPrice) || 0;
+    const costNum  = parseFloat(costPrice) || 0;
     const discNum  = parseFloat(discount) || 0;
-    const totalNum = parseFloat(totalAmount) || Math.max(0, (priceNum * qtyNum) - discNum);
+    const totalNum = parseFloat(totalAmount) || calcTotal(priceNum, costNum, qtyNum, discNum);
 
     const newItem = {
       product_id:   selectedProduct.id,
       product_name: selectedProduct.name,
       price:        priceNum,
-      cost_price:   selectedProduct.type === 'service' ? (parseFloat(costPrice) || 0) : (selectedProduct.cost_price || 0),
+      cost_price:   selectedProduct.type === 'service' ? costNum : (selectedProduct.cost_price || 0),
       quantity:     qtyNum,
       line_total:   totalNum,
       discount:     discNum,
@@ -835,7 +859,22 @@ export default function QuickBill() {
               <select
                 className="input-field qb-inline-input qb-method-select"
                 value={payMethod}
-                onChange={e => setPayMethod(e.target.value)}
+                onChange={e => {
+                  const newMethod = e.target.value;
+                  setPayMethod(newMethod);
+                  // Recalculate total if switching to/from bank method with a service selected
+                  if (selectedProduct?.type === 'service') {
+                    const p = parseFloat(sellingPrice) || 0;
+                    const c = parseFloat(costPrice) || 0;
+                    const q = parseFloat(quantity) || 0;
+                    const d = parseFloat(discount) || 0;
+                    const isBank = newMethod === 'UPI - Bank' || newMethod === 'Cash - Bank';
+                    setTotalAmount(isBank
+                      ? Math.max(0, (p - c - d) * q).toFixed(2)
+                      : Math.max(0, (p * q) - d).toFixed(2)
+                    );
+                  }
+                }}
               >
                 <option value="Cash">💵 Cash</option>
                 <option value="UPI">📱 UPI</option>
@@ -844,19 +883,23 @@ export default function QuickBill() {
               </select>
             </div>
 
-            {/* 3b. Service Price hint (services only) — auto-filled from product, not editable */}
-            {selectedProduct?.type === 'service' && costPrice > 0 && (
-              <div className="qb-inline-field qb-field-price" style={{ opacity: 0.6 }}>
-                <label className="qb-inline-label">Service Price (cost)</label>
+            {/* 3b. Service Price — editable for bank methods, read-only for others */}
+            {selectedProduct?.type === 'service' && (
+              <div className="qb-inline-field qb-field-price">
+                <label className="qb-inline-label">Service Price {isBankService ? '(our cost)' : '(cost)'}</label>
                 <div className="qb-currency-input-wrap">
                   <span className="qb-currency-symbol">₹</span>
                   <input
-                    type="text"
+                    type="number"
+                    step="0.01"
                     className="input-field qb-inline-input qb-currency-input"
-                    value={Number(costPrice).toFixed(2)}
-                    readOnly
-                    tabIndex={-1}
-                    style={{ cursor: 'default' }}
+                    placeholder="0.00"
+                    value={costPrice}
+                    readOnly={!isBankService}
+                    tabIndex={isBankService ? 0 : -1}
+                    style={!isBankService ? { cursor: 'default', opacity: 0.6 } : {}}
+                    onChange={e => isBankService && handleCostChange(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && priceInputRef.current?.focus()}
                   />
                 </div>
               </div>
@@ -902,7 +945,7 @@ export default function QuickBill() {
             {/* 6. Total Amount (Editable) */}
             <div className="qb-inline-field qb-field-total">
               <label className="qb-inline-label">
-                {selectedProduct?.type === 'service' ? 'Total (Service Charge × Qty − Discount)' : 'Total Amount'}
+                {isBankService ? 'Profit (Service Total − Service Price − Discount) × Qty' : selectedProduct?.type === 'service' ? 'Total (Service Charge × Qty − Discount)' : 'Total Amount'}
               </label>
               <div className="qb-currency-input-wrap">
                 <span className="qb-currency-symbol">₹</span>
