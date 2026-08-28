@@ -13,11 +13,12 @@ const CATEGORIES = [
 
 const expenseSchema = new mongoose.Schema(
   {
-    title:        { type: String, required: true, trim: true },
-    amount:       { type: Number, required: true, min: 0 },
-    category:     { type: String, enum: CATEGORIES, default: 'Miscellaneous' },
-    expense_date: { type: String, required: true },  // "YYYY-MM-DD"
-    note:         { type: String, default: '' },
+    title:          { type: String, required: true, trim: true },
+    amount:         { type: Number, required: true, min: 0 },
+    category:       { type: String, enum: CATEGORIES, default: 'Miscellaneous' },
+    expense_date:   { type: String, required: true },  // "YYYY-MM-DD"
+    payment_method: { type: String, enum: ['Cash', 'UPI'], default: 'Cash' },
+    note:           { type: String, default: '' },
   },
   { timestamps: true }
 );

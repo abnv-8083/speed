@@ -411,7 +411,7 @@
 
 .sr-expense-header-row {
   display: grid;
-  grid-template-columns: 110px 1fr 130px 100px 70px;
+  grid-template-columns: 100px 1fr 120px 90px 90px 70px;
   padding: 0.55rem 1rem;
   border-bottom: 1px solid var(--border);
   font-size: 0.68rem;
@@ -424,7 +424,7 @@
 
 .sr-expense-row {
   display: grid;
-  grid-template-columns: 110px 1fr 130px 100px 70px;
+  grid-template-columns: 100px 1fr 120px 90px 90px 70px;
   padding: 0.65rem 1rem;
   border-bottom: 1px solid rgba(255,255,255,0.04);
   align-items: center;
@@ -459,6 +459,29 @@
   font-weight: 700;
   color: #f87171;
   text-align: right;
+}
+
+.sr-exp-pay-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.15rem 0.45rem;
+  border-radius: 5px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  width: fit-content;
+}
+
+.sr-exp-pay--cash {
+  background: rgba(16, 185, 129, 0.12);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.25);
+}
+
+.sr-exp-pay--upi {
+  background: rgba(139, 92, 246, 0.15);
+  color: #c4b5fd;
+  border: 1px solid rgba(139, 92, 246, 0.3);
 }
 
 .sr-exp-actions {

@@ -64,6 +64,7 @@ function ExpenseModal({ expense, onSave, onClose }) {
     amount: expense?.amount || '',
     category: expense?.category || 'Miscellaneous',
     expense_date: expense?.expense_date || today,
+    payment_method: expense?.payment_method || 'Cash',
     note: expense?.note || '',
   });
   const [saving, setSaving] = useState(false);
@@ -115,6 +116,27 @@ function ExpenseModal({ expense, onSave, onClose }) {
           onChange={e => set('category', e.target.value)}>
           {EXPENSE_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
         </select>
+      </div>
+      <div className="form-group">
+        <label className="form-label">Payment Method</label>
+        <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+          <button
+            type="button"
+            className={`btn ${form.payment_method === 'Cash' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '0.5rem' }}
+            onClick={() => set('payment_method', 'Cash')}
+          >
+            💵 Cash
+          </button>
+          <button
+            type="button"
+            className={`btn ${form.payment_method === 'UPI' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ flex: 1, padding: '0.5rem' }}
+            onClick={() => set('payment_method', 'UPI')}
+          >
+            📱 UPI
+          </button>
+        </div>
       </div>
       <div className="form-group">
         <label className="form-label">Note (optional)</label>
@@ -821,6 +843,7 @@ const SalesReport = () => {
                     <span>Date</span>
                     <span>Title</span>
                     <span>Category</span>
+                    <span>Payment</span>
                     <span className="text-right">Amount</span>
                     <span></span>
                   </div>
@@ -833,6 +856,9 @@ const SalesReport = () => {
                       </div>
                       <span className="sr-exp-cat" style={{ background: `${CATEGORY_COLORS[exp.category]}18`, color: CATEGORY_COLORS[exp.category] }}>
                         {exp.category}
+                      </span>
+                      <span className={`sr-exp-pay-badge ${exp.payment_method === 'UPI' ? 'sr-exp-pay--upi' : 'sr-exp-pay--cash'}`}>
+                        {exp.payment_method === 'UPI' ? '📱 UPI' : '💵 Cash'}
                       </span>
                       <span className="sr-exp-amount">₹{Number(exp.amount).toFixed(2)}</span>
                       <div className="sr-exp-actions">
