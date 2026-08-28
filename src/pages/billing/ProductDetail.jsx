@@ -60,13 +60,21 @@ const ProductDetail = () => {
   // ── Save full edit ───────────────────────────────────────────
   const handleSaveEdit = async (e) => {
     e.preventDefault();
-    if (!editName || !editPrice) return;
+    if (!editName) return;
+    if (product.type === 'service' && !editCost) {
+      toast.error('Service Price (cost) is required');
+      return;
+    }
+    if (product.type !== 'service' && !editPrice) {
+      toast.error('Selling Price is required');
+      return;
+    }
     setEditSaving(true);
     try {
       const updated = await api.updateProduct(id, {
         name:       editName.trim(),
         cost_price: parseFloat(editCost) || 0,
-        price:      parseFloat(editPrice),
+        price:      product.type === 'service' ? 0 : parseFloat(editPrice),
       });
       setProduct(prev => ({ ...prev, ...updated }));
       setShowEditModal(false);

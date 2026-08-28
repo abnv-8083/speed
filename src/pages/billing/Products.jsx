@@ -52,9 +52,13 @@ const Products = () => {
 
   const handleAddProduct = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
-    if (!newProdName || !newProdPrice) return;
-    if (newProdType === 'product' && !newProdStock) {
-      toast.error('Stock is required for physical products');
+    if (!newProdName) return;
+    if (newProdType === 'service' && !newProdCost) {
+      toast.error('Service Price (cost) is required for services');
+      return;
+    }
+    if (newProdType === 'product' && (!newProdPrice || !newProdStock)) {
+      toast.error('Selling Price and Stock are required for products');
       return;
     }
     try {
@@ -62,7 +66,7 @@ const Products = () => {
         name:       newProdName,
         type:       newProdType,
         cost_price: parseFloat(newProdCost) || 0,
-        price:      parseFloat(newProdPrice),
+        price:      newProdType === 'service' ? 0 : parseFloat(newProdPrice),
         stock:      newProdType === 'product' ? parseInt(newProdStock, 10) || 0 : 0,
         is_print:   false,
       });
