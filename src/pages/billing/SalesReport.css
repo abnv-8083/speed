@@ -146,29 +146,161 @@
   flex: 1;
 }
 
-/* ── Metric cards grid ────────────────────────────────────────── */
-.sr-metrics-grid {
+/* ═══════════════════════════════════════════════════════════════
+   OVERVIEW TAB LAYOUT
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Section Wrapper ──────────────────────────────────────────── */
+.sr-overview-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.sr-overview-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text);
+  letter-spacing: 0.02em;
+}
+
+.sr-overview-section-title svg {
+  color: var(--text-muted);
+}
+
+.sr-overview-section-hint {
+  font-size: 0.65rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: auto;
+  text-transform: none;
+  letter-spacing: 0;
+}
+
+/* ── Hero Row ─────────────────────────────────────────────────── */
+.sr-overview-hero-row {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(185px, 1fr));
-  gap: 0.75rem;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+.sr-overview-hero-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1.25rem 1.5rem;
+  border-radius: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.sr-overview-hero-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+}
+
+.sr-overview-hero--revenue::before { background: linear-gradient(90deg, #10b981, #34d399); }
+.sr-overview-hero--profit::before { background: linear-gradient(90deg, #10b981, #6ee7b7); }
+.sr-overview-hero--loss::before { background: linear-gradient(90deg, #f87171, #fca5a5); }
+
+.sr-overview-hero-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.sr-overview-hero--profit .sr-overview-hero-icon { background: rgba(16,185,129,0.12); color: #10b981; }
+.sr-overview-hero--loss .sr-overview-hero-icon { background: rgba(248,113,113,0.12); color: #f87171; }
+
+.sr-overview-hero-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.sr-overview-hero-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.sr-overview-hero-value {
+  font-size: 1.75rem;
+  font-weight: 900;
+  line-height: 1.1;
+  white-space: nowrap;
+}
+
+.sr-overview-hero--profit .sr-overview-hero-value { color: #10b981; }
+.sr-overview-hero--loss .sr-overview-hero-value { color: #f87171; }
+
+.sr-overview-hero-click-hint {
+  margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0.3rem 0.65rem;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  transition: all 0.15s;
+  white-space: nowrap;
+  align-self: center;
+}
+
+.sr-overview-hero-click-hint:hover {
+  color: var(--primary);
+  border-color: var(--primary);
+  background: rgba(139,92,246,0.06);
+}
+
+/* ── Stats Grid ───────────────────────────────────────────────── */
+.sr-overview-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.65rem;
+}
+
+.sr-overview-stats-grid--4 {
+  grid-template-columns: repeat(3, 1fr);
 }
 
 .sr-metric {
   display: flex;
   align-items: center;
-  gap: 0.85rem;
-  padding: 0.85rem 1.1rem;
-  border-radius: 12px;
-  border-left: 4px solid transparent;
-  transition: transform 0.18s;
+  gap: 0.75rem;
+  padding: 0.75rem 0.95rem;
+  border-radius: 10px;
+  border-left: 3px solid transparent;
+  transition: transform 0.15s, box-shadow 0.15s;
 }
-.sr-metric:hover { transform: translateY(-2px); }
-.sr-metric--highlight { box-shadow: 0 0 0 1px rgba(255,255,255,0.08); }
+.sr-metric:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
 
 .sr-metric-icon {
-  width: 38px;
-  height: 38px;
-  border-radius: 9px;
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -178,12 +310,12 @@
 .sr-metric-info {
   display: flex;
   flex-direction: column;
-  gap: 0.15rem;
+  gap: 0.1rem;
   min-width: 0;
 }
 
 .sr-metric-label {
-  font-size: 0.68rem;
+  font-size: 0.62rem;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -191,7 +323,7 @@
 }
 
 .sr-metric-value {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   font-weight: 800;
   color: var(--text);
   white-space: nowrap;
@@ -899,6 +1031,10 @@
 /* ── Responsive ───────────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .sr-bottom-grid { grid-template-columns: 1fr; }
+  .sr-overview-hero-row { grid-template-columns: 1fr; }
+  .sr-overview-stats-grid { grid-template-columns: repeat(2, 1fr); }
+  .sr-overview-stats-grid--4 { grid-template-columns: repeat(3, 1fr); }
+  .sr-pay-methods-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
@@ -906,7 +1042,8 @@
   .sr-header-right  { width: 100%; flex-wrap: wrap; }
   .sr-date-pill     { border-radius: 10px; width: 100%; }
   .sr-date-input    { flex: 1; width: auto; }
-  .sr-metrics-grid  { grid-template-columns: 1fr 1fr; }
+  .sr-overview-stats-grid { grid-template-columns: 1fr 1fr; }
+  .sr-overview-stats-grid--4 { grid-template-columns: 1fr 1fr; }
   .sr-expense-header-row { display: none; }
   .sr-expense-row   {
     grid-template-columns: 1fr auto;
@@ -921,8 +1058,12 @@
 }
 
 @media (max-width: 480px) {
-  .sr-metrics-grid { grid-template-columns: 1fr; }
+  .sr-overview-stats-grid { grid-template-columns: 1fr; }
+  .sr-overview-stats-grid--4 { grid-template-columns: 1fr; }
+  .sr-pay-methods-grid { grid-template-columns: 1fr; }
   .sr-presets      { flex-wrap: wrap; }
+  .sr-overview-hero-card { flex-direction: column; text-align: center; }
+  .sr-overview-hero-click-hint { margin-left: 0; }
 }
 
 /* ── Clickable metric card ────────────────────────────────────── */
@@ -940,37 +1081,7 @@
   text-underline-offset: 3px;
 }
 
-/* ── Payment Methods Section ──────────────────────────────────── */
-.sr-pay-methods-section {
-  background: var(--surface, #1a1a24);
-  border: 1px solid var(--border);
-  border-radius: 14px;
-  padding: 1rem 1.25rem;
-}
-
-.sr-pay-section-title {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 700;
-  color: var(--text);
-  margin-bottom: 0.85rem;
-}
-
-.sr-pay-section-title svg {
-  color: var(--text-muted);
-}
-
-.sr-pay-section-hint {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  margin-left: auto;
-  text-transform: none;
-  letter-spacing: 0;
-}
-
+/* ── Payment Methods Grid ─────────────────────────────────────── */
 .sr-pay-methods-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);

@@ -579,78 +579,115 @@ const SalesReport = () => {
           {activeTab === 'Overview' && (
             <div className="sr-content">
 
-              {/* Metric cards — row 1 */}
-              <div className="sr-metrics-grid">
-                <MetricCard label="Revenue" value={`₹${metrics.revenue.toFixed(2)}`} accent="success" icon={<DollarSign size={18}/>} />
-                <MetricCard label="Total Expenses" value={`₹${metrics.totalExp.toFixed(2)}`} accent="danger" icon={<TrendingDown size={18}/>} />
-                <MetricCard
-                  label={isProfit ? 'Gross Profit' : 'Gross Loss'}
-                  value={`₹${Math.abs(metrics.grossProfit).toFixed(2)}`}
-                  accent={isProfit ? 'success' : 'danger'}
-                  icon={isProfit ? <TrendingUp size={18}/> : <TrendingDown size={18}/>}
-                  highlight
-                  clickable
-                  onClick={() => setShowProfitModal(true)}
-                  hint="Price − Cost per item · Click to see breakdown"
-                />
-                <MetricCard label="Profit Margin" value={`${metrics.profitPct.toFixed(1)}%`}
-                  accent={metrics.profitPct >= 0 ? 'success' : 'danger'} icon={<PieChart size={18}/>} />
-                <div style={{ gridColumn: '1 / -1' }}>
-                  <div className="sr-pay-methods-section">
-                    <h3 className="sr-pay-section-title">
-                      <Wallet size={16} /> Payment Methods
-                      <span className="sr-pay-section-hint">Click a card to filter transactions</span>
-                    </h3>
-                    <div className="sr-pay-methods-grid">
-                      {[
-                        { key: 'Cash', label: 'Cash', icon: '💵', count: metrics.cashCount, revenue: metrics.cashRevenue, color: '#10b981', bgColor: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.25)', activeColor: '#059669' },
-                        { key: 'UPI', label: 'UPI', icon: '📱', count: metrics.upiCount, revenue: metrics.upiRevenue, color: '#8b5cf6', bgColor: 'rgba(139,92,246,0.08)', borderColor: 'rgba(139,92,246,0.25)', activeColor: '#7c3aed' },
-                        { key: 'UPI - Bank', label: 'UPI - Bank', icon: '🏦', count: metrics.upiBankCount, revenue: metrics.upiBankRevenue, color: '#6366f1', bgColor: 'rgba(99,102,241,0.08)', borderColor: 'rgba(99,102,241,0.25)', activeColor: '#4f46e5' },
-                        { key: 'Cash - Bank', label: 'Cash - Bank', icon: '🏧', count: metrics.cashBankCount, revenue: metrics.cashBankRevenue, color: '#059669', bgColor: 'rgba(5,150,105,0.08)', borderColor: 'rgba(5,150,105,0.25)', activeColor: '#047857' },
-                      ].map(m => (
-                        <div
-                          key={m.key}
-                          className={`sr-pay-method-card ${paymentFilter === m.key ? 'sr-pay-method-card--active' : ''}`}
-                          style={{
-                            '--pm-color': m.color,
-                            '--pm-bg': m.bgColor,
-                            '--pm-border': m.borderColor,
-                            '--pm-active-color': m.activeColor,
-                            borderColor: paymentFilter === m.key ? m.activeColor : undefined,
-                            background: paymentFilter === m.key ? m.bgColor : undefined,
-                          }}
-                          onClick={() => {
-                            setPaymentFilter(m.key);
-                            setActiveTab('P&L Report');
-                            setTablePage(1);
-                          }}
-                          role="button"
-                          tabIndex={0}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter' || e.key === ' ') {
-                              e.preventDefault();
-                              setPaymentFilter(m.key);
-                              setActiveTab('P&L Report');
-                              setTablePage(1);
-                            }
-                          }}
-                        >
-                          <div className="sr-pay-method-icon">{m.icon}</div>
-                          <div className="sr-pay-method-info">
-                            <span className="sr-pay-method-label">{m.label}</span>
-                            <span className="sr-pay-method-count">{m.count} transaction{m.count !== 1 ? 's' : ''}</span>
-                          </div>
-                          <span className="sr-pay-method-value">₹{m.revenue.toFixed(2)}</span>
-                          <ChevronRight size={14} className="sr-pay-method-arrow" />
-                        </div>
-                      ))}
-                    </div>
+              {/* ═══ ROW 1: Hero Cards ═══ */}
+              <div className="sr-overview-hero-row">
+                <div className="sr-overview-hero-card sr-overview-hero--revenue glass-panel">
+                  <div className="sr-overview-hero-icon" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                    <DollarSign size={22} />
+                  </div>
+                  <div className="sr-overview-hero-text">
+                    <span className="sr-overview-hero-label">Total Revenue</span>
+                    <span className="sr-overview-hero-value" style={{ color: '#10b981' }}>₹{metrics.revenue.toFixed(2)}</span>
                   </div>
                 </div>
-                <MetricCard label="Invoices" value={metrics.invoiceCount} accent="primary" icon={<Receipt size={18}/>} />
-                <MetricCard label="Items Sold" value={metrics.itemsCount} accent="warning" icon={<Package size={18}/>} />
-                <MetricCard label="Avg. Order" value={`₹${metrics.avgOrder.toFixed(2)}`} accent="neutral" icon={<Activity size={18}/>} />
-                <MetricCard label="Discounts Given" value={`₹${metrics.discounts.toFixed(2)}`} accent="neutral" icon={<Wallet size={18}/>} />
+                <div className={`sr-overview-hero-card glass-panel ${isProfit ? 'sr-overview-hero--profit' : 'sr-overview-hero--loss'}`}>
+                  <div className="sr-overview-hero-icon">
+                    {isProfit ? <TrendingUp size={22}/> : <TrendingDown size={22}/>}
+                  </div>
+                  <div className="sr-overview-hero-text">
+                    <span className="sr-overview-hero-label">{isProfit ? 'Net Profit' : 'Net Loss'}</span>
+                    <span className="sr-overview-hero-value">₹{Math.abs(metrics.netProfit).toFixed(2)}</span>
+                  </div>
+                  <div
+                    className="sr-overview-hero-click-hint"
+                    onClick={() => setShowProfitModal(true)}
+                    title="Click to see profit breakdown"
+                  >
+                    <ChevronRight size={14} /> See breakdown
+                  </div>
+                </div>
+              </div>
+
+              {/* ═══ ROW 2: Financial Stats ═══ */}
+              <div className="sr-overview-section">
+                <h3 className="sr-overview-section-title">Financial Summary</h3>
+                <div className="sr-overview-stats-grid">
+                  <MetricCard label="Total Expenses" value={`₹${metrics.totalExp.toFixed(2)}`} accent="danger" icon={<TrendingDown size={18}/>} />
+                  <MetricCard
+                    label="Gross Profit"
+                    value={`₹${Math.abs(metrics.grossProfit).toFixed(2)}`}
+                    accent={isProfit ? 'success' : 'danger'}
+                    icon={isProfit ? <TrendingUp size={18}/> : <TrendingDown size={18}/>}
+                    clickable
+                    onClick={() => setShowProfitModal(true)}
+                    hint="Click for breakdown"
+                  />
+                  <MetricCard label="Profit Margin" value={`${metrics.profitPct.toFixed(1)}%`}
+                    accent={metrics.profitPct >= 0 ? 'success' : 'danger'} icon={<PieChart size={18}/>} />
+                  <MetricCard label="Discounts Given" value={`₹${metrics.discounts.toFixed(2)}`} accent="neutral" icon={<Wallet size={18}/>} />
+                </div>
+              </div>
+
+              {/* ═══ ROW 3: Payment Methods ═══ */}
+              <div className="sr-overview-section">
+                <h3 className="sr-overview-section-title">
+                  <Wallet size={15} /> Payment Methods
+                  <span className="sr-overview-section-hint">Click a card to filter transactions</span>
+                </h3>
+                <div className="sr-pay-methods-grid">
+                  {[
+                    { key: 'Cash', label: 'Cash', icon: '💵', count: metrics.cashCount, revenue: metrics.cashRevenue, color: '#10b981', bgColor: 'rgba(16,185,129,0.08)', borderColor: 'rgba(16,185,129,0.25)', activeColor: '#059669' },
+                    { key: 'UPI', label: 'UPI', icon: '📱', count: metrics.upiCount, revenue: metrics.upiRevenue, color: '#8b5cf6', bgColor: 'rgba(139,92,246,0.08)', borderColor: 'rgba(139,92,246,0.25)', activeColor: '#7c3aed' },
+                    { key: 'UPI - Bank', label: 'UPI - Bank', icon: '🏦', count: metrics.upiBankCount, revenue: metrics.upiBankRevenue, color: '#6366f1', bgColor: 'rgba(99,102,241,0.08)', borderColor: 'rgba(99,102,241,0.25)', activeColor: '#4f46e5' },
+                    { key: 'Cash - Bank', label: 'Cash - Bank', icon: '🏧', count: metrics.cashBankCount, revenue: metrics.cashBankRevenue, color: '#059669', bgColor: 'rgba(5,150,105,0.08)', borderColor: 'rgba(5,150,105,0.25)', activeColor: '#047857' },
+                  ].map(m => (
+                    <div
+                      key={m.key}
+                      className={`sr-pay-method-card ${paymentFilter === m.key ? 'sr-pay-method-card--active' : ''}`}
+                      style={{
+                        '--pm-color': m.color,
+                        '--pm-bg': m.bgColor,
+                        '--pm-border': m.borderColor,
+                        '--pm-active-color': m.activeColor,
+                        borderColor: paymentFilter === m.key ? m.activeColor : undefined,
+                        background: paymentFilter === m.key ? m.bgColor : undefined,
+                      }}
+                      onClick={() => {
+                        setPaymentFilter(m.key);
+                        setActiveTab('P&L Report');
+                        setTablePage(1);
+                      }}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setPaymentFilter(m.key);
+                          setActiveTab('P&L Report');
+                          setTablePage(1);
+                        }
+                      }}
+                    >
+                      <div className="sr-pay-method-icon">{m.icon}</div>
+                      <div className="sr-pay-method-info">
+                        <span className="sr-pay-method-label">{m.label}</span>
+                        <span className="sr-pay-method-count">{m.count} transaction{m.count !== 1 ? 's' : ''}</span>
+                      </div>
+                      <span className="sr-pay-method-value">₹{m.revenue.toFixed(2)}</span>
+                      <ChevronRight size={14} className="sr-pay-method-arrow" />
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ═══ ROW 4: Activity Stats ═══ */}
+              <div className="sr-overview-section">
+                <h3 className="sr-overview-section-title">Activity</h3>
+                <div className="sr-overview-stats-grid sr-overview-stats-grid--4">
+                  <MetricCard label="Invoices" value={metrics.invoiceCount} accent="primary" icon={<Receipt size={18}/>} />
+                  <MetricCard label="Items Sold" value={metrics.itemsCount} accent="warning" icon={<Package size={18}/>} />
+                  <MetricCard label="Avg. Order" value={`₹${metrics.avgOrder.toFixed(2)}`} accent="neutral" icon={<Activity size={18}/>} />
+                </div>
               </div>
 
               {/* Revenue + Expenses + Profit chart */}
