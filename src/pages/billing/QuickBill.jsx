@@ -303,6 +303,7 @@ export default function QuickBill() {
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchQuery, setSearchQuery]         = useState('');
   const [sellingPrice, setSellingPrice]       = useState('');
+  const [costPrice, setCostPrice]             = useState('');
   const [quantity, setQuantity]               = useState(1);
   const [discount, setDiscount]               = useState('');
   const [totalAmount, setTotalAmount]         = useState('');
@@ -520,6 +521,7 @@ export default function QuickBill() {
     setShowDropdown(false);
     const p = Number(product.price) || 0;
     setSellingPrice(p);
+    setCostPrice(Number(product.cost_price) || 0);
     setQuantity(1);
     setDiscount('');
     setTotalAmount(p);
@@ -620,6 +622,7 @@ export default function QuickBill() {
       product_id:   selectedProduct.id,
       product_name: selectedProduct.name,
       price:        priceNum,
+      cost_price:   selectedProduct.type === 'service' ? (parseFloat(costPrice) || 0) : (selectedProduct.cost_price || 0),
       quantity:     qtyNum,
       line_total:   totalNum,
       discount:     discNum,
@@ -632,6 +635,7 @@ export default function QuickBill() {
     setSelectedProduct(null);
     setSearchQuery('');
     setSellingPrice('');
+    setCostPrice('');
     setQuantity(1);
     setDiscount('');
     setTotalAmount('');
@@ -838,9 +842,28 @@ export default function QuickBill() {
               </select>
             </div>
 
-            {/* 4. Selling Price (Editable) */}
+            {/* 3b. Service Price (for services only) */}
+            {selectedProduct?.type === 'service' && (
+              <div className="qb-inline-field qb-field-price">
+                <label className="qb-inline-label">Service Price</label>
+                <div className="qb-currency-input-wrap">
+                  <span className="qb-currency-symbol">₹</span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    className="input-field qb-inline-input qb-currency-input"
+                    placeholder="0.00"
+                    value={costPrice}
+                    onChange={e => setCostPrice(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && priceInputRef.current?.focus()}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* 4. Selling Price / Service Charge (Editable) */}
             <div className="qb-inline-field qb-field-price">
-              <label className="qb-inline-label">Selling Price</label>
+              <label className="qb-inline-label">{selectedProduct?.type === 'service' ? 'Service Charge' : 'Selling Price'}</label>
               <div className="qb-currency-input-wrap">
                 <span className="qb-currency-symbol">₹</span>
                 <input

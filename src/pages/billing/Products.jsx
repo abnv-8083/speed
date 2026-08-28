@@ -208,12 +208,12 @@ const Products = () => {
                 onChange={e => setNewProdName(e.target.value)} required placeholder={newProdType === 'service' ? 'e.g. Color Xerox / Lamination' : 'e.g. A4 Paper Bundle'} autoFocus />
             </div>
             <div className="form-group">
-              <label>Cost Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— your expense</span></label>
+              <label>{newProdType === 'service' ? 'Service Price' : 'Cost Price'} (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— {newProdType === 'service' ? 'base cost' : 'your expense'}</span></label>
               <input type="number" className="input-field" value={newProdCost}
                 onChange={e => setNewProdCost(e.target.value)} min="0" step="0.01" placeholder="0.00" />
             </div>
             <div className="form-group">
-              <label>Selling Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you charge</span></label>
+              <label>{newProdType === 'service' ? 'Service Charge' : 'Selling Price'} (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you charge</span></label>
               <input type="number" className="input-field" value={newProdPrice}
                 onChange={e => setNewProdPrice(e.target.value)} required min="0" step="0.01" placeholder="0.00" />
             </div>
@@ -269,7 +269,7 @@ const Products = () => {
                       </div>
                       <div className="prod-col-price">
                         <span className="prod-price">₹{Number(product.price).toFixed(2)}</span>
-                        {product.cost_price > 0 && <span className="prod-cost-price">Cost: ₹{Number(product.cost_price).toFixed(2)}</span>}
+                        {product.cost_price > 0 && <span className="prod-cost-price">{product.type === 'service' ? 'S.Price' : 'Cost'}: ₹{Number(product.cost_price).toFixed(2)}</span>}
                       </div>
                       <div className="prod-col-stock">
                         {product.type === 'service' ? (
@@ -338,12 +338,12 @@ const Products = () => {
                         {/* Prices */}
                         <div className="prod-card-prices">
                           <div className="prod-card-price-row">
-                            <span className="prod-card-price-label">Sell</span>
+                            <span className="prod-card-price-label">{product.type === 'service' ? 'S.Charge' : 'Sell'}</span>
                             <span className="prod-card-sell-price">₹{Number(product.price).toFixed(2)}</span>
                           </div>
                           {product.cost_price > 0 && (
                             <div className="prod-card-price-row">
-                              <span className="prod-card-price-label">Cost</span>
+                              <span className="prod-card-price-label">{product.type === 'service' ? 'S.Price' : 'Cost'}</span>
                               <span className="prod-card-cost-price">₹{Number(product.cost_price).toFixed(2)}</span>
                             </div>
                           )}
