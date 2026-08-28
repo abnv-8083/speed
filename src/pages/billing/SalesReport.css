@@ -581,6 +581,18 @@
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
+.sr-pay-badge--card {
+  background: rgba(37, 99, 235, 0.15);
+  color: #93c5fd;
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+.sr-pay-badge--bank {
+  background: rgba(217, 119, 6, 0.15);
+  color: #fcd34d;
+  border: 1px solid rgba(217, 119, 6, 0.3);
+}
+
 /* ── Chart tooltip (legacy name, some charts use it) ──────────── */
 .chart-tooltip       { padding: 0.6rem 0.85rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
 .chart-tooltip-label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 0.2rem; }

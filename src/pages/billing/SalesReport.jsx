@@ -899,7 +899,7 @@ const SalesReport = () => {
                                 <td className="inv-id-cell">INV-{String(inv.id).slice(-6).padStart(6,'0')}</td>
                                 <td>{inv.customer_name || 'Walk-in'}</td>
                                 <td style={{ textAlign: 'center' }}>
-                                  <span className={`sr-pay-badge ${isUpi ? 'sr-pay-badge--upi' : 'sr-pay-badge--cash'}`}>
+                                  <span className={`sr-pay-badge ${payM === 'UPI' ? 'sr-pay-badge--upi' : payM === 'Card' ? 'sr-pay-badge--card' : payM === 'Bank Transfer' ? 'sr-pay-badge--bank' : 'sr-pay-badge--cash'}`}>
                                     {payM}
                                   </span>
                                 </td>
