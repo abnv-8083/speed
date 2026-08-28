@@ -370,22 +370,38 @@ const POS = () => {
           </div>
           <div className="pos-modal-field" style={{ marginTop: '0.75rem' }}>
             <label>Payment Method</label>
-            <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.25rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem', marginTop: '0.25rem' }}>
               <button
                 type="button"
                 className={`btn ${paymentMethod === 'Cash' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ flex: 1, padding: '0.45rem' }}
+                style={{ padding: '0.45rem' }}
                 onClick={() => setPaymentMethod('Cash')}
               >
-                Cash
+                💵 Cash
               </button>
               <button
                 type="button"
                 className={`btn ${paymentMethod === 'UPI' ? 'btn-primary' : 'btn-secondary'}`}
-                style={{ flex: 1, padding: '0.45rem' }}
+                style={{ padding: '0.45rem' }}
                 onClick={() => setPaymentMethod('UPI')}
               >
-                UPI
+                📱 UPI
+              </button>
+              <button
+                type="button"
+                className={`btn ${paymentMethod === 'UPI - Bank' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '0.45rem' }}
+                onClick={() => setPaymentMethod('UPI - Bank')}
+              >
+                📱 UPI - Bank
+              </button>
+              <button
+                type="button"
+                className={`btn ${paymentMethod === 'Cash - Bank' ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '0.45rem' }}
+                onClick={() => setPaymentMethod('Cash - Bank')}
+              >
+                💵 Cash - Bank
               </button>
             </div>
           </div>

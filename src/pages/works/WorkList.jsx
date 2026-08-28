@@ -503,8 +503,8 @@ const WorkList = () => {
                   >
                     <option value="Cash">Cash</option>
                     <option value="UPI">UPI</option>
-                    <option value="Card">Card</option>
-                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="UPI - Bank">UPI - Bank</option>
+                    <option value="Cash - Bank">Cash - Bank</option>
                     <option value="Cheque">Cheque</option>
                     <option value="Other">Other</option>
                   </select>

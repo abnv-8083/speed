@@ -124,8 +124,8 @@ const Invoices = () => {
                       <div className="inv-col-id">
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                           <span className="inv-id-badge">INV-{invoice.id.toString().padStart(6, '0')}</span>
-                          <span className={`qb-pay-badge-sm ${(invoice.payment_method || '').toUpperCase() === 'UPI' ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
-                            {(invoice.payment_method || '').toUpperCase() === 'UPI' ? 'UPI' : 'Cash'}
+                          <span className={`qb-pay-badge-sm ${(invoice.payment_method || '').toUpperCase() === 'UPI' ? 'qb-pay-badge--upi' : (invoice.payment_method || '') === 'UPI - Bank' ? 'qb-pay-badge--upi-bank' : (invoice.payment_method || '') === 'Cash - Bank' ? 'qb-pay-badge--cash-bank' : 'qb-pay-badge--cash'}`}>
+                            {invoice.payment_method || 'Cash'}
                           </span>
                         </div>
                         <span className="inv-customer-name">{invoice.customer_name || 'Walk-in Customer'}</span>

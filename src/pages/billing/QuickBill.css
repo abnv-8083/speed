@@ -524,6 +524,18 @@
   border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
+.qb-pay-badge--upi-bank {
+  background: rgba(99, 102, 241, 0.15);
+  color: #a5b4fc;
+  border: 1px solid rgba(99, 102, 241, 0.35);
+}
+
+.qb-pay-badge--cash-bank {
+  background: rgba(5, 150, 105, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(5, 150, 105, 0.3);
+}
+
 .qb-pay-badge-sm {
   display: inline-flex;
   align-items: center;
@@ -743,6 +755,18 @@
   border-color: #8b5cf6;
   background: rgba(139, 92, 246, 0.1);
   color: #8b5cf6;
+}
+
+.qb-qty-pay-btn.active.upi-bank {
+  border-color: #6366f1;
+  background: rgba(99, 102, 241, 0.1);
+  color: #6366f1;
+}
+
+.qb-qty-pay-btn.active.cash-bank {
+  border-color: #059669;
+  background: rgba(5, 150, 105, 0.1);
+  color: #059669;
 }
 
 .qb-qty-line-total {

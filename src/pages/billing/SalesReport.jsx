@@ -148,7 +148,7 @@ const SalesReport = () => {
   const [showProfitModal, setShowProfitModal] = useState(false);
 
   // Transactions payment filter & pagination
-  const [paymentFilter, setPaymentFilter] = useState('ALL'); // 'ALL' | 'Cash' | 'UPI' | 'Card' | 'Bank Transfer'
+  const [paymentFilter, setPaymentFilter] = useState('ALL'); // 'ALL' | 'Cash' | 'UPI' | 'UPI - Bank' | 'Cash - Bank'
   const [tablePage, setTablePage] = useState(1);
   const TABLE_PAGE_SIZE = 10;
 
@@ -203,10 +203,10 @@ const SalesReport = () => {
     const upiRevenue   = upiInvoices.reduce((s, inv) => s + Number(inv.total_amount || 0), 0);
     const cashInvoices = methodGroups['Cash'] || [];
     const cashRevenue  = cashInvoices.reduce((s, inv) => s + Number(inv.total_amount || 0), 0);
-    const cardInvoices = methodGroups['Card'] || [];
-    const cardRevenue  = cardInvoices.reduce((s, inv) => s + Number(inv.total_amount || 0), 0);
-    const bankInvoices = methodGroups['Bank Transfer'] || [];
-    const bankRevenue  = bankInvoices.reduce((s, inv) => s + Number(inv.total_amount || 0), 0);
+    const upiBankInvoices  = methodGroups['UPI - Bank'] || [];
+    const upiBankRevenue   = upiBankInvoices.reduce((s, inv) => s + Number(inv.total_amount || 0), 0);
+    const cashBankInvoices = methodGroups['Cash - Bank'] || [];
+    const cashBankRevenue  = cashBankInvoices.reduce((s, inv) => s + Number(inv.total_amount || 0), 0);
 
     // Gross profit = sum of (selling_price - cost_price) × qty per item across all invoices
     let cogs = 0;
@@ -298,8 +298,8 @@ const SalesReport = () => {
       itemsCount, invoiceCount: salesData.length,
       upiRevenue, upiCount: upiInvoices.length,
       cashRevenue, cashCount: cashInvoices.length,
-      cardRevenue, cardCount: cardInvoices.length,
-      bankRevenue, bankCount: bankInvoices.length,
+      upiBankRevenue, upiBankCount: upiBankInvoices.length,
+      cashBankRevenue, cashBankCount: cashBankInvoices.length,
       avgOrder: salesData.length > 0 ? revenue / salesData.length : 0,
       chartData, expPieData, topProducts,
       billProfits: billProfits.sort((a, b) => new Date(b.date) - new Date(a.date)),
@@ -340,7 +340,7 @@ const SalesReport = () => {
     let csv = 'data:text/csv;charset=utf-8,';
     csv += 'Type,Date,Reference,Customer,Payment Method,Discount,Amount\n';
     salesData.forEach(inv => {
-      const pm = (inv.payment_method || '').toUpperCase() === 'UPI' ? 'UPI' : 'Cash';
+      const pm = inv.payment_method || 'Cash';
       csv += `Revenue,${new Date(inv.created_at).toLocaleDateString()},INV-${String(inv.id).slice(-6)},${inv.customer_name || 'Walk-in'},${pm},${inv.discount || 0},${inv.total_amount}\n`;
     });
     expenses.forEach(e => {
@@ -378,10 +378,10 @@ const SalesReport = () => {
     const invoiceRows = salesData.slice(0, 100).map((inv, i) => {
       const pm = (inv.payment_method || 'Cash').toUpperCase();
       const isUpi = pm === 'UPI';
-      const isCard = pm === 'CARD';
-      const isBank = pm === 'BANK TRANSFER';
-      const badgeBg = isUpi ? '#ede9fe' : isCard ? '#dbeafe' : isBank ? '#fef3c7' : '#dcfce7';
-      const badgeColor = isUpi ? '#7c3aed' : isCard ? '#2563eb' : isBank ? '#d97706' : '#15803d';
+      const isUpiBank = pm === 'UPI - BANK';
+      const isCashBank = pm === 'CASH - BANK';
+      const badgeBg = isUpi ? '#ede9fe' : isUpiBank ? '#e0e7ff' : isCashBank ? '#d1fae5' : '#dcfce7';
+      const badgeColor = isUpi ? '#7c3aed' : isUpiBank ? '#6366f1' : isCashBank ? '#059669' : '#15803d';
       return `<tr style="${i % 2 === 0 ? '' : 'background:#f8fafc'};page-break-inside:avoid">
         <td style="padding:4px 8px;font-size:10px;color:#64748b;white-space:nowrap">${new Date(inv.created_at).toLocaleDateString()}</td>
         <td style="padding:4px 8px;font-size:10px;font-family:monospace;color:#6366f1">INV-${String(inv.id).slice(-6).padStart(6,'0')}</td>
@@ -855,20 +855,20 @@ const SalesReport = () => {
                         UPI ({metrics.upiCount})
                       </button>
                     )}
-                    {metrics.cardCount > 0 && (
+                    {metrics.upiBankCount > 0 && (
                       <button
-                        className={`sr-pay-pill ${paymentFilter === 'Card' ? 'sr-pay-pill--active' : ''}`}
-                        onClick={() => { setPaymentFilter('Card'); setTablePage(1); }}
+                        className={`sr-pay-pill ${paymentFilter === 'UPI - Bank' ? 'sr-pay-pill--active' : ''}`}
+                        onClick={() => { setPaymentFilter('UPI - Bank'); setTablePage(1); }}
                       >
-                        Card ({metrics.cardCount})
+                        UPI - Bank ({metrics.upiBankCount})
                       </button>
                     )}
-                    {metrics.bankCount > 0 && (
+                    {metrics.cashBankCount > 0 && (
                       <button
-                        className={`sr-pay-pill ${paymentFilter === 'Bank Transfer' ? 'sr-pay-pill--active' : ''}`}
-                        onClick={() => { setPaymentFilter('Bank Transfer'); setTablePage(1); }}
+                        className={`sr-pay-pill ${paymentFilter === 'Cash - Bank' ? 'sr-pay-pill--active' : ''}`}
+                        onClick={() => { setPaymentFilter('Cash - Bank'); setTablePage(1); }}
                       >
-                        Bank Transfer ({metrics.bankCount})
+                        Cash - Bank ({metrics.cashBankCount})
                       </button>
                     )}
                   </div>
@@ -899,7 +899,7 @@ const SalesReport = () => {
                                 <td className="inv-id-cell">INV-{String(inv.id).slice(-6).padStart(6,'0')}</td>
                                 <td>{inv.customer_name || 'Walk-in'}</td>
                                 <td style={{ textAlign: 'center' }}>
-                                  <span className={`sr-pay-badge ${payM === 'UPI' ? 'sr-pay-badge--upi' : payM === 'Card' ? 'sr-pay-badge--card' : payM === 'Bank Transfer' ? 'sr-pay-badge--bank' : 'sr-pay-badge--cash'}`}>
+                                  <span className={`sr-pay-badge ${payM === 'UPI' ? 'sr-pay-badge--upi' : payM === 'UPI - Bank' ? 'sr-pay-badge--upi-bank' : payM === 'Cash - Bank' ? 'sr-pay-badge--cash-bank' : 'sr-pay-badge--cash'}`}>
                                     {payM}
                                   </span>
                                 </td>
@@ -973,7 +973,7 @@ const SalesReport = () => {
               <tbody>
                 {metrics.billProfits.map((b, i) => {
                   const isPos = b.profit >= 0;
-                  const payCls = b.paymentMethod === 'UPI' ? 'sr-pay-badge--upi' : b.paymentMethod === 'Card' ? 'sr-pay-badge--card' : b.paymentMethod === 'Bank Transfer' ? 'sr-pay-badge--bank' : 'sr-pay-badge--cash';
+                  const payCls = b.paymentMethod === 'UPI' ? 'sr-pay-badge--upi' : b.paymentMethod === 'UPI - Bank' ? 'sr-pay-badge--upi-bank' : b.paymentMethod === 'Cash - Bank' ? 'sr-pay-badge--cash-bank' : 'sr-pay-badge--cash';
                   return (
                     <tr key={b.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
                       <td style={{ padding: '0.6rem 0.85rem', color: 'var(--text-muted)' }}>{format(new Date(b.date), 'dd MMM yy')}</td>

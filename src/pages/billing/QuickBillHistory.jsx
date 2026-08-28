@@ -22,13 +22,14 @@ const PRESETS = [
 // ── Expandable bill row ───────────────────────────────────────
 function BillHistoryRow({ bill }) {
   const [open, setOpen] = useState(false);
-  const isUpi = (bill.payment_method || '').toUpperCase() === 'UPI';
+  const pm = (bill.payment_method || 'Cash');
+  const payBadgeClass = pm === 'UPI' ? 'qb-pay-badge--upi' : pm === 'UPI - Bank' ? 'qb-pay-badge--upi-bank' : pm === 'Cash - Bank' ? 'qb-pay-badge--cash-bank' : 'qb-pay-badge--cash';
   return (
     <div className={`qbh-row ${open ? 'qbh-row--open' : ''}`}>
       <div className="qbh-row-header" onClick={() => setOpen(v => !v)}>
         <span className="qbh-row-num">#{bill.bill_number}</span>
-        <span className={`qb-pay-badge ${isUpi ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
-          {isUpi ? 'UPI' : 'Cash'}
+        <span className={`qb-pay-badge ${payBadgeClass}`}>
+          {pm}
         </span>
         <span className="qbh-row-date">{format(new Date(bill.created_at), 'dd MMM yyyy')}</span>
         <span className="qbh-row-time">{format(new Date(bill.created_at), 'hh:mm a')}</span>
@@ -106,7 +107,7 @@ export default function QuickBillHistory() {
   const [loading, setLoading]     = useState(false);
   const [activePreset, setActivePreset] = useState('Last 7 days');
   const [searchTerm, setSearchTerm]     = useState('');
-  const [paymentFilter, setPaymentFilter] = useState('ALL'); // ALL | Cash | UPI | Card | Bank Transfer
+  const [paymentFilter, setPaymentFilter] = useState('ALL'); // ALL | Cash | UPI | UPI - Bank | Cash - Bank
   const [exporting, setExporting]       = useState('');  // 'csv' | 'pdf' | ''
 
   useEffect(() => { fetchBills(); }, [startDate, endDate]);
@@ -159,6 +160,8 @@ export default function QuickBillHistory() {
   const totalRevenue = filteredBills.reduce((s, b) => s + Number(b.total), 0);
   const totalItems   = filteredBills.reduce((s, b) => s + b.items.reduce((si, i) => si + i.quantity, 0), 0);
   const totalUPI     = filteredBills.filter(b => (b.payment_method || '').toUpperCase() === 'UPI').reduce((s, b) => s + Number(b.total), 0);
+  const totalUPIBank = filteredBills.filter(b => b.payment_method === 'UPI - Bank').reduce((s, b) => s + Number(b.total), 0);
+  const totalCashBank = filteredBills.filter(b => b.payment_method === 'Cash - Bank').reduce((s, b) => s + Number(b.total), 0);
 
   // ── CSV export ────────────────────────────────────────────────
   const exportCSV = () => {
@@ -214,7 +217,7 @@ export default function QuickBillHistory() {
             <td style="text-align:center">${item.quantity}</td>
             <td style="text-align:right">₹${Number(item.price).toFixed(2)}</td>
             <td style="text-align:right">₹${Number(item.line_total).toFixed(2)}</td>
-            <td style="text-align:center;font-weight:700;${payMethod === 'UPI' ? 'color:#7c3aed' : payMethod === 'Card' ? 'color:#2563eb' : payMethod === 'Bank Transfer' ? 'color:#d97706' : 'color:#16a34a'}">${idx === 0 ? (bill.payment_method || 'Cash') : ''}</td>
+            <td style="text-align:center;font-weight:700;${payMethod === 'UPI' ? 'color:#7c3aed' : payMethod === 'UPI - Bank' ? 'color:#6366f1' : payMethod === 'Cash - Bank' ? 'color:#059669' : 'color:#16a34a'}">${idx === 0 ? (bill.payment_method || 'Cash') : ''}</td>
             <td style="text-align:right;font-weight:700">${idx === 0 ? '₹' + Number(bill.total).toFixed(2) : ''}</td>
           </tr>`;
         });
@@ -353,7 +356,7 @@ export default function QuickBillHistory() {
 
         {/* Payment method filter */}
         <div className="qbh-pay-filters">
-          {['ALL', 'Cash', 'UPI', 'Card', 'Bank Transfer'].map(m => (
+          {['ALL', 'Cash', 'UPI', 'UPI - Bank', 'Cash - Bank'].map(m => (
             <button
               key={m}
               className={`qbh-pay-pill ${paymentFilter === m ? 'qbh-pay-pill--active' : ''}`}

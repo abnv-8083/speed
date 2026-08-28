@@ -85,6 +85,8 @@ function EditItemModal({ item, bill, onSave, onClose }) {
           <div className="qb-qty-pay-options">
             <button type="button" className={`qb-qty-pay-btn ${payMethod === 'Cash' ? 'active cash' : ''}`} onClick={() => setPayMethod('Cash')}>💵 Cash</button>
             <button type="button" className={`qb-qty-pay-btn ${payMethod === 'UPI' ? 'active upi' : ''}`} onClick={() => setPayMethod('UPI')}>📱 UPI</button>
+            <button type="button" className={`qb-qty-pay-btn ${payMethod === 'UPI - Bank' ? 'active upi-bank' : ''}`} onClick={() => setPayMethod('UPI - Bank')}>📱 UPI - Bank</button>
+            <button type="button" className={`qb-qty-pay-btn ${payMethod === 'Cash - Bank' ? 'active cash-bank' : ''}`} onClick={() => setPayMethod('Cash - Bank')}>💵 Cash - Bank</button>
           </div>
         </div>
 
@@ -307,7 +309,7 @@ export default function QuickBill() {
   const [quantity, setQuantity]               = useState(1);
   const [discount, setDiscount]               = useState('');
   const [totalAmount, setTotalAmount]         = useState('');
-  const [payMethod, setPayMethod]              = useState('Cash');
+  const [payMethod, setPayMethod]              = useState('Cash'); // 'Cash' | 'UPI' | 'UPI - Bank' | 'Cash - Bank'
 
   // Dropdown search state
   const [showDropdown, setShowDropdown]       = useState(false);
@@ -837,8 +839,8 @@ export default function QuickBill() {
               >
                 <option value="Cash">💵 Cash</option>
                 <option value="UPI">📱 UPI</option>
-                <option value="Card">💳 Card</option>
-                <option value="Bank Transfer">🏦 Bank Transfer</option>
+                <option value="UPI - Bank">📱 UPI - Bank</option>
+                <option value="Cash - Bank">💵 Cash - Bank</option>
               </select>
             </div>
 
