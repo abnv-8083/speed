@@ -353,137 +353,150 @@ const SalesReport = () => {
     }, {});
     const expCatRows = Object.entries(expByCat).map(([cat, amt]) =>
       `<tr style="background:#fef9f9">
-        <td style="padding:6px 12px 6px 28px;color:#64748b;font-size:12px">${cat}</td>
-        <td style="padding:6px 12px;text-align:right;color:#f87171;font-size:12px">₹${amt.toFixed(2)}</td>
+        <td style="padding:5px 10px 5px 22px;color:#64748b;font-size:11px">${cat}</td>
+        <td style="padding:5px 10px;text-align:right;color:#f87171;font-size:11px">₹${amt.toFixed(2)}</td>
       </tr>`).join('');
 
     const topProductRows = metrics.topProducts.map((p, i) =>
       `<tr style="${i % 2 === 0 ? '' : 'background:#f8fafc'}">
-        <td style="padding:6px 10px;font-size:12px">#${i + 1} ${p.name}</td>
-        <td style="padding:6px 10px;text-align:center;font-size:12px;color:#64748b">${p.qty}</td>
-        <td style="padding:6px 10px;text-align:right;font-size:12px;font-weight:700;color:#10b981">₹${p.revenue.toFixed(2)}</td>
+        <td style="padding:5px 8px;font-size:11px">#${i + 1} ${p.name}</td>
+        <td style="padding:5px 8px;text-align:center;font-size:11px;color:#64748b">${p.qty}</td>
+        <td style="padding:5px 8px;text-align:right;font-size:11px;font-weight:700;color:#10b981">₹${p.revenue.toFixed(2)}</td>
       </tr>`).join('');
 
-    const invoiceRows = salesData.slice(0, 50).map((inv, i) => {
-      const isUpi = (inv.payment_method || '').toUpperCase() === 'UPI';
-      return `<tr style="${i % 2 === 0 ? '' : 'background:#f8fafc'}">
-        <td style="padding:5px 10px;font-size:11px;color:#64748b">${new Date(inv.created_at).toLocaleDateString()}</td>
-        <td style="padding:5px 10px;font-size:11px;font-family:monospace;color:#6366f1">INV-${String(inv.id).slice(-6).padStart(6,'0')}</td>
-        <td style="padding:5px 10px;font-size:11px">${inv.customer_name || 'Walk-in'}</td>
-        <td style="padding:5px 10px;text-align:center;font-size:10px"><span style="background:${isUpi ? '#ede9fe' : '#dcfce7'};color:${isUpi ? '#7c3aed' : '#15803d'};font-weight:700;padding:1px 6px;border-radius:4px">${isUpi ? 'UPI' : 'Cash'}</span></td>
-        <td style="padding:5px 10px;text-align:right;font-size:11px;color:#f87171">${inv.discount > 0 ? `-₹${Number(inv.discount).toFixed(2)}` : '—'}</td>
-        <td style="padding:5px 10px;text-align:right;font-size:11px;font-weight:700;color:#10b981">₹${Number(inv.total_amount).toFixed(2)}</td>
+    const invoiceRows = salesData.slice(0, 100).map((inv, i) => {
+      const pm = (inv.payment_method || 'Cash').toUpperCase();
+      const isUpi = pm === 'UPI';
+      const isCard = pm === 'CARD';
+      const isBank = pm === 'BANK TRANSFER';
+      const badgeBg = isUpi ? '#ede9fe' : isCard ? '#dbeafe' : isBank ? '#fef3c7' : '#dcfce7';
+      const badgeColor = isUpi ? '#7c3aed' : isCard ? '#2563eb' : isBank ? '#d97706' : '#15803d';
+      return `<tr style="${i % 2 === 0 ? '' : 'background:#f8fafc'};page-break-inside:avoid">
+        <td style="padding:4px 8px;font-size:10px;color:#64748b;white-space:nowrap">${new Date(inv.created_at).toLocaleDateString()}</td>
+        <td style="padding:4px 8px;font-size:10px;font-family:monospace;color:#6366f1">INV-${String(inv.id).slice(-6).padStart(6,'0')}</td>
+        <td style="padding:4px 8px;font-size:10px">${inv.customer_name || 'Walk-in'}</td>
+        <td style="padding:4px 8px;text-align:center;font-size:9px"><span style="background:${badgeBg};color:${badgeColor};font-weight:700;padding:1px 5px;border-radius:3px">${inv.payment_method || 'Cash'}</span></td>
+        <td style="padding:4px 8px;text-align:right;font-size:10px;color:#f87171">${inv.discount > 0 ? `-₹${Number(inv.discount).toFixed(2)}` : '—'}</td>
+        <td style="padding:4px 8px;text-align:right;font-size:10px;font-weight:700;color:#10b981">₹${Number(inv.total_amount).toFixed(2)}</td>
       </tr>`;
     }).join('');
 
-    const html = `
-      <div style="font-family:Inter,Arial,sans-serif;color:#111;padding:24px;background:#fff">
+    const thStyle = 'padding:6px 8px;text-align:left;font-size:9px;color:#64748b;font-weight:700;text-transform:uppercase;border-bottom:2px solid #e2e8f0';
 
-        <!-- Header -->
-        <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;padding-bottom:16px;border-bottom:2px solid #e2e8f0">
+    const html = `
+      <style>
+        .pdf-section { page-break-inside: avoid; }
+        .pdf-break { page-break-before: always; }
+        .pdf-tbl { width:100%;border-collapse:collapse;border:1px solid #e2e8f0 }
+        .pdf-tbl thead { display:table-header-group }
+        .pdf-tbl tr { page-break-inside:avoid }
+        .pdf-tbl th { background:#f1f5f9 }
+      </style>
+      <div style="font-family:Inter,Arial,sans-serif;color:#111;padding:20px;background:#fff;font-size:11px;line-height:1.4">
+
+        <!-- ── Header ── -->
+        <div class="pdf-section" style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:16px;padding-bottom:12px;border-bottom:2px solid #e2e8f0">
           <div>
-            <h1 style="font-size:22px;font-weight:900;color:#1e1b4b;margin:0 0 4px">Sales & Analytics Report</h1>
-            <p style="color:#64748b;font-size:13px;margin:0">Period: ${startDate} to ${endDate}</p>
+            <h1 style="font-size:20px;font-weight:900;color:#1e1b4b;margin:0 0 3px">Sales & Analytics Report</h1>
+            <p style="color:#64748b;font-size:12px;margin:0">Period: ${startDate} to ${endDate}</p>
           </div>
           <div style="text-align:right">
-            <p style="font-size:11px;color:#94a3b8;margin:0">Generated by Speed@net</p>
-            <p style="font-size:11px;color:#94a3b8;margin:2px 0 0">${format(new Date(), 'dd MMM yyyy, hh:mm a')}</p>
+            <p style="font-size:10px;color:#94a3b8;margin:0">Generated by Speed@net</p>
+            <p style="font-size:10px;color:#94a3b8;margin:1px 0 0">${format(new Date(), 'dd MMM yyyy, hh:mm a')}</p>
           </div>
         </div>
 
-        <!-- P&L Summary -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+        <!-- ── P&L Summary Cards ── -->
+        <div class="pdf-section" style="display:flex;gap:10px;margin-bottom:14px">
           ${[
             { label: 'Revenue', value: `₹${metrics.revenue.toFixed(2)}`, color: '#10b981' },
             { label: 'Total Expenses', value: `₹${metrics.totalExp.toFixed(2)}`, color: '#f87171' },
             { label: isProfit ? 'Net Profit' : 'Net Loss', value: `₹${Math.abs(metrics.netProfit).toFixed(2)}`, color: isProfit ? '#10b981' : '#f87171' },
             { label: 'Profit Margin', value: `${metrics.profitPct.toFixed(1)}%`, color: isProfit ? '#10b981' : '#f87171' },
           ].map(m => `
-            <div style="background:#f8fafc;border-radius:8px;padding:12px;border-left:4px solid ${m.color}">
-              <p style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 4px;font-weight:700">${m.label}</p>
-              <p style="font-size:18px;font-weight:900;color:${m.color};margin:0">${m.value}</p>
+            <div style="flex:1;background:#f8fafc;border-radius:6px;padding:10px;border-left:3px solid ${m.color}">
+              <p style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 3px;font-weight:700">${m.label}</p>
+              <p style="font-size:16px;font-weight:900;color:${m.color};margin:0">${m.value}</p>
             </div>`).join('')}
         </div>
 
-        <!-- Secondary metrics -->
-        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:24px">
+        <!-- ── Secondary Metrics ── -->
+        <div class="pdf-section" style="display:flex;gap:10px;margin-bottom:14px">
           ${[
             { label: 'Invoices', value: metrics.invoiceCount },
             { label: 'UPI Payments', value: `₹${metrics.upiRevenue.toFixed(2)} (${metrics.upiCount})` },
             { label: 'Cash Payments', value: `₹${metrics.cashRevenue.toFixed(2)} (${metrics.cashCount})` },
             { label: 'Avg. Order', value: `₹${metrics.avgOrder.toFixed(2)}` },
           ].map(m => `
-            <div style="background:#f8fafc;border-radius:8px;padding:10px 12px;border:1px solid #e2e8f0">
-              <p style="font-size:10px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 3px;font-weight:700">${m.label}</p>
-              <p style="font-size:15px;font-weight:800;color:#1e293b;margin:0">${m.value}</p>
+            <div style="flex:1;background:#f8fafc;border-radius:6px;padding:8px 10px;border:1px solid #e2e8f0">
+              <p style="font-size:9px;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;margin:0 0 2px;font-weight:700">${m.label}</p>
+              <p style="font-size:13px;font-weight:800;color:#1e293b;margin:0">${m.value}</p>
             </div>`).join('')}
         </div>
 
-        <!-- Two-column: P&L breakdown + Top Products -->
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px">
-
-          <!-- P&L -->
-          <div>
-            <h2 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 8px">Income Statement</h2>
-            <table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0">
-              <tr style="background:#f1f5f9"><td style="padding:8px 12px;font-weight:700;font-size:12px">Revenue (Gross)</td><td style="padding:8px 12px;text-align:right;font-weight:700;font-size:12px;color:#10b981">+₹${metrics.revenue.toFixed(2)}</td></tr>
-              <tr><td style="padding:6px 12px 6px 24px;color:#64748b;font-size:12px">↳ Cash Sales</td><td style="padding:6px 12px;text-align:right;color:#10b981;font-size:12px">₹${metrics.cashRevenue.toFixed(2)}</td></tr>
-              <tr><td style="padding:6px 12px 6px 24px;color:#64748b;font-size:12px">↳ UPI Sales</td><td style="padding:6px 12px;text-align:right;color:#7c3aed;font-size:12px">₹${metrics.upiRevenue.toFixed(2)}</td></tr>
-              <tr><td style="padding:6px 12px 6px 24px;color:#64748b;font-size:12px">Discounts Given</td><td style="padding:6px 12px;text-align:right;color:#f87171;font-size:12px">-₹${metrics.discounts.toFixed(2)}</td></tr>
-              <tr style="background:#fef9f9"><td style="padding:8px 12px;font-weight:700;font-size:12px">Total Expenses</td><td style="padding:8px 12px;text-align:right;font-weight:700;font-size:12px;color:#f87171">-₹${metrics.totalExp.toFixed(2)}</td></tr>
-              ${expCatRows}
-              <tr style="background:${isProfit ? '#f0fdf4' : '#fef2f2'}"><td style="padding:10px 12px;font-weight:900;font-size:13px">${isProfit ? 'Net Profit' : 'Net Loss'}</td><td style="padding:10px 12px;text-align:right;font-weight:900;font-size:13px;color:${isProfit ? '#10b981' : '#f87171'}">₹${Math.abs(metrics.netProfit).toFixed(2)}</td></tr>
-            </table>
-          </div>
-
-          <!-- Top Products -->
-          <div>
-            <h2 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 8px">Top Products</h2>
-            <table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0">
-              <tr style="background:#f1f5f9">
-                <th style="padding:7px 10px;text-align:left;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Product</th>
-                <th style="padding:7px 10px;text-align:center;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Units</th>
-                <th style="padding:7px 10px;text-align:right;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Revenue</th>
-              </tr>
-              ${topProductRows || '<tr><td colspan="3" style="padding:12px;text-align:center;color:#94a3b8;font-size:12px">No sales data</td></tr>'}
-            </table>
-          </div>
+        <!-- ── Income Statement ── -->
+        <div class="pdf-section" style="margin-bottom:14px">
+          <h2 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 6px">Income Statement</h2>
+          <table class="pdf-tbl" style="border-radius:6px;overflow:hidden">
+            <tr style="background:#f1f5f9"><td style="padding:6px 10px;font-weight:700;font-size:11px">Revenue (Gross)</td><td style="padding:6px 10px;text-align:right;font-weight:700;font-size:11px;color:#10b981">+₹${metrics.revenue.toFixed(2)}</td></tr>
+            <tr><td style="padding:4px 10px 4px 20px;color:#64748b;font-size:11px">↳ Cash Sales</td><td style="padding:4px 10px;text-align:right;color:#10b981;font-size:11px">₹${metrics.cashRevenue.toFixed(2)}</td></tr>
+            <tr><td style="padding:4px 10px 4px 20px;color:#64748b;font-size:11px">↳ UPI Sales</td><td style="padding:4px 10px;text-align:right;color:#7c3aed;font-size:11px">₹${metrics.upiRevenue.toFixed(2)}</td></tr>
+            <tr><td style="padding:4px 10px 4px 20px;color:#64748b;font-size:11px">Discounts Given</td><td style="padding:4px 10px;text-align:right;color:#f87171;font-size:11px">-₹${metrics.discounts.toFixed(2)}</td></tr>
+            <tr style="background:#fef9f9"><td style="padding:6px 10px;font-weight:700;font-size:11px">Total Expenses</td><td style="padding:6px 10px;text-align:right;font-weight:700;font-size:11px;color:#f87171">-₹${metrics.totalExp.toFixed(2)}</td></tr>
+            ${expCatRows}
+            <tr style="background:${isProfit ? '#f0fdf4' : '#fef2f2'}"><td style="padding:8px 10px;font-weight:900;font-size:12px">${isProfit ? 'Net Profit' : 'Net Loss'}</td><td style="padding:8px 10px;text-align:right;font-weight:900;font-size:12px;color:${isProfit ? '#10b981' : '#f87171'}">₹${Math.abs(metrics.netProfit).toFixed(2)}</td></tr>
+          </table>
         </div>
 
-        <!-- Transactions -->
-        <h2 style="font-size:13px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 8px">
-          Sales Transactions ${salesData.length > 50 ? `(showing first 50 of ${salesData.length})` : ''}
-        </h2>
-        <table style="width:100%;border-collapse:collapse;border-radius:8px;overflow:hidden;border:1px solid #e2e8f0">
-          <tr style="background:#f1f5f9">
-            <th style="padding:7px 10px;text-align:left;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Date</th>
-            <th style="padding:7px 10px;text-align:left;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Invoice</th>
-            <th style="padding:7px 10px;text-align:left;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Customer</th>
-            <th style="padding:7px 10px;text-align:center;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Method</th>
-            <th style="padding:7px 10px;text-align:right;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Discount</th>
-            <th style="padding:7px 10px;text-align:right;font-size:10px;color:#64748b;font-weight:700;text-transform:uppercase">Amount</th>
-          </tr>
-          ${invoiceRows || '<tr><td colspan="6" style="padding:12px;text-align:center;color:#94a3b8;font-size:12px">No transactions</td></tr>'}
-        </table>
+        <!-- ── Top Products ── -->
+        <div class="pdf-section" style="margin-bottom:16px">
+          <h2 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 6px">Top Products</h2>
+          <table class="pdf-tbl" style="border-radius:6px;overflow:hidden">
+            <thead><tr style="background:#f1f5f9">
+              <th style="${thStyle}">Product</th>
+              <th style="${thStyle};text-align:center">Units</th>
+              <th style="${thStyle};text-align:right">Revenue</th>
+            </tr></thead>
+            <tbody>${topProductRows || '<tr><td colspan="3" style="padding:10px;text-align:center;color:#94a3b8;font-size:11px">No sales data</td></tr>'}</tbody>
+          </table>
+        </div>
 
-        <p style="margin-top:20px;font-size:10px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:12px">
+        <!-- ── Transactions ── -->
+        <div class="pdf-break">
+          <h2 style="font-size:12px;font-weight:800;text-transform:uppercase;letter-spacing:0.06em;color:#64748b;margin:0 0 6px">
+            Sales Transactions ${salesData.length > 100 ? `(showing first 100 of ${salesData.length})` : ''}
+          </h2>
+          <table class="pdf-tbl" style="border-radius:6px;overflow:hidden">
+            <thead><tr style="background:#f1f5f9">
+              <th style="${thStyle}">Date</th>
+              <th style="${thStyle}">Invoice</th>
+              <th style="${thStyle}">Customer</th>
+              <th style="${thStyle};text-align:center">Method</th>
+              <th style="${thStyle};text-align:right">Discount</th>
+              <th style="${thStyle};text-align:right">Amount</th>
+            </tr></thead>
+            <tbody>${invoiceRows || '<tr><td colspan="6" style="padding:10px;text-align:center;color:#94a3b8;font-size:11px">No transactions</td></tr>'}</tbody>
+          </table>
+        </div>
+
+        <p style="margin-top:16px;font-size:9px;color:#94a3b8;text-align:center;border-top:1px solid #e2e8f0;padding-top:10px">
           Generated by Speed@net CRM · ${format(new Date(), 'dd MMM yyyy')}
         </p>
       </div>`;
 
     const el = document.createElement('div');
     el.innerHTML = html;
-    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:800px;background:#fff';
+    el.style.cssText = 'position:fixed;left:-9999px;top:0;width:794px;background:#fff';
     document.body.appendChild(el);
 
     await html2pdf()
       .set({
-        margin:      [8, 8, 8, 8],
+        margin:      [10, 10, 10, 10],
         filename:    `sales_report_${startDate}_to_${endDate}.pdf`,
         image:       { type: 'jpeg', quality: 0.98 },
-        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 800, windowWidth: 800 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 794, windowWidth: 794 },
         jsPDF:       { unit: 'mm', format: 'a4', orientation: 'portrait' },
-        pagebreak:   { mode: 'avoid-all' },
+        pagebreak:   { mode: ['css', 'legacy'], before: '.pdf-break', avoid: '.pdf-section' },
       })
       .from(el.firstElementChild)
       .save();
