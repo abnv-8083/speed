@@ -199,6 +199,7 @@ export default function QuickBillHistory() {
       let rows = '';
       filteredBills.forEach(bill => {
         bill.items.forEach((item, idx) => {
+          const payMethod = (bill.payment_method || 'Cash').toUpperCase();
           rows += `<tr>
             <td>${idx === 0 ? bill.billed_date : ''}</td>
             <td>${idx === 0 ? '#' + bill.bill_number : ''}</td>
@@ -206,6 +207,7 @@ export default function QuickBillHistory() {
             <td style="text-align:center">${item.quantity}</td>
             <td style="text-align:right">₹${Number(item.price).toFixed(2)}</td>
             <td style="text-align:right">₹${Number(item.line_total).toFixed(2)}</td>
+            <td style="text-align:center;font-weight:700;${payMethod === 'UPI' ? 'color:#7c3aed' : 'color:#16a34a'}">${idx === 0 ? (bill.payment_method || 'Cash') : ''}</td>
             <td style="text-align:right;font-weight:700">${idx === 0 ? '₹' + Number(bill.total).toFixed(2) : ''}</td>
           </tr>`;
         });
@@ -228,13 +230,14 @@ export default function QuickBillHistory() {
                 <th style="text-align:center;padding:6px 8px;border-bottom:2px solid #e2e8f0">Qty</th>
                 <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e2e8f0">Unit Price</th>
                 <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e2e8f0">Line Total</th>
+                <th style="text-align:center;padding:6px 8px;border-bottom:2px solid #e2e8f0">Payment</th>
                 <th style="text-align:right;padding:6px 8px;border-bottom:2px solid #e2e8f0">Bill Total</th>
               </tr>
             </thead>
             <tbody>${rows}</tbody>
             <tfoot>
               <tr style="background:#f8fafc;font-weight:700">
-                <td colspan="5" style="padding:8px;border-top:2px solid #e2e8f0">Grand Total</td>
+                <td colspan="6" style="padding:8px;border-top:2px solid #e2e8f0">Grand Total</td>
                 <td style="padding:8px;border-top:2px solid #e2e8f0;text-align:right">
                   ₹${filteredBills.reduce((s,b) => s + b.items.reduce((si,i) => si + Number(i.line_total),0), 0).toFixed(2)}
                 </td>

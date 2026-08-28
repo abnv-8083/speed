@@ -95,6 +95,7 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
   };
 
   const advance      = Number(invoice.advance || 0);
+  const paymentMethod = invoice.payment_method || 'Cash';
 
   return (
     <div className="inv-root animate-fade-in">
@@ -153,6 +154,10 @@ const InvoiceTemplate = ({ invoice, onBack, backLabel = 'Back' }) => {
               <div className="rcpt-to-row">
                 <span className="rcpt-meta-label rcpt-to-tag">To:</span>
                 <span className="rcpt-to-name">{customerName.toUpperCase()}</span>
+              </div>
+              <div className="rcpt-pay-row">
+                <span className="rcpt-meta-label">Payment:</span>
+                <span className="rcpt-pay-method">{paymentMethod}</span>
               </div>
             </div>
 

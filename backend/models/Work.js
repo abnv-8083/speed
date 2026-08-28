@@ -117,6 +117,9 @@ const workSchema = new mongoose.Schema(
     issues:      { type: [workIssueSchema], default: [] },
     time_logs:   { type: [timeLogSchema], default: [] },
 
+    // Payment
+    payment_method: { type: String, enum: ['Cash', 'UPI', 'Card', 'Bank Transfer', 'Cheque', 'Other'], default: 'Cash' },
+
     // Metadata
     tags:        { type: [String], default: [] },
     estimated_hours: { type: Number, default: 0 },

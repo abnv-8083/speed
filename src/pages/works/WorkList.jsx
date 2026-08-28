@@ -40,7 +40,7 @@ const WorkList = () => {
   const [showCreate, setShowCreate] = useState(false);
   const [createForm, setCreateForm] = useState({
     title: '', description: '', customer_name: '', priority: 'medium',
-    start_date: '', due_date: '', tags: '',
+    start_date: '', due_date: '', tags: '', payment_method: 'Cash',
   });
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState(null);
@@ -111,7 +111,7 @@ const WorkList = () => {
       }
       const work = await api.createWork(body);
       setShowCreate(false);
-      setCreateForm({ title: '', description: '', customer_name: '', priority: 'medium', start_date: '', due_date: '', tags: '' });
+      setCreateForm({ title: '', description: '', customer_name: '', priority: 'medium', start_date: '', due_date: '', tags: '', payment_method: 'Cash' });
       setSelectedCustomer(null);
       navigate(`/admin/billing/works/${work.id || work._id}`);
     } catch (err) {
@@ -495,6 +495,22 @@ const WorkList = () => {
                     ))}
                   </select>
                 </div>
+                <div className="wl-form-group">
+                  <label>Payment Method</label>
+                  <select
+                    value={createForm.payment_method}
+                    onChange={(e) => setCreateForm({ ...createForm, payment_method: e.target.value })}
+                  >
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI</option>
+                    <option value="Card">Card</option>
+                    <option value="Bank Transfer">Bank Transfer</option>
+                    <option value="Cheque">Cheque</option>
+                    <option value="Other">Other</option>
+                  </select>
+                </div>
+              </div>
+              <div className="wl-form-row">
                 <div className="wl-form-group">
                   <label>Start Date</label>
                   <input

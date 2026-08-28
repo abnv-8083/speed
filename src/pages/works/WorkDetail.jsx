@@ -6,7 +6,7 @@ import {
   MessageSquare, Clock, CheckCircle, XCircle, PauseCircle,
   Briefcase, Calendar, Tag, Users, Mic, MicOff, Play, Pause,
   Download, Eye, Upload, Link as LinkIcon, Loader2, Send,
-  Edit2, Check, Timer, TrendingUp, Activity, Volume2, Info, AlertOctagon
+  Edit2, Check, Timer, TrendingUp, Activity, Volume2, Info, AlertOctagon, CreditCard
 } from 'lucide-react';
 import Portal from '../../components/Portal';
 import './WorkDetail.css';
@@ -103,6 +103,7 @@ const WorkDetail = () => {
         tags: (data.tags || []).join(', '),
         estimated_hours: data.estimated_hours || 0,
         actual_hours: data.actual_hours || 0,
+        payment_method: data.payment_method || 'Cash',
       });
     } catch (err) {
       console.error('Failed to load work:', err);
@@ -396,7 +397,7 @@ const WorkDetail = () => {
           {isOverdue && <span className="wd-overdue-badge">Overdue</span>}
         </div>
         <div className="wd-header-right">
-          <button className="wd-btn-edit" onClick={() => { setEditForm({ title: work.title, description: work.description, status: work.status, priority: work.priority, start_date: work.start_date, due_date: work.due_date, tags: (work.tags || []).join(', '), estimated_hours: work.estimated_hours || 0, actual_hours: work.actual_hours || 0 }); setShowEditModal(true); }}>
+          <button className="wd-btn-edit" onClick={() => { setEditForm({ title: work.title, description: work.description, status: work.status, priority: work.priority, start_date: work.start_date, due_date: work.due_date, tags: (work.tags || []).join(', '), estimated_hours: work.estimated_hours || 0, actual_hours: work.actual_hours || 0, payment_method: work.payment_method || 'Cash' }); setShowEditModal(true); }}>
             <Edit2 size={14} /> Edit
           </button>
         </div>
@@ -503,6 +504,7 @@ const WorkDetail = () => {
                 <div className="wd-detail-row"><Clock size={14} /><span className="wd-detail-label">Start</span><span className="wd-detail-value">{formatDate(work.start_date)}</span></div>
                 <div className={`wd-detail-row ${isOverdue ? 'overdue' : ''}`}><Calendar size={14} /><span className="wd-detail-label">Due</span><span className="wd-detail-value">{formatDate(work.due_date)}</span></div>
                 {work.completed_at && <div className="wd-detail-row"><CheckCircle size={14} /><span className="wd-detail-label">Completed</span><span className="wd-detail-value">{formatDate(work.completed_at)}</span></div>}
+                <div className="wd-detail-row"><CreditCard size={14} /><span className="wd-detail-label">Payment</span><span className="wd-detail-value">{work.payment_method || 'Cash'}</span></div>
               </div>
               <div className="wd-info-card">
                 <h4 className="wd-card-section-title"><TrendingUp size={14} /> Progress</h4>
@@ -823,6 +825,7 @@ const WorkDetail = () => {
                 <div className="wd-form-row">
                   <div className="wd-form-group"><label>Status</label><select value={editForm.status} onChange={e => setEditForm({...editForm, status: e.target.value})}>{Object.entries(STATUS_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></div>
                   <div className="wd-form-group"><label>Priority</label><select value={editForm.priority} onChange={e => setEditForm({...editForm, priority: e.target.value})}>{Object.entries(PRIORITY_CONFIG).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></div>
+                  <div className="wd-form-group"><label>Payment Method</label><select value={editForm.payment_method || 'Cash'} onChange={e => setEditForm({...editForm, payment_method: e.target.value})}><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Card">Card</option><option value="Bank Transfer">Bank Transfer</option><option value="Cheque">Cheque</option><option value="Other">Other</option></select></div>
                 </div>
                 <div className="wd-form-row">
                   <div className="wd-form-group"><label>Start Date</label><input type="date" value={editForm.start_date} onChange={e => setEditForm({...editForm, start_date: e.target.value})} /></div>
