@@ -341,6 +341,26 @@ export default function QuickBill() {
     loadCustomers();
   }, []);
 
+  // ── Auto-refresh on midnight rollover ─────────────────────────
+  useEffect(() => {
+    let lastDate = format(new Date(), 'yyyy-MM-dd');
+    const checkDate = () => {
+      const today = format(new Date(), 'yyyy-MM-dd');
+      if (today !== lastDate) {
+        lastDate = today;
+        loadTodayBills();
+      }
+    };
+    const interval = setInterval(checkDate, 30000); // check every 30s
+    // Also refresh when user returns to tab
+    const onVisible = () => { if (!document.hidden) checkDate(); };
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener('visibilitychange', onVisible);
+    };
+  }, []);
+
   const loadProducts = async () => {
     setLoadingProducts(true);
     try {
