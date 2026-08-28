@@ -205,7 +205,13 @@ const ProductDetail = () => {
             </div>
             <div className="pd-stat">
               <span className="pd-stat-label">{product.type === 'service' ? 'Service Charge' : 'Selling Price'}</span>
-              <span className="pd-stat-value pd-stat-price">₹{Number(product.price).toFixed(2)}</span>
+              <span className="pd-stat-value pd-stat-price">
+                {product.type === 'service' ? (
+                  <span style={{ color: 'var(--text-muted)', fontStyle: 'italic', fontWeight: 500 }}>Varies per bill</span>
+                ) : (
+                  `₹${Number(product.price).toFixed(2)}`
+                )}
+              </span>
             </div>
             <div className="pd-stat">
               <span className="pd-stat-label">{product.type === 'service' ? 'Service Price' : 'Cost Price'}</span>
@@ -213,22 +219,26 @@ const ProductDetail = () => {
                 {product.cost_price > 0 ? `₹${Number(product.cost_price).toFixed(2)}` : '—'}
               </span>
             </div>
-            <div className="pd-stat">
-              <span className="pd-stat-label">Margin</span>
-              <span className="pd-stat-value" style={{ color: '#34d399' }}>
-                {product.cost_price > 0
-                  ? `${(((product.price - product.cost_price) / product.price) * 100).toFixed(1)}%`
-                  : '—'}
-              </span>
-            </div>
-            <div className="pd-stat">
-              <span className="pd-stat-label">Profit / Unit</span>
-              <span className="pd-stat-value" style={{ color: '#34d399' }}>
-                {product.cost_price > 0
-                  ? `₹${(product.price - product.cost_price).toFixed(2)}`
-                  : '—'}
-              </span>
-            </div>
+            {product.type !== 'service' && (
+              <>
+                <div className="pd-stat">
+                  <span className="pd-stat-label">Margin</span>
+                  <span className="pd-stat-value" style={{ color: '#34d399' }}>
+                    {product.cost_price > 0
+                      ? `${(((product.price - product.cost_price) / product.price) * 100).toFixed(1)}%`
+                      : '—'}
+                  </span>
+                </div>
+                <div className="pd-stat">
+                  <span className="pd-stat-label">Profit / Unit</span>
+                  <span className="pd-stat-value" style={{ color: '#34d399' }}>
+                    {product.cost_price > 0
+                      ? `₹${(product.price - product.cost_price).toFixed(2)}`
+                      : '—'}
+                  </span>
+                </div>
+              </>
+            )}
             <div className="pd-stat">
               <span className="pd-stat-label">Stock Level</span>
               <span className={`pd-stat-value ${product.type === 'service' ? '' : product.stock === 0 ? 'stock-zero' : product.stock < 10 ? 'stock-low' : ''}`}>
@@ -281,15 +291,17 @@ const ProductDetail = () => {
               onChange={e => setEditName(e.target.value)} required autoFocus disabled={editSaving} />
           </div>
           <div className="pd-form-field">
-            <label>{product.type === 'service' ? 'Service Price' : 'Cost Price'} (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— {product.type === 'service' ? 'base cost' : 'what you paid'}</span></label>
+            <label>{product.type === 'service' ? 'Service Price (cost)' : 'Cost Price'} (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— {product.type === 'service' ? 'what you pay internally' : 'what you paid'}</span></label>
             <input type="number" className="input-field" value={editCost}
-              onChange={e => setEditCost(e.target.value)} min="0" step="0.01" disabled={editSaving} />
+              onChange={e => setEditCost(e.target.value)} min="0" step="0.01" disabled={editSaving} required={product.type === 'service'} />
           </div>
-          <div className="pd-form-field">
-            <label>{product.type === 'service' ? 'Service Charge' : 'Selling Price'} (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you charge</span></label>
-            <input type="number" className="input-field" value={editPrice}
-              onChange={e => setEditPrice(e.target.value)} required min="0" step="0.01" disabled={editSaving} />
-          </div>
+          {product.type !== 'service' && (
+            <div className="pd-form-field">
+              <label>Selling Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you charge</span></label>
+              <input type="number" className="input-field" value={editPrice}
+                onChange={e => setEditPrice(e.target.value)} required min="0" step="0.01" disabled={editSaving} />
+            </div>
+          )}
         </AppModal>
       )}
 
