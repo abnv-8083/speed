@@ -517,8 +517,7 @@ export default function QuickBill() {
   }, []);
 
   // ── Select product from dropdown ──────────────────────────────
-  const isBankMethod = payMethod === 'UPI - Bank' || payMethod === 'Cash - Bank';
-  const isBankService = isBankMethod && selectedProduct?.type === 'service';
+  const isService = selectedProduct?.type === 'service';
 
   const selectProduct = (product) => {
     setSelectedProduct(product);
@@ -529,11 +528,14 @@ export default function QuickBill() {
     setCostPrice(Number(product.cost_price) || 0);
     setQuantity(1);
     setDiscount('');
-    // For bank service: total = (serviceTotal - servicePrice) × qty
-    // For others: total = serviceCharge × qty
-    const isBank = (payMethod === 'UPI - Bank' || payMethod === 'Cash - Bank') && product.type === 'service';
-    const cp = Number(product.cost_price) || 0;
-    setTotalAmount(isBank ? Math.max(0, p - cp).toFixed(2) : p);
+    // For services: total = (serviceTotal - servicePrice) × qty
+    // For products: total = price × qty
+    if (product.type === 'service') {
+      const cp = Number(product.cost_price) || 0;
+      setTotalAmount(Math.max(0, p - cp).toFixed(2));
+    } else {
+      setTotalAmount(p);
+    }
     setTimeout(() => {
       qtyInputRef.current?.focus();
       qtyInputRef.current?.select();
@@ -543,11 +545,11 @@ export default function QuickBill() {
   // ── Auto Calculations ─────────────────────────────────────────
   // Bank service: total = (serviceTotal − servicePrice − discount) × qty
   // Others: total = price × qty − discount
-  const calcTotal = (price, cost, qty, disc) => {
-    if (isBankService) {
-      return Math.max(0, (price - cost - disc) * qty);
+  const calcTotal = (serviceTotal, servicePrice, qty, disc) => {
+    if (isService) {
+      return Math.max(0, (serviceTotal - servicePrice - disc) * qty);
     }
-    return Math.max(0, (price * qty) - disc);
+    return Math.max(0, (serviceTotal * qty) - disc);
   };
 
   const handlePriceChange = (val) => {
@@ -868,11 +870,7 @@ export default function QuickBill() {
                     const c = parseFloat(costPrice) || 0;
                     const q = parseFloat(quantity) || 0;
                     const d = parseFloat(discount) || 0;
-                    const isBank = newMethod === 'UPI - Bank' || newMethod === 'Cash - Bank';
-                    setTotalAmount(isBank
-                      ? Math.max(0, (p - c - d) * q).toFixed(2)
-                      : Math.max(0, (p * q) - d).toFixed(2)
-                    );
+                    setTotalAmount(calcTotal(p, c, q, d).toFixed(2));
                   }
                 }}
               >
@@ -883,10 +881,10 @@ export default function QuickBill() {
               </select>
             </div>
 
-            {/* 3b. Service Price — editable for bank methods, read-only for others */}
-            {selectedProduct?.type === 'service' && (
+            {/* 3b. Service Price (our cost) — for services */}
+            {isService && (
               <div className="qb-inline-field qb-field-price">
-                <label className="qb-inline-label">Service Price {isBankService ? '(our cost)' : '(cost)'}</label>
+                <label className="qb-inline-label">Service Price <span className="qb-req">*</span></label>
                 <div className="qb-currency-input-wrap">
                   <span className="qb-currency-symbol">₹</span>
                   <input
@@ -895,19 +893,16 @@ export default function QuickBill() {
                     className="input-field qb-inline-input qb-currency-input"
                     placeholder="0.00"
                     value={costPrice}
-                    readOnly={!isBankService}
-                    tabIndex={isBankService ? 0 : -1}
-                    style={!isBankService ? { cursor: 'default', opacity: 0.6 } : {}}
-                    onChange={e => isBankService && handleCostChange(e.target.value)}
+                    onChange={e => handleCostChange(e.target.value)}
                     onKeyDown={e => e.key === 'Enter' && priceInputRef.current?.focus()}
                   />
                 </div>
               </div>
             )}
 
-            {/* 4. Selling Price / Service Charge (Editable) */}
+            {/* 4. Service Total / Selling Price (Editable) */}
             <div className="qb-inline-field qb-field-price">
-              <label className="qb-inline-label">{selectedProduct?.type === 'service' ? 'Service Charge' : 'Selling Price'} <span className="qb-req">*</span></label>
+              <label className="qb-inline-label">{isService ? 'Service Total' : 'Selling Price'} <span className="qb-req">*</span></label>
               <div className="qb-currency-input-wrap">
                 <span className="qb-currency-symbol">₹</span>
                 <input
@@ -945,7 +940,7 @@ export default function QuickBill() {
             {/* 6. Total Amount (Editable) */}
             <div className="qb-inline-field qb-field-total">
               <label className="qb-inline-label">
-                {isBankService ? 'Profit (Service Total − Service Price − Discount) × Qty' : selectedProduct?.type === 'service' ? 'Total (Service Charge × Qty − Discount)' : 'Total Amount'}
+                {isService ? 'Total (Service Total − Service Price − Discount) × Qty' : 'Total Amount'}
               </label>
               <div className="qb-currency-input-wrap">
                 <span className="qb-currency-symbol">₹</span>
