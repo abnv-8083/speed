@@ -61,10 +61,6 @@ const ProductDetail = () => {
   const handleSaveEdit = async (e) => {
     e.preventDefault();
     if (!editName) return;
-    if (product.type === 'service' && !editCost) {
-      toast.error('Service Price (cost) is required');
-      return;
-    }
     if (product.type !== 'service' && !editPrice) {
       toast.error('Selling Price is required');
       return;
@@ -298,11 +294,13 @@ const ProductDetail = () => {
             <input type="text" className="input-field" value={editName}
               onChange={e => setEditName(e.target.value)} required autoFocus disabled={editSaving} />
           </div>
-          <div className="pd-form-field">
-            <label>{product.type === 'service' ? 'Service Price (cost)' : 'Cost Price'} (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— {product.type === 'service' ? 'what you pay internally' : 'what you paid'}</span></label>
-            <input type="number" className="input-field" value={editCost}
-              onChange={e => setEditCost(e.target.value)} min="0" step="0.01" disabled={editSaving} required={product.type === 'service'} />
-          </div>
+          {product.type !== 'service' && (
+            <div className="pd-form-field">
+              <label>Cost Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you paid</span></label>
+              <input type="number" className="input-field" value={editCost}
+                onChange={e => setEditCost(e.target.value)} min="0" step="0.01" disabled={editSaving} />
+            </div>
+          )}
           {product.type !== 'service' && (
             <div className="pd-form-field">
               <label>Selling Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you charge</span></label>

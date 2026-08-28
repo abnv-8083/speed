@@ -53,10 +53,6 @@ const Products = () => {
   const handleAddProduct = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     if (!newProdName) return;
-    if (newProdType === 'service' && !newProdCost) {
-      toast.error('Service Price (cost) is required for services');
-      return;
-    }
     if (newProdType === 'product' && (!newProdPrice || !newProdStock)) {
       toast.error('Selling Price and Stock are required for products');
       return;
@@ -211,11 +207,13 @@ const Products = () => {
               <input type="text" className="input-field" value={newProdName}
                 onChange={e => setNewProdName(e.target.value)} required placeholder={newProdType === 'service' ? 'e.g. Color Xerox / Lamination' : 'e.g. A4 Paper Bundle'} autoFocus />
             </div>
-            <div className="form-group">
-              <label>{newProdType === 'service' ? 'Service Price (cost)' : 'Cost Price'} (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— {newProdType === 'service' ? 'what you pay internally' : 'your expense'}</span></label>
-              <input type="number" className="input-field" value={newProdCost}
-                onChange={e => setNewProdCost(e.target.value)} min="0" step="0.01" placeholder="0.00" required={newProdType === 'service'} />
-            </div>
+            {newProdType === 'product' && (
+              <div className="form-group">
+                <label>Cost Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— your expense</span></label>
+                <input type="number" className="input-field" value={newProdCost}
+                  onChange={e => setNewProdCost(e.target.value)} min="0" step="0.01" placeholder="0.00" />
+              </div>
+            )}
             {newProdType === 'product' && (
               <div className="form-group">
                 <label>Selling Price (₹) <span style={{fontSize:'0.72rem',color:'var(--text-muted)',fontWeight:400}}>— what you charge</span></label>
