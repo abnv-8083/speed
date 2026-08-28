@@ -208,7 +208,7 @@ function BillRow({
             <div className="qb-bill-badge-group">
               <span className="qb-bill-badge">#{bill.bill_number}</span>
               <span className={`qb-pay-badge ${isUpi ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
-                {isUpi ? 'UPI' : 'Cash'}
+                {bill.payment_method || 'Cash'}
               </span>
               {hasAdvance && idx === 0 && (
                 <span className="qb-advance-badge" title={`Advance Paid: ₹${Number(bill.advance).toFixed(2)}`}>
@@ -306,7 +306,7 @@ export default function QuickBill() {
   const [quantity, setQuantity]               = useState(1);
   const [discount, setDiscount]               = useState('');
   const [totalAmount, setTotalAmount]         = useState('');
-  const [isUPI, setIsUPI]                     = useState(false);
+  const [payMethod, setPayMethod]              = useState('Cash');
 
   // Dropdown search state
   const [showDropdown, setShowDropdown]       = useState(false);
@@ -647,7 +647,6 @@ export default function QuickBill() {
     setSaving(true);
     try {
       const total = items.reduce((s, i) => s + i.line_total, 0);
-      const payMethod = isUPI ? 'UPI' : 'Cash';
       const newBill = await api.createQuickBill({ items, total, payment_method: payMethod });
       setBills(prev => [newBill, ...prev]);
       setSummary(prev => ({
@@ -824,18 +823,19 @@ export default function QuickBill() {
               />
             </div>
 
-            {/* 3. UPI Checkbox */}
-            <div className="qb-inline-field qb-field-upi">
+            {/* 3. Payment Method */}
+            <div className="qb-inline-field qb-field-method">
               <label className="qb-inline-label">Method</label>
-              <label className={`qb-upi-checkbox-label ${isUPI ? 'qb-upi-checked' : ''}`} title="Check to mark as UPI payment">
-                <input
-                  type="checkbox"
-                  className="qb-upi-checkbox"
-                  checked={isUPI}
-                  onChange={e => setIsUPI(e.target.checked)}
-                />
-                <span className="qb-upi-toggle-text">{isUPI ? 'UPI' : 'Cash'}</span>
-              </label>
+              <select
+                className="input-field qb-inline-input qb-method-select"
+                value={payMethod}
+                onChange={e => setPayMethod(e.target.value)}
+              >
+                <option value="Cash">💵 Cash</option>
+                <option value="UPI">📱 UPI</option>
+                <option value="Card">💳 Card</option>
+                <option value="Bank Transfer">🏦 Bank Transfer</option>
+              </select>
             </div>
 
             {/* 4. Selling Price (Editable) */}
@@ -1075,7 +1075,7 @@ export default function QuickBill() {
                     <div className="qb-summary-bill-num-wrap">
                       <span className="qb-summary-bill-num">#{bill.bill_number}</span>
                       <span className={`qb-pay-badge-sm ${isUpi ? 'qb-pay-badge--upi' : 'qb-pay-badge--cash'}`}>
-                        {isUpi ? 'UPI' : 'Cash'}
+                        {bill.payment_method || 'Cash'}
                       </span>
                     </div>
                     <span className="qb-summary-bill-items">

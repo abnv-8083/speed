@@ -60,7 +60,7 @@
 .qb-field-price    { flex: 1; min-width: 90px; }
 .qb-field-discount { flex: 1; min-width: 90px; }
 .qb-field-total    { flex: 1.1; min-width: 95px; }
-.qb-field-upi      { flex: 0.8; min-width: 75px; }
+.qb-field-method   { flex: 1.1; min-width: 100px; }
 .qb-inline-action  { flex: none; }
 
 .qb-inline-label {
@@ -128,49 +128,12 @@
   font-weight: 700;
 }
 
-.qb-upi-checkbox-label {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.4rem;
-  padding: 0.52rem 0.65rem;
-  border-radius: 9px;
-  background: var(--background);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  user-select: none;
-  transition: all 0.15s ease;
+.qb-method-select {
   height: 38px;
-  box-sizing: border-box;
-}
-
-.qb-upi-checkbox-label:hover {
-  border-color: var(--primary);
-  background: rgba(139, 92, 246, 0.05);
-}
-
-.qb-upi-checkbox-label.qb-upi-checked {
-  background: rgba(139, 92, 246, 0.15);
-  border-color: var(--primary);
-  box-shadow: 0 0 0 1px rgba(139, 92, 246, 0.35);
-}
-
-.qb-upi-checkbox {
-  width: 15px;
-  height: 15px;
-  accent-color: var(--primary);
-  cursor: pointer;
-  margin: 0;
-}
-
-.qb-upi-checkbox-text {
   font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--text);
-}
-
-.qb-upi-checked .qb-upi-checkbox-text {
-  color: #a78bfa;
+  font-weight: 600;
+  cursor: pointer;
+  appearance: auto;
 }
 
 .qb-inline-add-btn {
