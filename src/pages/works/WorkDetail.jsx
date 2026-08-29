@@ -362,84 +362,94 @@ const WorkDetail = () => {
         {/* ═══════ OVERVIEW TAB ═══════════════════════════ */}
         {activeTab === 'overview' && (
           <div className="wd-overview">
-            {/* Top Row: Title + Customer side by side */}
-            <div className="wd-overview-top">
-              {/* Title Card */}
-              <div className="wd-info-card wd-title-card">
-                <div className="wd-title-row">
-                  <h2>{work.title}</h2>
+            {/* ── Hero Card ────────────────────────────────── */}
+            <div className="wd-info-card wd-hero-card" style={{ '--hero-accent': statusCfg.color }}>
+              <div className="wd-hero-top">
+                <h2 className="wd-hero-title">{work.title}</h2>
+                <div className="wd-hero-meta">
+                  <span className="wd-status" style={{ color: statusCfg.color, background: `${statusCfg.color}18` }}>
+                    {React.createElement(statusCfg.icon, { size: 12 })} {statusCfg.label}
+                  </span>
+                  <span className="wd-priority" style={{ color: priorityCfg.color }}>● {priorityCfg.label}</span>
                 </div>
-                {work.description && <p className="wd-desc">{work.description}</p>}
-                {work.tags?.length > 0 && (
-                  <div className="wd-tags">
+              </div>
+              {work.description && <p className="wd-hero-desc">{work.description}</p>}
+              <div className="wd-hero-bottom">
+                {work.tags?.length > 0 ? (
+                  <div className="wd-hero-tags">
                     {work.tags.map((tag, i) => <span key={i} className="wd-tag"><Tag size={10} /> {tag}</span>)}
                   </div>
-                )}
+                ) : <div />}
+                <div className="wd-hero-stats">
+                  <span className="wd-hero-stat"><FileText size={12} /> {(work.documents || []).length} docs</span>
+                  <span className="wd-hero-stat"><MessageSquare size={12} /> {(work.notes || []).length} notes</span>
+                  <span className="wd-hero-stat"><AlertTriangle size={12} /> {openIssues} issues</span>
+                </div>
               </div>
+            </div>
 
+            {/* ── Grid: Customer + Status + Timeline ──────── */}
+            <div className="wd-overview-grid three-col">
               {/* Customer Card */}
               <div className="wd-info-card">
+                <h4 className="wd-card-section-title"><Users size={14} /> Customer</h4>
                 {work.customer_id && work.customer_id.name ? (
                   <div className="wd-customer-card">
                     <div className="wd-customer-card-header">
                       <div className="wd-customer-avatar">{work.customer_id.name.charAt(0).toUpperCase()}</div>
                       <div className="wd-customer-card-info">
                         <span className="wd-customer-card-name">{work.customer_id.name}</span>
-                        <span className="wd-customer-card-id">Customer</span>
+                        <span className="wd-customer-card-id">Linked Customer</span>
                       </div>
-                      <button className="wd-customer-link" onClick={() => navigate(`/admin/billing/customers/${work.customer_id._id || work.customer_id.id}`)}>
-                        View Profile →
-                      </button>
                     </div>
                     <div className="wd-customer-card-details">
                       {work.customer_id.phone && <div className="wd-customer-detail"><span className="wd-customer-detail-label">Phone</span><span className="wd-customer-detail-value">{work.customer_id.phone}</span></div>}
                       {work.customer_id.email && <div className="wd-customer-detail"><span className="wd-customer-detail-label">Email</span><span className="wd-customer-detail-value">{work.customer_id.email}</span></div>}
                       {work.customer_id.address && <div className="wd-customer-detail full"><span className="wd-customer-detail-label">Address</span><span className="wd-customer-detail-value">{work.customer_id.address}</span></div>}
-                      {work.customer_id.dob && <div className="wd-customer-detail"><span className="wd-customer-detail-label">DOB</span><span className="wd-customer-detail-value">{work.customer_id.dob}</span></div>}
                     </div>
-                    {work.customer_id.documents?.length > 0 && (
-                      <div className="wd-customer-card-footer">📎 {work.customer_id.documents.length} document{work.customer_id.documents.length > 1 ? 's' : ''} on file</div>
-                    )}
+                    <button className="wd-customer-link" style={{ alignSelf: 'flex-start', marginTop: '0.35rem' }} onClick={() => navigate(`/admin/billing/customers/${work.customer_id._id || work.customer_id.id}`)}>
+                      View Profile →
+                    </button>
                   </div>
                 ) : (
                   <div className="wd-customer-card wd-walkin">
                     <div className="wd-customer-card-header">
                       <div className="wd-customer-avatar walkin">W</div>
                       <div className="wd-customer-card-info">
-                        <span className="wd-customer-card-name">{work.customer_name || 'Walk-in Customer'}</span>
+                        <span className="wd-customer-card-name">{work.customer_name || 'Walk-in'}</span>
                         <span className="wd-customer-card-id">No customer linked</span>
                       </div>
                     </div>
                   </div>
                 )}
               </div>
-            </div>
 
-            {/* Middle Row: Quick Status */}
-            <div className="wd-info-card">
-              <h4 className="wd-card-section-title"><Activity size={14} /> Quick Status</h4>
-              <div className="wd-status-grid">
-                {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-                  <button key={key} className={`wd-status-btn ${work.status === key ? 'active' : ''}`}
-                    style={{ '--status-color': cfg.color }}
-                    onClick={() => quickStatusChange(key)}
-                    disabled={changingStatus || work.status === key}
-                  >
-                    {changingStatus && work.status !== key ? <Spinner size={12} /> : React.createElement(cfg.icon, { size: 13 })}
-                    {cfg.label}
-                  </button>
-                ))}
+              {/* Quick Status */}
+              <div className="wd-info-card">
+                <h4 className="wd-card-section-title"><Activity size={14} /> Status</h4>
+                <div className="wd-status-grid">
+                  {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+                    <button key={key} className={`wd-status-btn ${work.status === key ? 'active' : ''}`}
+                      style={{ '--status-color': cfg.color }}
+                      onClick={() => quickStatusChange(key)}
+                      disabled={changingStatus || work.status === key}
+                    >
+                      {changingStatus && work.status !== key ? <Spinner size={12} /> : React.createElement(cfg.icon, { size: 13 })}
+                      {cfg.label}
+                    </button>
+                  ))}
+                </div>
               </div>
-            </div>
 
-            {/* Bottom Row: Dates */}
-            <div className="wd-info-card">
-              <h4 className="wd-card-section-title"><Calendar size={14} /> Timeline</h4>
-              <div className="wd-detail-row"><Calendar size={14} /><span className="wd-detail-label">Created</span><span className="wd-detail-value">{formatDate(work.createdAt)}</span></div>
-              <div className="wd-detail-row"><Clock size={14} /><span className="wd-detail-label">Start</span><span className="wd-detail-value">{formatDate(work.start_date)}</span></div>
-              <div className={`wd-detail-row ${isOverdue ? 'overdue' : ''}`}><Calendar size={14} /><span className="wd-detail-label">Due</span><span className="wd-detail-value">{formatDate(work.due_date)}</span></div>
-              {work.completed_at && <div className="wd-detail-row"><CheckCircle size={14} /><span className="wd-detail-label">Completed</span><span className="wd-detail-value">{formatDate(work.completed_at)}</span></div>}
-              <div className="wd-detail-row"><CreditCard size={14} /><span className="wd-detail-label">Payment</span><span className="wd-detail-value">{work.payment_method || 'Cash'}</span></div>
+              {/* Timeline */}
+              <div className="wd-info-card">
+                <h4 className="wd-card-section-title"><Calendar size={14} /> Details</h4>
+                <div className="wd-detail-row"><Calendar size={14} /><span className="wd-detail-label">Created</span><span className="wd-detail-value">{formatDate(work.createdAt)}</span></div>
+                <div className="wd-detail-row"><Clock size={14} /><span className="wd-detail-label">Start</span><span className="wd-detail-value">{formatDate(work.start_date)}</span></div>
+                <div className={`wd-detail-row ${isOverdue ? 'overdue' : ''}`}><Calendar size={14} /><span className="wd-detail-label">Due</span><span className="wd-detail-value">{formatDate(work.due_date)}</span></div>
+                {work.completed_at && <div className="wd-detail-row"><CheckCircle size={14} /><span className="wd-detail-label">Done</span><span className="wd-detail-value">{formatDate(work.completed_at)}</span></div>}
+                <div className="wd-detail-row"><CreditCard size={14} /><span className="wd-detail-label">Payment</span><span className="wd-detail-value">{work.payment_method || 'Cash'}</span></div>
+              </div>
             </div>
           </div>
         )}
