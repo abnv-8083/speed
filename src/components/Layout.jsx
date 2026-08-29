@@ -22,7 +22,6 @@ import {
 import { SubNavProvider, useSubNav } from './SubNavContext';
 import { useTheme } from './ThemeContext';
 import { api } from '../api';
-import DueDatePopup from './DueDatePopup';
 import './Layout.css';
 
 // ── Inner layout reads sub-nav from context ───────────────────
@@ -218,8 +217,6 @@ function LayoutInner() {
           <Outlet />
         </main>
 
-        {/* ── Due Date Global Popup ── */}
-        <DueDatePopup />
       </div>
     </div>
   );
