@@ -54,19 +54,14 @@ const counterSchema = new mongoose.Schema({
 });
 const Counter = mongoose.model('WorkCounter', counterSchema);
 
-workSchema.pre('save', async function(next) {
-  try {
-    if (!this.work_id) {
-      const counter = await Counter.findByIdAndUpdate(
-        'work',
-        { $inc: { seq: 1 } },
-        { new: true, upsert: true }
-      );
-      this.work_id = `WRK-${String(counter.seq).padStart(4, '0')}`;
-    }
-    next();
-  } catch (err) {
-    next(err);
+workSchema.pre('save', async function() {
+  if (!this.work_id) {
+    const counter = await Counter.findByIdAndUpdate(
+      'work',
+      { $inc: { seq: 1 } },
+      { new: true, upsert: true }
+    );
+    this.work_id = `WRK-${String(counter.seq).padStart(4, '0')}`;
   }
 });
 
