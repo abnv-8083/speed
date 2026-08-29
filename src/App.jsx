@@ -20,6 +20,8 @@ import SavedCVs from './pages/cv/SavedCVs';
 import CVLayout from './pages/cv/CVLayout';
 import ToolsPortal from './pages/tools/ToolsPortal';
 import ToolsLayout from './pages/tools/ToolsLayout';
+import WorkList from './pages/works/WorkList';
+import WorkDetail from './pages/works/WorkDetail';
 import CustomerList from './pages/customers/CustomerList';
 import CustomerDetail from './pages/customers/CustomerDetail';
 import PrintingHistory from './pages/printing/PrintingHistory';
@@ -54,6 +56,8 @@ function App() {
                   <Route path="products/:id" element={<ProductDetail />} />
                   <Route path="invoices" element={<Invoices />} />
                   <Route path="reports" element={<SalesReport />} />
+                  <Route path="works" element={<WorkList />} />
+                  <Route path="works/:id" element={<WorkDetail />} />
                   <Route path="customers" element={<CustomerList />} />
                   <Route path="customers/:id" element={<CustomerDetail />} />
                 </Route>
