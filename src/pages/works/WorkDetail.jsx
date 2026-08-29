@@ -276,33 +276,27 @@ const WorkDetail = () => {
 
   return (
     <div className="wd-root">
-      {/* ── Header ──────────────────────────────────────────── */}
-      <div className="wd-header">
-        <div className="wd-header-left">
-          <button className="wd-back" onClick={() => navigate('/admin/billing/works')}>
-            <ArrowLeft size={18} />
-          </button>
-          <div className="wd-header-info">
-            <div className="wd-header-title-row">
-              <span className="wd-work-id">{work.work_id}</span>
-              <h1 className="wd-header-title">{work.title}</h1>
-            </div>
-            <div className="wd-header-badges">
-              <span className="wd-status" style={{ color: statusCfg.color, background: `${statusCfg.color}18` }}>
-                {React.createElement(statusCfg.icon, { size: 12 })} {statusCfg.label}
-              </span>
-              {isOverdue && <span className="wd-overdue-badge">Overdue</span>}
-              {work.end_date && (
-                <span className="wd-due-badge">
-                  <Calendar size={11} /> {formatDate(work.end_date)} {formatTime(work.end_date)}
-                </span>
-              )}
-            </div>
-          </div>
+      {/* ── Top Bar (matches ProductDetail) ──────────────────── */}
+      <div className="wd-topbar">
+        <button className="wd-back-btn" onClick={() => navigate('/admin/billing/works')}>
+          <ArrowLeft size={16} /> All Works
+        </button>
+        <div className="wd-topbar-center">
+          <span className="wd-work-id">{work.work_id}</span>
+          <h1 className="wd-header-title">{work.title}</h1>
+          <span className="status-badge" style={{ background: `${statusCfg.color}18`, color: statusCfg.color, border: `1px solid ${statusCfg.color}40` }}>
+            {statusCfg.label}
+          </span>
+          {isOverdue && <span className="status-badge status-error">Overdue</span>}
+          {work.end_date && (
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+              <Calendar size={12} /> {formatDate(work.end_date)} {formatTime(work.end_date)}
+            </span>
+          )}
         </div>
-        <div className="wd-header-right">
-          <button className="wd-btn-edit" onClick={openEdit}><Edit2 size={14} /> Edit</button>
-          <button className="wd-btn-danger-sm" onClick={deleteWork}><Trash2 size={14} /></button>
+        <div className="wd-topbar-actions">
+          <button className="pd-btn pd-btn-stock" onClick={openEdit}><Edit2 size={14} /> Edit</button>
+          <button className="btn btn-danger" onClick={deleteWork}><Trash2 size={14} /></button>
         </div>
       </div>
 
