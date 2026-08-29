@@ -47,13 +47,27 @@ const workSchema = new mongoose.Schema({
 
 }, { timestamps: true });
 
-// Auto-generate work_id before saving
+// Auto-generate work_id using atomic counter to avoid race conditions
+const counterSchema = new mongoose.Schema({
+  _id:  { type: String, default: 'work' },
+  seq:  { type: Number, default: 0 },
+});
+const Counter = mongoose.model('WorkCounter', counterSchema);
+
 workSchema.pre('save', async function(next) {
-  if (!this.work_id) {
-    const count = await mongoose.model('Work').countDocuments();
-    this.work_id = `WRK-${String(count + 1).padStart(4, '0')}`;
+  try {
+    if (!this.work_id) {
+      const counter = await Counter.findByIdAndUpdate(
+        'work',
+        { $inc: { seq: 1 } },
+        { new: true, upsert: true }
+      );
+      this.work_id = `WRK-${String(counter.seq).padStart(4, '0')}`;
+    }
+    next();
+  } catch (err) {
+    next(err);
   }
-  next();
 });
 
 module.exports = mongoose.model('Work', workSchema);

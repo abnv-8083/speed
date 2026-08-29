@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Work = require('../models/Work');
+const Customer = require('../models/Customer');
 
 // ── List Works ────────────────────────────────────────────────
 router.get('/', async (req, res) => {
@@ -74,10 +75,13 @@ router.get('/:id', async (req, res) => {
 // ── Create Work ───────────────────────────────────────────────
 router.post('/', async (req, res) => {
   try {
+    console.log('[WORK] Create request body:', JSON.stringify(req.body, null, 2));
     const work = new Work(req.body);
     await work.save();
+    console.log('[WORK] Created:', work.work_id, work._id);
     res.status(201).json(work);
   } catch (err) {
+    console.error('[WORK] Create error:', err.message, err);
     res.status(400).json({ error: err.message });
   }
 });
@@ -165,7 +169,6 @@ router.post('/:id/documents/from-customer', async (req, res) => {
     const work = await Work.findById(req.params.id);
     if (!work) return res.status(404).json({ error: 'Work not found' });
 
-    const Customer = require('../models/Customer');
     const customer = await Customer.findById(customer_id);
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
 
