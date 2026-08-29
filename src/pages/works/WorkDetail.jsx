@@ -4,9 +4,9 @@ import { api } from '../../api';
 import {
   ArrowLeft, Save, Trash2, Plus, X, FileText, AlertTriangle,
   MessageSquare, Clock, CheckCircle, XCircle, PauseCircle,
-  Briefcase, Calendar, Tag, Users, Mic, MicOff, Play, Pause,
+  Briefcase, Calendar, Tag, Users, Mic, MicOff,
   Download, Eye, Upload, Link as LinkIcon, Loader2, Send,
-  Edit2, Check, Timer, TrendingUp, Activity, Volume2, Info, AlertOctagon, CreditCard
+  Edit2, Check, Activity, Volume2, AlertOctagon, CreditCard
 } from 'lucide-react';
 import Portal from '../../components/Portal';
 import './WorkDetail.css';
@@ -80,14 +80,7 @@ const WorkDetail = () => {
   const [deletingDoc, setDeletingDoc] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
 
-  // Time tracking
-  const [activeTimeLog, setActiveTimeLog] = useState(null);
-  const [elapsedTime, setElapsedTime] = useState(0);
-  const [timeLogDesc, setTimeLogDesc] = useState('');
-  const [startingTimer, setStartingTimer] = useState(false);
-  const [stoppingTimer, setStoppingTimer] = useState(false);
-  const [deletingTimeLog, setDeletingTimeLog] = useState(null);
-  const timerIntervalRef = useRef(null);
+
 
   const fetchWork = useCallback(async () => {
     try {
@@ -101,8 +94,6 @@ const WorkDetail = () => {
         start_date: data.start_date,
         due_date: data.due_date,
         tags: (data.tags || []).join(', '),
-        estimated_hours: data.estimated_hours || 0,
-        actual_hours: data.actual_hours || 0,
         payment_method: data.payment_method || 'Cash',
       });
     } catch (err) {
@@ -114,52 +105,7 @@ const WorkDetail = () => {
 
   useEffect(() => { fetchWork(); }, [fetchWork]);
 
-  useEffect(() => {
-    if (work?.time_logs) {
-      const running = work.time_logs.find(t => !t.end_time);
-      if (running) {
-        setActiveTimeLog(running);
-        const elapsed = Math.floor((Date.now() - new Date(running.start_time).getTime()) / 1000);
-        setElapsedTime(elapsed);
-        timerIntervalRef.current = setInterval(() => setElapsedTime(p => p + 1), 1000);
-      } else {
-        setActiveTimeLog(null);
-        setElapsedTime(0);
-      }
-    }
-    return () => clearInterval(timerIntervalRef.current);
-  }, [work?.time_logs?.length]);
 
-  // ── Time Tracking ──────────────────────────────────────────────
-  const startTimeLog = async () => {
-    try {
-      setStartingTimer(true);
-      const log = await api.startTimeLog(id, { description: timeLogDesc.trim(), billable: true });
-      setActiveTimeLog(log);
-      setTimeLogDesc('');
-      setElapsedTime(0);
-      timerIntervalRef.current = setInterval(() => setElapsedTime(p => p + 1), 1000);
-      fetchWork();
-    } catch (err) { alert('Failed: ' + err.message); }
-    finally { setStartingTimer(false); }
-  };
-
-  const stopTimeLog = async () => {
-    if (!activeTimeLog) return;
-    try {
-      setStoppingTimer(true);
-      clearInterval(timerIntervalRef.current);
-      await api.stopTimeLog(id, activeTimeLog.id || activeTimeLog._id, {});
-      setActiveTimeLog(null);
-      setElapsedTime(0);
-      fetchWork();
-    } catch (err) { alert('Failed: ' + err.message); }
-    finally { setStoppingTimer(false); }
-  };
-
-  const deleteTimeLog = async (logId) => {
-    setConfirmDelete({ type: 'timeLog', id: logId, label: 'this time log' });
-  };
 
   // ── Quick Status ───────────────────────────────────────────────
   const quickStatusChange = async (newStatus) => {
@@ -312,13 +258,11 @@ const WorkDetail = () => {
       if (type === 'note') { setDeletingNote(itemId); await api.deleteWorkNote(id, itemId); }
       else if (type === 'issue') { await api.deleteWorkIssue(id, itemId); }
       else if (type === 'document') { setDeletingDoc(itemId); await api.deleteWorkDocument(id, itemId); }
-      else if (type === 'timeLog') { setDeletingTimeLog(itemId); await api.deleteTimeLog(id, itemId); }
       fetchWork();
     } catch (err) { alert('Failed: ' + err.message); }
     finally {
       setDeletingNote(null);
       setDeletingDoc(null);
-      setDeletingTimeLog(null);
       setConfirmDelete(null);
     }
   };
@@ -330,8 +274,6 @@ const WorkDetail = () => {
       const body = {
         ...editForm,
         tags: editForm.tags ? editForm.tags.split(',').map(t => t.trim()).filter(Boolean) : [],
-        estimated_hours: Number(editForm.estimated_hours) || 0,
-        actual_hours: Number(editForm.actual_hours) || 0,
       };
       await api.updateWork(id, body);
       setShowEditModal(false);
@@ -342,8 +284,6 @@ const WorkDetail = () => {
 
   // ── Helpers ────────────────────────────────────────────────────
   const formatDate = (d) => d ? new Date(d).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
-  const formatTimer = (t) => { const h = Math.floor(t / 3600), m = Math.floor((t % 3600) / 60), s = t % 60; return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`; };
-  const formatLogDuration = (sec) => { if (!sec) return '0m'; const h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60); return h > 0 ? `${h}h ${m}m` : `${m}m`; };
   const formatDuration = (sec) => { const m = Math.floor(sec / 60), s = sec % 60; return `${m}:${String(s).padStart(2, '0')}`; };
 
   const isOverdue = work && work.due_date && !['completed', 'closed'].includes(work.status) && new Date(work.due_date) < new Date();
@@ -352,8 +292,7 @@ const WorkDetail = () => {
   if (loading) {
     return (
       <div className="wd-root">
-        <div className="wd-skeleton-header"><div className="wd-sk-line wd-sk-w80" /><div className="wd-sk-line wd-sk-w120" /></div>
-        <div className="wd-skeleton-tabs">{[1,2,3,4,5].map(i => <div key={i} className="wd-sk-tab" />)}</div>
+        <div className="wd-skeleton-header"><div className="wd-sk-line wd-sk-w80" /><div className="wd-sk-line wd-sk-w120" /></div>          <div className="wd-skeleton-tabs">{[1,2,3,4].map(i => <div key={i} className="wd-sk-tab" />)}</div>
         <div className="wd-skeleton-content">
           <div className="wd-sk-card"><div className="wd-sk-line wd-sk-w60" /><div className="wd-sk-line wd-sk-full" /><div className="wd-sk-line wd-sk-w80" /></div>
           <div className="wd-sk-card">{[1,2,3,4].map(i => <div key={i} className="wd-sk-row" />)}</div>
@@ -376,8 +315,6 @@ const WorkDetail = () => {
   const statusCfg = STATUS_CONFIG[work.status] || STATUS_CONFIG.new;
   const priorityCfg = PRIORITY_CONFIG[work.priority] || PRIORITY_CONFIG.medium;
   const openIssues = (work.issues || []).filter(i => i.status !== 'resolved').length;
-  const totalLogs = (work.time_logs || []).filter(t => t.end_time).length;
-  const progress = work.estimated_hours > 0 ? Math.min(100, Math.round((work.actual_hours / work.estimated_hours) * 100)) : 0;
 
   return (
     <div className="wd-root">
@@ -397,7 +334,7 @@ const WorkDetail = () => {
           {isOverdue && <span className="wd-overdue-badge">Overdue</span>}
         </div>
         <div className="wd-header-right">
-          <button className="wd-btn-edit" onClick={() => { setEditForm({ title: work.title, description: work.description, status: work.status, priority: work.priority, start_date: work.start_date, due_date: work.due_date, tags: (work.tags || []).join(', '), estimated_hours: work.estimated_hours || 0, actual_hours: work.actual_hours || 0, payment_method: work.payment_method || 'Cash' }); setShowEditModal(true); }}>
+          <button className="wd-btn-edit" onClick={() => { setEditForm({ title: work.title, description: work.description, status: work.status, priority: work.priority, start_date: work.start_date, due_date: work.due_date, tags: (work.tags || []).join(', '), payment_method: work.payment_method || 'Cash' }); setShowEditModal(true); }}>
             <Edit2 size={14} /> Edit
           </button>
         </div>
@@ -407,7 +344,6 @@ const WorkDetail = () => {
       <div className="wd-tabs">
         {[
           { key: 'overview', label: 'Overview', icon: Briefcase },
-          { key: 'timelog', label: 'Time', icon: Timer },
           { key: 'notes', label: `Notes (${(work.notes || []).length})`, icon: MessageSquare },
           { key: 'issues', label: `Issues (${openIssues})`, icon: AlertTriangle },
           { key: 'documents', label: `Docs (${(work.documents || []).length})`, icon: FileText },
@@ -496,183 +432,19 @@ const WorkDetail = () => {
               </div>
             </div>
 
-            {/* Bottom Row: Dates + Progress side by side */}
-            <div className="wd-overview-bottom">
-              <div className="wd-info-card">
-                <h4 className="wd-card-section-title"><Calendar size={14} /> Timeline</h4>
-                <div className="wd-detail-row"><Calendar size={14} /><span className="wd-detail-label">Created</span><span className="wd-detail-value">{formatDate(work.createdAt)}</span></div>
-                <div className="wd-detail-row"><Clock size={14} /><span className="wd-detail-label">Start</span><span className="wd-detail-value">{formatDate(work.start_date)}</span></div>
-                <div className={`wd-detail-row ${isOverdue ? 'overdue' : ''}`}><Calendar size={14} /><span className="wd-detail-label">Due</span><span className="wd-detail-value">{formatDate(work.due_date)}</span></div>
-                {work.completed_at && <div className="wd-detail-row"><CheckCircle size={14} /><span className="wd-detail-label">Completed</span><span className="wd-detail-value">{formatDate(work.completed_at)}</span></div>}
-                <div className="wd-detail-row"><CreditCard size={14} /><span className="wd-detail-label">Payment</span><span className="wd-detail-value">{work.payment_method || 'Cash'}</span></div>
-              </div>
-              <div className="wd-info-card">
-                <h4 className="wd-card-section-title"><TrendingUp size={14} /> Progress</h4>
-                <div className="wd-progress-row"><span>Estimated: <strong>{work.estimated_hours || 0}h</strong></span><span>Actual: <strong>{work.actual_hours || 0}h</strong></span></div>
-                {work.estimated_hours > 0 && (
-                  <div className="wd-progress-bar-wrap">
-                    <div className="wd-progress-bar" style={{ width: `${progress}%`, background: progress > 100 ? '#ef4444' : '#8b5cf6' }} />
-                  </div>
-                )}
-                <div className="wd-progress-stats">
-                  <span>{totalLogs} time logs</span><span>{(work.issues || []).length} issues</span><span>{(work.documents || []).length} docs</span><span>{(work.notes || []).length} notes</span>
-                </div>
-              </div>
+            {/* Bottom Row: Dates */}
+            <div className="wd-info-card">
+              <h4 className="wd-card-section-title"><Calendar size={14} /> Timeline</h4>
+              <div className="wd-detail-row"><Calendar size={14} /><span className="wd-detail-label">Created</span><span className="wd-detail-value">{formatDate(work.createdAt)}</span></div>
+              <div className="wd-detail-row"><Clock size={14} /><span className="wd-detail-label">Start</span><span className="wd-detail-value">{formatDate(work.start_date)}</span></div>
+              <div className={`wd-detail-row ${isOverdue ? 'overdue' : ''}`}><Calendar size={14} /><span className="wd-detail-label">Due</span><span className="wd-detail-value">{formatDate(work.due_date)}</span></div>
+              {work.completed_at && <div className="wd-detail-row"><CheckCircle size={14} /><span className="wd-detail-label">Completed</span><span className="wd-detail-value">{formatDate(work.completed_at)}</span></div>}
+              <div className="wd-detail-row"><CreditCard size={14} /><span className="wd-detail-label">Payment</span><span className="wd-detail-value">{work.payment_method || 'Cash'}</span></div>
             </div>
           </div>
         )}
 
-        {/* ═══════ TIME TRACKING TAB ═══════════════════════ */}
-        {activeTab === 'timelog' && (
-          <div className="wd-timelog">
-            {/* ── Timer Hero ────────────────────────────── */}
-            <div className="wd-timer-hero">
-              {activeTimeLog ? (
-                <div className="wd-timer-active">
-                  <div className="wd-timer-ring">
-                    <svg viewBox="0 0 120 120" className="wd-timer-svg">
-                      <circle cx="60" cy="60" r="52" className="wd-timer-ring-bg" />
-                      <circle cx="60" cy="60" r="52" className="wd-timer-ring-fg" />
-                    </svg>
-                    <div className="wd-timer-center">
-                      <div className="wd-timer-digits">{formatTimer(elapsedTime)}</div>
-                      <div className="wd-timer-label">TRACKING</div>
-                    </div>
-                  </div>
-                  <div className="wd-timer-meta-row">
-                    {activeTimeLog.description && <span className="wd-timer-desc-badge">📝 {activeTimeLog.description}</span>}
-                    <span className="wd-timer-start-badge"><Clock size={12} /> Started {new Date(activeTimeLog.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</span>
-                  </div>
-                  <button className="wd-timer-btn stop" onClick={stopTimeLog} disabled={stoppingTimer}>
-                    {stoppingTimer ? <Spinner size={18} /> : <Pause size={18} />} {stoppingTimer ? 'Stopping...' : 'Stop Timer'}
-                  </button>
-                </div>
-              ) : (
-                <div className="wd-timer-idle">
-                  <div className="wd-timer-idle-icon"><Play size={28} /></div>
-                  <div className="wd-timer-idle-content">
-                    <h4>Start Tracking</h4>
-                    <p>Begin a new time session for this work</p>
-                  </div>
-                  <div className="wd-timer-idle-form">
-                    <input type="text" placeholder="What are you working on?" value={timeLogDesc} onChange={e => setTimeLogDesc(e.target.value)}
-                      onKeyDown={e => { if (e.key === 'Enter') startTimeLog(); }} disabled={startingTimer} />
-                    <button className="wd-timer-btn start" onClick={startTimeLog} disabled={startingTimer}>
-                      {startingTimer ? <Spinner size={18} /> : <Play size={18} />} {startingTimer ? 'Starting...' : 'Start Timer'}
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
 
-            {/* ── Summary Cards ─────────────────────────── */}
-            <div className="wd-time-summary">
-              <div className="wd-time-stat">
-                <div className="wd-time-stat-icon"><Clock size={16} /></div>
-                <div className="wd-time-stat-body">
-                  <span className="wd-time-stat-label">Estimated</span>
-                  <span className="wd-time-stat-value">{work.estimated_hours || 0}h</span>
-                </div>
-              </div>
-              <div className="wd-time-stat">
-                <div className="wd-time-stat-icon green"><Timer size={16} /></div>
-                <div className="wd-time-stat-body">
-                  <span className="wd-time-stat-label">Actual</span>
-                  <span className="wd-time-stat-value">{work.actual_hours || 0}h</span>
-                </div>
-              </div>
-              <div className="wd-time-stat">
-                <div className="wd-time-stat-icon blue"><Activity size={16} /></div>
-                <div className="wd-time-stat-body">
-                  <span className="wd-time-stat-label">Sessions</span>
-                  <span className="wd-time-stat-value">{totalLogs}</span>
-                </div>
-              </div>
-              <div className="wd-time-stat">
-                <div className="wd-time-stat-icon yellow"><TrendingUp size={16} /></div>
-                <div className="wd-time-stat-body">
-                  <span className="wd-time-stat-label">Billable</span>
-                  <span className="wd-time-stat-value">{(work.time_logs || []).filter(t => t.billable && t.end_time).length}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* ── Progress Bar ──────────────────────────── */}
-            {work.estimated_hours > 0 && (
-              <div className="wd-time-progress-card">
-                <div className="wd-time-progress-header">
-                  <span>Time Budget</span>
-                  <span className="wd-time-progress-pct" style={{ color: progress > 100 ? '#ef4444' : '#8b5cf6' }}>{progress}%</span>
-                </div>
-                <div className="wd-time-progress-track">
-                  <div className="wd-time-progress-fill" style={{ width: `${Math.min(progress, 100)}%`, background: progress > 100 ? '#ef4444' : '#8b5cf6' }} />
-                </div>
-                <div className="wd-time-progress-footer">
-                  <span>{work.actual_hours || 0}h used</span>
-                  <span>{work.estimated_hours || 0}h estimated</span>
-                </div>
-              </div>
-            )}
-
-            {/* ── Session History ───────────────────────── */}
-            <div className="wd-time-history">
-              <h4 className="wd-card-section-title"><Clock size={14} /> Session History ({(work.time_logs || []).length})</h4>
-              <div className="wd-time-logs-list">
-                {(work.time_logs || []).length === 0 ? (
-                  <div className="wd-empty-inline"><Clock size={28} /><p>No time logged yet. Start the timer above to begin tracking.</p></div>
-                ) : (
-                  /* Group logs by date */
-                  Object.entries(
-                    (work.time_logs || []).reduce((groups, log) => {
-                      const d = new Date(log.start_time).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
-                      if (!groups[d]) groups[d] = [];
-                      groups[d].push(log);
-                      return groups;
-                    }, {})
-                  ).map(([date, logs]) => {
-                    const dayTotal = logs.filter(t => t.end_time).reduce((s, t) => s + (t.duration || 0), 0);
-                    return (
-                      <div key={date} className="wd-time-day-group">
-                        <div className="wd-time-day-header">
-                          <span className="wd-time-day-date">{date}</span>
-                          <span className="wd-time-day-count">{logs.length} session{logs.length > 1 ? 's' : ''}</span>
-                          {dayTotal > 0 && <span className="wd-time-day-total">{formatLogDuration(dayTotal)}</span>}
-                        </div>
-                        {logs.map((log) => (
-                          <div key={log.id || log._id} className={`wd-time-log ${log.end_time ? '' : 'running'}`}>
-                            <div className="wd-time-log-left">
-                              <div className="wd-time-log-dot" style={{ background: log.end_time ? '#8b5cf6' : '#22c55e' }} />
-                              <div className="wd-time-log-line" />
-                            </div>
-                            <div className="wd-time-log-body">
-                              <div className="wd-time-log-row1">
-                                <span className="wd-time-log-duration-badge">
-                                  {log.end_time ? formatLogDuration(log.duration) : <span className="wd-time-log-running-text">● Running</span>}
-                                </span>
-                                {log.description && <span className="wd-time-log-desc">{log.description}</span>}
-                                {log.billable && <span className="wd-badge-pill blue">Billable</span>}
-                              </div>
-                              <div className="wd-time-log-row2">
-                                <span className="wd-time-log-clock"><Clock size={11} /></span>
-                                {new Date(log.start_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}
-                                {log.end_time && <> → {new Date(log.end_time).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}</>}
-                              </div>
-                            </div>
-                            {log.end_time && (
-                              <button className="wd-delete-btn" onClick={() => deleteTimeLog(log.id || log._id)} disabled={deletingTimeLog === (log.id || log._id)}>
-                                {deletingTimeLog === (log.id || log._id) ? <Spinner size={12} /> : <Trash2 size={12} />}
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          </div>
-        )}
 
         {/* ═══════ NOTES TAB ═══════════════════════════════ */}
         {activeTab === 'notes' && (
@@ -831,10 +603,7 @@ const WorkDetail = () => {
                   <div className="wd-form-group"><label>Start Date</label><input type="date" value={editForm.start_date} onChange={e => setEditForm({...editForm, start_date: e.target.value})} /></div>
                   <div className="wd-form-group"><label>Due Date</label><input type="date" value={editForm.due_date} onChange={e => setEditForm({...editForm, due_date: e.target.value})} /></div>
                 </div>
-                <div className="wd-form-row">
-                  <div className="wd-form-group"><label>Estimated Hours</label><input type="number" step="0.5" value={editForm.estimated_hours} onChange={e => setEditForm({...editForm, estimated_hours: e.target.value})} /></div>
-                  <div className="wd-form-group"><label>Actual Hours</label><input type="number" step="0.5" value={editForm.actual_hours} onChange={e => setEditForm({...editForm, actual_hours: e.target.value})} /></div>
-                </div>
+
                 <div className="wd-form-group"><label>Tags (comma separated)</label><input value={editForm.tags} onChange={e => setEditForm({...editForm, tags: e.target.value})} placeholder="tag1, tag2, tag3" /></div>
               </div>
               <div className="wd-modal-footer">
