@@ -322,16 +322,23 @@ const WorkDetail = () => {
           HEADER
          ═══════════════════════════════════════════════════════════════ */}
       <div className="wd-header">
-        <button className="wd-back" onClick={() => navigate('/admin/billing/works')}>
-          <ArrowLeft size={18} /> Works
-        </button>
-        <div className="wd-header-center">
-          <span className="wd-work-id">{work.work_id}</span>
-          <span className="wd-status" style={{ color: statusCfg.color, background: `${statusCfg.color}18` }}>
-            {React.createElement(statusCfg.icon, { size: 13 })} {statusCfg.label}
-          </span>
-          <span className="wd-priority" style={{ color: priorityCfg.color }}>● {priorityCfg.label}</span>
-          {isOverdue && <span className="wd-overdue-badge">Overdue</span>}
+        <div className="wd-header-left">
+          <button className="wd-back" onClick={() => navigate('/admin/billing/works')}>
+            <ArrowLeft size={18} />
+          </button>
+          <div className="wd-header-info">
+            <div className="wd-header-title-row">
+              <span className="wd-work-id">{work.work_id}</span>
+              <h1 className="wd-header-title">{work.title}</h1>
+            </div>
+            <div className="wd-header-badges">
+              <span className="wd-status" style={{ color: statusCfg.color, background: `${statusCfg.color}18` }}>
+                {React.createElement(statusCfg.icon, { size: 12 })} {statusCfg.label}
+              </span>
+              <span className="wd-priority" style={{ color: priorityCfg.color }}>● {priorityCfg.label}</span>
+              {isOverdue && <span className="wd-overdue-badge">Overdue</span>}
+            </div>
+          </div>
         </div>
         <div className="wd-header-right">
           <button className="wd-btn-edit" onClick={() => { setEditForm({ title: work.title, description: work.description, status: work.status, priority: work.priority, start_date: work.start_date, due_date: work.due_date, tags: (work.tags || []).join(', '), payment_method: work.payment_method || 'Cash' }); setShowEditModal(true); }}>
@@ -364,15 +371,6 @@ const WorkDetail = () => {
           <div className="wd-overview">
             {/* ── Hero Card ────────────────────────────────── */}
             <div className="wd-info-card wd-hero-card" style={{ '--hero-accent': statusCfg.color }}>
-              <div className="wd-hero-top">
-                <h2 className="wd-hero-title">{work.title}</h2>
-                <div className="wd-hero-meta">
-                  <span className="wd-status" style={{ color: statusCfg.color, background: `${statusCfg.color}18` }}>
-                    {React.createElement(statusCfg.icon, { size: 12 })} {statusCfg.label}
-                  </span>
-                  <span className="wd-priority" style={{ color: priorityCfg.color }}>● {priorityCfg.label}</span>
-                </div>
-              </div>
               {work.description && <p className="wd-hero-desc">{work.description}</p>}
               <div className="wd-hero-bottom">
                 {work.tags?.length > 0 ? (
