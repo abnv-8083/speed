@@ -175,12 +175,12 @@ const WorkList = () => {
       {/* Stats Bar */}
       {stats && (
         <div className="wl-stats">
-          <div className="wl-stat">
-            <span className="wl-stat-num">{stats.total || 0}</span>
+          <div className="wl-stat" style={{ '--stat-accent': 'var(--primary, #8b5cf6)' }}>
+            <span className="wl-stat-num" style={{ color: 'var(--primary, #8b5cf6)' }}>{stats.total || 0}</span>
             <span className="wl-stat-label">Total</span>
           </div>
           {(Object.entries(stats.by_status || {}).map(([key, val]) => (
-            <div className="wl-stat" key={key}>
+            <div className="wl-stat" key={key} style={{ '--stat-accent': STATUS_CONFIG[key]?.color }}>
               <span className="wl-stat-num" style={{ color: STATUS_CONFIG[key]?.color }}>{val}</span>
               <span className="wl-stat-label">{STATUS_CONFIG[key]?.label || key}</span>
             </div>
@@ -275,6 +275,7 @@ const WorkList = () => {
               <div
                 key={work.id || work._id}
                 className={`wl-card ${overdue ? 'overdue' : ''}`}
+                style={{ '--card-accent': statusCfg.color }}
                 onClick={() => navigate(`/admin/billing/works/${work.id || work._id}`)}
               >
                 <div className="wl-card-header">
