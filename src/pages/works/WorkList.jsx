@@ -347,7 +347,7 @@ const WorkList = () => {
                     <div className="wk-customer-avatar">{selectedCustomer.name?.charAt(0)?.toUpperCase()}</div>
                     <div style={{ flex: 1 }}>
                       <div style={{ fontSize: '0.88rem', fontWeight: 600, color: 'var(--text)' }}>{selectedCustomer.name}</div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{selectedCustomer.phone || ''}</div>
+                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>{selectedCustomer._id ? (selectedCustomer.phone || 'Linked customer') : 'Manual entry'}</div>
                     </div>
                     <button type="button" className="wk-customer-clear" onClick={() => { setSelectedCustomer(null); setForm(prev => ({ ...prev, contact_name: '', contact_phone: '', contact_email: '' })); }}>
                       <X size={14} />
@@ -355,22 +355,30 @@ const WorkList = () => {
                   </div>
                 ) : (
                   <>
-                    <input type="text" className="input-field" placeholder="Search customer or enter details below..." value={customerSearch} onChange={e => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true); }} onFocus={() => setShowCustomerDropdown(true)} />
+                    <input type="text" className="input-field" placeholder="Type customer name..." value={customerSearch} onChange={e => { setCustomerSearch(e.target.value); setShowCustomerDropdown(true); }} onFocus={() => setShowCustomerDropdown(true)} onBlur={() => setTimeout(() => setShowCustomerDropdown(false), 200)} />
                     {showCustomerDropdown && customerSearch && (
                       <div className="wk-customer-dropdown">
-                        {filteredCustomers.length === 0 ? (
-                          <div className="wk-customer-dropdown-empty">No customers found</div>
-                        ) : (
-                          filteredCustomers.slice(0, 6).map(c => (
-                            <div key={c._id || c.id} className="wk-customer-option" onClick={() => handleSelectCustomer(c)}>
-                              <div className="wk-customer-avatar small">{c.name?.charAt(0)?.toUpperCase()}</div>
-                              <div>
-                                <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)' }}>{c.name}</div>
-                                <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{c.phone} {c.address ? `• ${c.address}` : ''}</div>
-                              </div>
+                        {filteredCustomers.slice(0, 5).map(c => (
+                          <div key={c._id || c.id} className="wk-customer-option" onClick={() => handleSelectCustomer(c)}>
+                            <div className="wk-customer-avatar small">{c.name?.charAt(0)?.toUpperCase()}</div>
+                            <div>
+                              <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--text)' }}>{c.name}</div>
+                              <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{c.phone} {c.address ? `• ${c.address}` : ''}</div>
                             </div>
-                          ))
-                        )}
+                          </div>
+                        ))}
+                        <div className="wk-customer-option" style={{ borderTop: '1px solid var(--border)', marginTop: '0.25rem', paddingTop: '0.5rem' }} onClick={() => {
+                          setSelectedCustomer({ name: customerSearch.trim() });
+                          setForm(prev => ({ ...prev, contact_name: customerSearch.trim(), contact_phone: '', contact_email: '' }));
+                          setShowCustomerDropdown(false);
+                          setCustomerSearch('');
+                        }}>
+                          <div className="wk-customer-avatar small" style={{ background: 'var(--primary)', color: '#fff' }}><Plus size={12} /></div>
+                          <div>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 500, color: 'var(--primary)' }}>Use \"{customerSearch.trim()}\" as customer</div>
+                            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>Enter contact details manually</div>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </>
