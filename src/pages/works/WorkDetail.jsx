@@ -398,15 +398,23 @@ const WorkDetail = () => {
             </div>
 
             <div className="wd-card">
-              <h4 className="wd-card-title"><MessageSquare size={14} /> Notes</h4>
-              {work.notes?.length > 0 ? (
-                <div className="wd-notes-list">
-                  {work.notes.map((note, i) => (
-                    <div key={i} className="wd-note-item">{note}</div>
-                  ))}
+              <h4 className="wd-card-title"><AlertTriangle size={14} /> Issues ({openIssues})</h4>
+              {(work.issues || []).length > 0 ? (
+                <div className="wd-issues-list">
+                  {work.issues.slice(0, 5).map((issue) => {
+                    const dotColor = issue.status === 'open' ? '#ef4444' : issue.status === 'in_progress' ? '#f59e0b' : '#22c55e';
+                    return (
+                      <div key={issue._id} className="wd-note-item" style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                        <span className="wd-issue-dot" style={{ background: dotColor, flexShrink: 0 }} />
+                        <span style={{ flex: 1, minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{issue.title}</span>
+                        <span className={`wd-issue-badge ${issue.status}`} style={{ flexShrink: 0 }}>{issue.status}</span>
+                      </div>
+                    );
+                  })}
+                  {work.issues.length > 5 && <p className="wd-card-text" style={{ fontSize: '0.75rem', textAlign: 'center', margin: '0.3rem 0 0' }}>+{work.issues.length - 5} more</p>}
                 </div>
               ) : (
-                <p className="wd-card-text" style={{ fontStyle: 'italic', opacity: 0.5 }}>No notes yet.</p>
+                <p className="wd-card-text" style={{ fontStyle: 'italic', opacity: 0.5 }}>No issues yet.</p>
               )}
             </div>
           </div>
