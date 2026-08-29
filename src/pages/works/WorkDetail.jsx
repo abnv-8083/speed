@@ -333,16 +333,17 @@ const WorkDetail = () => {
 
         {/* DETAILS TAB */}
         {activeTab === 'details' && (
-          <div className="wd-details">
-            {/* Description */}
-            {work.description && (
-              <div className="wd-card">
-                <h4 className="wd-card-title"><MessageSquare size={14} /> Description</h4>
+          <div className="wd-details-grid">
+            {/* Row 1: Description + Contact */}
+            <div className="wd-card">
+              <h4 className="wd-card-title"><MessageSquare size={14} /> Description</h4>
+              {work.description ? (
                 <p className="wd-card-text">{work.description}</p>
-              </div>
-            )}
+              ) : (
+                <p className="wd-card-text" style={{ fontStyle: 'italic', opacity: 0.5 }}>No description provided.</p>
+              )}
+            </div>
 
-            {/* Contact Info */}
             <div className="wd-card">
               <h4 className="wd-card-title"><Users size={14} /> Contact Information</h4>
               <div className="wd-detail-grid">
@@ -373,7 +374,7 @@ const WorkDetail = () => {
               </div>
             </div>
 
-            {/* Schedule */}
+            {/* Row 2: Schedule + Notes */}
             <div className="wd-card">
               <h4 className="wd-card-title"><Calendar size={14} /> Schedule</h4>
               <div className="wd-detail-grid">
@@ -396,17 +397,18 @@ const WorkDetail = () => {
               </div>
             </div>
 
-            {/* Notes */}
-            {work.notes?.length > 0 && (
-              <div className="wd-card">
-                <h4 className="wd-card-title"><MessageSquare size={14} /> Notes</h4>
+            <div className="wd-card">
+              <h4 className="wd-card-title"><MessageSquare size={14} /> Notes</h4>
+              {work.notes?.length > 0 ? (
                 <div className="wd-notes-list">
                   {work.notes.map((note, i) => (
                     <div key={i} className="wd-note-item">{note}</div>
                   ))}
                 </div>
-              </div>
-            )}
+              ) : (
+                <p className="wd-card-text" style={{ fontStyle: 'italic', opacity: 0.5 }}>No notes yet.</p>
+              )}
+            </div>
           </div>
         )}
 

@@ -158,11 +158,14 @@
    DETAILS TAB
    ═══════════════════════════════════════════════════════════════ */
 
-.wd-details {
-  display: flex;
-  flex-direction: column;
+.wd-details-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 0.85rem;
-  max-width: 800px;
+}
+
+@media (max-width: 768px) {
+  .wd-details-grid { grid-template-columns: 1fr; }
 }
 
 .wd-card {
