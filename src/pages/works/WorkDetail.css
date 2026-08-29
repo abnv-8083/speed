@@ -238,6 +238,36 @@
   line-height: 1.45;
 }
 
+/* ── Shared Add Button ──────────────────────────────────────── */
+
+.wd-add-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.45rem 0.85rem;
+  background: var(--primary);
+  border: 1px solid var(--primary);
+  border-radius: 8px;
+  color: white;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.wd-add-btn:hover { filter: brightness(1.15); transform: translateY(-1px); }
+.wd-add-btn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+.wd-add-btn.secondary {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+}
+
+.wd-add-btn.secondary:hover { border-color: var(--primary); color: var(--primary); filter: none; }
+
 /* ═══════════════════════════════════════════════════════════════
    ISSUES TAB
    ═══════════════════════════════════════════════════════════════ */
