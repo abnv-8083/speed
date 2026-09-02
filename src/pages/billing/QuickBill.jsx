@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Search, X, Check, Plus, Edit2, Trash2,
   ShoppingBag, Receipt, TrendingUp, Hash, Clock,
@@ -8,6 +8,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { format } from 'date-fns';
 import { api } from '../../api';
+import { useWs } from '../../contexts/WebSocketContext';
 import { useToast } from '../../components/ToastContext';
 import AppModal from '../../components/AppModal';
 import PremiumLoader from '../../components/PremiumLoader';
@@ -334,12 +335,76 @@ export default function QuickBill() {
   // Delete confirm
   const [deleteId, setDeleteId]       = useState(null);
 
+  const { on } = useWs();
+
+  const loadProducts = useCallback(async () => {
+    setLoadingProducts(true);
+    try {
+      const data = await api.getProducts({ is_blocked: 'false' });
+      setProducts(data || []);
+    } catch (err) { toast.error('Failed to load products'); }
+    setLoadingProducts(false);
+  }, []);
+
+  const loadTodayBills = useCallback(async () => {
+    setLoadingBills(true);
+    try {
+      const [billsData, summaryData] = await Promise.all([
+        api.getQuickBills(),
+        api.getQuickBillSummary(),
+      ]);
+      setBills(billsData || []);
+      setSummary(summaryData || { totalAmount: 0, billCount: 0, itemCount: 0, upiAmount: 0, upiCount: 0 });
+    } catch (err) { toast.error("Failed to load today's bills"); }
+    setLoadingBills(false);
+  }, []);
+
+  const loadCustomers = useCallback(async () => {
+    try {
+      const data = await api.getCustomers();
+      setCustomers(data || []);
+    } catch (err) { /* silent */ }
+  }, []);
+
   // ── Load data ─────────────────────────────────────────────────
   useEffect(() => {
     loadProducts();
     loadTodayBills();
     loadCustomers();
-  }, []);
+  }, [loadProducts, loadTodayBills, loadCustomers]);
+
+  // ── Real-time updates via WebSocket ───────────────────────────
+  useEffect(() => {
+    const unsubBill = on('quickbill', (event, data) => {
+      switch (event) {
+        case 'created':
+          setBills(prev => [data, ...prev]);
+          setSummary(prev => ({
+            ...prev,
+            totalAmount: (prev.totalAmount || 0) + Number(data.total || 0),
+            billCount: (prev.billCount || 0) + 1,
+            itemCount: (prev.itemCount || 0) + (data.items || []).reduce((s, i) => s + i.quantity, 0),
+          }));
+          break;
+        case 'updated':
+          setBills(prev => prev.map(b => b.id === data.id ? data : b));
+          // Refresh summary for accuracy
+          loadTodayBills();
+          break;
+        case 'deleted':
+          setBills(prev => prev.filter(b => b.id !== data.id));
+          loadTodayBills();
+          break;
+        default:
+          loadTodayBills();
+      }
+    });
+    const unsubProduct = on('products', (event) => {
+      // Refresh product list so stock levels stay current
+      if (['created', 'updated', 'deleted'].includes(event)) loadProducts();
+    });
+    return () => { unsubBill(); unsubProduct(); };
+  }, [on, loadProducts, loadTodayBills]);
 
   // ── Auto-refresh on midnight rollover ─────────────────────────
   useEffect(() => {
@@ -351,44 +416,14 @@ export default function QuickBill() {
         loadTodayBills();
       }
     };
-    const interval = setInterval(checkDate, 30000); // check every 30s
-    // Also refresh when user returns to tab
+    const interval = setInterval(checkDate, 30000);
     const onVisible = () => { if (!document.hidden) checkDate(); };
     document.addEventListener('visibilitychange', onVisible);
     return () => {
       clearInterval(interval);
       document.removeEventListener('visibilitychange', onVisible);
     };
-  }, []);
-
-  const loadProducts = async () => {
-    setLoadingProducts(true);
-    try {
-      const data = await api.getProducts({ is_blocked: 'false' });
-      setProducts(data || []);
-    } catch (err) { toast.error('Failed to load products'); }
-    setLoadingProducts(false);
-  };
-
-  const loadTodayBills = async () => {
-    setLoadingBills(true);
-    try {
-      const [billsData, summaryData] = await Promise.all([
-        api.getQuickBills(),
-        api.getQuickBillSummary(),
-      ]);
-      setBills(billsData || []);
-      setSummary(summaryData || { totalAmount: 0, billCount: 0, itemCount: 0, upiAmount: 0, upiCount: 0 });
-    } catch (err) { toast.error('Failed to load today\'s bills'); }
-    setLoadingBills(false);
-  };
-
-  const loadCustomers = async () => {
-    try {
-      const data = await api.getCustomers();
-      setCustomers(data || []);
-    } catch (err) { /* silent — customers are optional */ }
-  };
+  }, [loadTodayBills]);
 
   // Close customer dropdown on outside click
   useEffect(() => {

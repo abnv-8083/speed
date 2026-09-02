@@ -5,6 +5,7 @@ const Invoice = require('../models/Invoice');
 const QuickBillSession = require('../models/QuickBillSession');
 const requireAuth = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
+const { broadcast } = require('../websocket');
 
 router.use(requireAuth);
 
@@ -71,6 +72,7 @@ router.post('/', async (req, res, next) => {
       dob:     (dob || '').trim(),
     });
 
+    broadcast('customers', 'created', customer);
     res.status(201).json(customer);
   } catch (err) {
     next(err);
@@ -102,6 +104,7 @@ router.patch('/:id', async (req, res, next) => {
     );
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
 
+    broadcast('customers', 'updated', customer);
     res.json(customer);
   } catch (err) {
     next(err);
@@ -113,6 +116,7 @@ router.delete('/:id', async (req, res, next) => {
   try {
     const customer = await Customer.findByIdAndDelete(req.params.id);
     if (!customer) return res.status(404).json({ error: 'Customer not found' });
+    broadcast('customers', 'deleted', { id: req.params.id });
     res.json({ message: 'Customer deleted successfully' });
   } catch (err) {
     next(err);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   ArrowUpRight, ArrowDownRight, Plus, Search,
   Trash2, Edit2, X, Check, AlertTriangle,
@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../api';
+import { useWs } from '../contexts/WebSocketContext';
 import PremiumLoader from '../components/PremiumLoader';
 import { useToast } from '../components/ToastContext';
 import { useModal } from '../components/ModalContext';
@@ -61,14 +62,39 @@ const Financial = () => {
   const [deleteId, setDeleteId]       = useState(null);
   const [deleting, setDeleting]       = useState(false);
 
-  useEffect(() => { fetchLoans(); }, []);
-
-  const fetchLoans = async () => {
+  const fetchLoans = useCallback(async () => {
     setLoading(true);
     try { setLoans(await api.getLoans()); }
     catch (err) { toast.error('Failed to load loans: ' + err.message); }
     setLoading(false);
-  };
+  }, []);
+
+  // Real-time loan updates via WebSocket
+  const { on } = useWs();
+  useEffect(() => {
+    const unsub = on('loans', (event, data) => {
+      switch (event) {
+        case 'created':
+          setLoans(prev => [data, ...prev]);
+          break;
+        case 'updated':
+          setLoans(prev => prev.map(l => l.id === data.id ? data : l));
+          break;
+        case 'deleted':
+          setLoans(prev => prev.filter(l => l.id !== data.id));
+          break;
+        case 'payment_added':
+          // Refresh for accurate amount_paid
+          fetchLoans();
+          break;
+        default:
+          fetchLoans();
+      }
+    });
+    return unsub;
+  }, [on, fetchLoans]);
+
+  useEffect(() => { fetchLoans(); }, [fetchLoans]);
 
   const handleAddLoan = async (e) => {
     if (e && e.preventDefault) e.preventDefault();

@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
+import { useWs } from '../../contexts/WebSocketContext';
 import { useToast } from '../../components/ToastContext';
 import { useModal } from '../../components/ModalContext';
 import AppModal from '../../components/AppModal';
@@ -70,6 +71,38 @@ const WorkList = () => {
   const fetchCustomers = async () => {
     try { const data = await api.getCustomers(); setCustomers(data || []); } catch {}
   };
+
+  // Real-time work updates via WebSocket
+  const { on } = useWs();
+  useEffect(() => {
+    const unsub = on('works', (event, data) => {
+      switch (event) {
+        case 'created':
+          setWorks(prev => [data, ...prev]);
+          fetchStats();
+          break;
+        case 'updated':
+          setWorks(prev => prev.map(w => (w._id || w.id) === (data._id || data.id) ? data : w));
+          fetchStats();
+          break;
+        case 'deleted':
+          setWorks(prev => prev.filter(w => (w._id || w.id) !== data.id));
+          fetchStats();
+          break;
+        case 'issue_added':
+        case 'issue_updated':
+        case 'issue_deleted':
+          // Refresh list for issue count changes
+          fetchWorks();
+          fetchStats();
+          break;
+        default:
+          fetchWorks();
+          fetchStats();
+      }
+    });
+    return unsub;
+  }, [on, fetchWorks, fetchStats]);
 
   useEffect(() => { fetchWorks(); fetchStats(); }, [fetchWorks]);
   useEffect(() => { if (showCreate) fetchCustomers(); }, [showCreate]);

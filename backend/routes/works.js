@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const Work = require('../models/Work');
 const Customer = require('../models/Customer');
+const { broadcast } = require('../websocket');
 
 // ── List Works ────────────────────────────────────────────────
 router.get('/', async (req, res) => {
@@ -79,6 +80,7 @@ router.post('/', async (req, res) => {
     const work = new Work(req.body);
     await work.save();
     console.log('[WORK] Created:', work.work_id, work._id);
+    broadcast('works', 'created', work);
     res.status(201).json(work);
   } catch (err) {
     console.error('[WORK] Create error:', err.message, err);
@@ -91,6 +93,7 @@ router.patch('/:id', async (req, res) => {
   try {
     const work = await Work.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
     if (!work) return res.status(404).json({ error: 'Work not found' });
+    broadcast('works', 'updated', work);
     res.json(work);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -102,6 +105,7 @@ router.delete('/:id', async (req, res) => {
   try {
     const work = await Work.findByIdAndDelete(req.params.id);
     if (!work) return res.status(404).json({ error: 'Work not found' });
+    broadcast('works', 'deleted', { id: req.params.id });
     res.json({ message: 'Work deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -115,6 +119,7 @@ router.post('/:id/issues', async (req, res) => {
     if (!work) return res.status(404).json({ error: 'Work not found' });
     work.issues.push(req.body);
     await work.save();
+    broadcast('works', 'issue_added', { work_id: work._id, issue: work.issues[work.issues.length - 1] });
     res.status(201).json(work.issues[work.issues.length - 1]);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -130,6 +135,7 @@ router.patch('/:id/issues/:issueId', async (req, res) => {
     if (!issue) return res.status(404).json({ error: 'Issue not found' });
     Object.assign(issue, req.body);
     await work.save();
+    broadcast('works', 'issue_updated', { work_id: work._id, issue });
     res.json(issue);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -143,6 +149,7 @@ router.delete('/:id/issues/:issueId', async (req, res) => {
     if (!work) return res.status(404).json({ error: 'Work not found' });
     work.issues = work.issues.filter(i => i._id.toString() !== req.params.issueId);
     await work.save();
+    broadcast('works', 'issue_deleted', { work_id: work._id, issue_id: req.params.issueId });
     res.json({ message: 'Issue deleted' });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -241,6 +248,7 @@ router.patch('/:id/dismiss-popup', async (req, res) => {
       { new: true }
     );
     if (!work) return res.status(404).json({ error: 'Work not found' });
+    broadcast('works', 'popup_dismissed', { work_id: work._id });
     res.json(work);
   } catch (err) {
     res.status(500).json({ error: err.message });

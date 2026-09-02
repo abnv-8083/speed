@@ -1,6 +1,7 @@
 const express     = require('express');
 const PrintLog    = require('../models/PrintLog');
 const requireAuth = require('../middleware/auth');
+const { broadcast } = require('../websocket');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -22,6 +23,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const log = await PrintLog.create(req.body);
+    broadcast('print-logs', 'created', log);
     res.status(201).json(log);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -38,6 +40,7 @@ router.patch('/:id', async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!log) return res.status(404).json({ error: 'Log not found' });
+    broadcast('print-logs', 'updated', log);
     res.json(log);
   } catch (err) {
     res.status(400).json({ error: err.message });

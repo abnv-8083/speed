@@ -4,6 +4,7 @@ const Invoice          = require('../models/Invoice');
 const InvoiceItem      = require('../models/InvoiceItem');
 const Product          = require('../models/Product');
 const requireAuth      = require('../middleware/auth');
+const { broadcast }    = require('../websocket');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -99,6 +100,7 @@ router.post('/', async (req, res) => {
       console.warn('⚠️  Failed to mirror quick bill to invoices:', mirrorErr.message);
     }
 
+    broadcast('quickbill', 'created', bill);
     res.status(201).json(bill);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -142,6 +144,7 @@ router.patch('/:id', async (req, res) => {
       await InvoiceItem.insertMany(newItems);
     }
 
+    broadcast('quickbill', 'updated', bill);
     res.json(bill);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -163,6 +166,7 @@ router.delete('/:id', async (req, res) => {
       await Invoice.findByIdAndDelete(bill.linked_invoice_id);
     }
 
+    broadcast('quickbill', 'deleted', { id: req.params.id });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

@@ -1,6 +1,7 @@
 const express     = require('express');
 const path        = require('path');
 const requireAuth = require('../middleware/auth');
+const { broadcast } = require('../websocket');
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ const TIMEOUT_MS  = 15000;    // 15 s
 // No auth required so the agent doesn't need to re-login on every ping
 router.post('/heartbeat', (req, res) => {
   lastHeartbeat = new Date();
+  broadcast('agent', 'heartbeat', { connected: true, last_seen: lastHeartbeat.toISOString() });
   res.json({ received: true });
 });
 

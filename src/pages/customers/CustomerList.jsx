@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
   Users, UserPlus, Search, Phone, Mail, MapPin,
@@ -6,6 +6,7 @@ import {
   Shield, AlertCircle
 } from 'lucide-react';
 import { api } from '../../api';
+import { useWs } from '../../contexts/WebSocketContext';
 import { useToast } from '../../components/ToastContext';
 import { useModal } from '../../components/ModalContext';
 import AppModal from '../../components/AppModal';
@@ -34,11 +35,7 @@ export default function CustomerList() {
   const [formDob, setFormDob]           = useState('');
   const [saving, setSaving]             = useState(false);
 
-  useEffect(() => {
-    fetchCustomers();
-  }, []);
-
-  const fetchCustomers = async () => {
+  const fetchCustomers = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getCustomers();
@@ -47,7 +44,32 @@ export default function CustomerList() {
       toast.error('Failed to load customers: ' + err.message);
     }
     setLoading(false);
-  };
+  }, []);
+
+  // Real-time customer updates via WebSocket
+  const { on } = useWs();
+  useEffect(() => {
+    const unsub = on('customers', (event, data) => {
+      switch (event) {
+        case 'created':
+          setCustomers(prev => [data, ...prev]);
+          break;
+        case 'updated':
+          setCustomers(prev => prev.map(c => c.id === data.id ? data : c));
+          break;
+        case 'deleted':
+          setCustomers(prev => prev.filter(c => c.id !== data.id));
+          break;
+        default:
+          fetchCustomers();
+      }
+    });
+    return unsub;
+  }, [on, fetchCustomers]);
+
+  useEffect(() => {
+    fetchCustomers();
+  }, [fetchCustomers]);
 
   const openCreateModal = () => {
     setEditingCustomer(null);

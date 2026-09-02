@@ -2,6 +2,7 @@ const express     = require('express');
 const Invoice     = require('../models/Invoice');
 const InvoiceItem = require('../models/InvoiceItem');
 const requireAuth = require('../middleware/auth');
+const { broadcast } = require('../websocket');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -65,6 +66,7 @@ router.get('/', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const invoice = await Invoice.create(req.body);
+    broadcast('invoices', 'created', invoice);
     res.status(201).json(invoice);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -78,6 +80,7 @@ router.post('/', async (req, res) => {
 router.post('/items', async (req, res) => {
   try {
     const items = await InvoiceItem.insertMany(req.body);
+    broadcast('invoices', 'items_created', { invoice_id: req.body[0]?.invoice_id, items });
     res.status(201).json(items);
   } catch (err) {
     res.status(400).json({ error: err.message });

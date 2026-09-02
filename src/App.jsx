@@ -3,6 +3,7 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { ThemeProvider } from './components/ThemeContext';
 import { ToastProvider } from './components/ToastContext';
 import { ModalProvider } from './components/ModalContext';
+import { WebSocketProvider } from './contexts/WebSocketContext';
 import Login from './pages/Login';
 import Home from './pages/Home';
 import Financial from './pages/Financial';
@@ -35,6 +36,7 @@ function App() {
     <ThemeProvider>
       <ModalProvider>
         <ToastProvider>
+          <WebSocketProvider>
           <Router>
             <Routes>
               {/* ═══════ PUBLIC WEBSITE (root) ══════════════════ */}
@@ -90,6 +92,7 @@ function App() {
               <Route path="/billing/*" element={<Navigate to="/admin/billing" replace />} />
             </Routes>
           </Router>
+          </WebSocketProvider>
         </ToastProvider>
       </ModalProvider>
     </ThemeProvider>

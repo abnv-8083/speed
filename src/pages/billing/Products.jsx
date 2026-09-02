@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Plus, Edit2, Trash2, Ban, Unlock, Search, Package, ChevronRight, LayoutGrid, LayoutList } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { api } from '../../api';
+import { useWs } from '../../contexts/WebSocketContext';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
 import { useToast } from '../../components/ToastContext';
@@ -37,9 +38,7 @@ const Products = () => {
     currentPage * ITEMS_PER_PAGE
   );
 
-  useEffect(() => { fetchProducts(); }, []);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getProducts();
@@ -48,7 +47,30 @@ const Products = () => {
       toast.error('Failed to load products: ' + err.message);
     }
     setLoading(false);
-  };
+  }, []);
+
+  // Real-time product updates via WebSocket
+  const { on } = useWs();
+  useEffect(() => {
+    const unsub = on('products', (event, data) => {
+      switch (event) {
+        case 'created':
+          setProducts(prev => [...prev, data]);
+          break;
+        case 'updated':
+          setProducts(prev => prev.map(p => p.id === data.id ? data : p));
+          break;
+        case 'deleted':
+          setProducts(prev => prev.filter(p => p.id !== data.id));
+          break;
+        default:
+          fetchProducts();
+      }
+    });
+    return unsub;
+  }, [on, fetchProducts]);
+
+  useEffect(() => { fetchProducts(); }, []);
 
   const handleAddProduct = async (e) => {
     if (e && e.preventDefault) e.preventDefault();

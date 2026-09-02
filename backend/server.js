@@ -1,7 +1,9 @@
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
+const http = require('http');
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const { initWebSocket } = require('./websocket');
 
 // Force Google DNS to resolve Atlas SRV records (bypasses ISP DNS issues)
 const dns = require('dns');
@@ -74,7 +76,9 @@ mongoose
   .connect(MONGO_URI)
   .then(() => {
     console.log('✅  Connected to MongoDB Atlas');
-    app.listen(PORT, () => console.log(`🚀  API running on port ${PORT}`));
+    const server = http.createServer(app);
+    initWebSocket(server);
+    server.listen(PORT, () => console.log(`🚀  API + WebSocket running on port ${PORT}`));
   })
   .catch((err) => {
     console.error('❌  MongoDB connection failed:', err.message);

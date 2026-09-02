@@ -13,6 +13,7 @@ import {
   Legend, ResponsiveContainer,
 } from 'recharts';
 import { api } from '../../api';
+import { useWs } from '../../contexts/WebSocketContext';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
 import AppModal from '../../components/AppModal';
@@ -191,6 +192,14 @@ const SalesReport = () => {
     }
     setLoading(false);
   }, [startDate, endDate]);
+
+  // Real-time updates via WebSocket
+  const { on } = useWs();
+  useEffect(() => {
+    const unsubInvoice = on('invoices', () => fetchAll());
+    const unsubExpense = on('expenses', () => fetchAll());
+    return () => { unsubInvoice(); unsubExpense(); };
+  }, [on, fetchAll]);
 
   useEffect(() => { fetchAll(); }, [fetchAll]);
 

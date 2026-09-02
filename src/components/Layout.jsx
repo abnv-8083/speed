@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { NavLink, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Zap,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import { SubNavProvider, useSubNav } from './SubNavContext';
 import { useTheme } from './ThemeContext';
+import { useWs } from '../contexts/WebSocketContext';
 import { api } from '../api';
 import WorkDuePopup from './WorkDuePopup';
 import './Layout.css';
@@ -38,8 +39,9 @@ function LayoutInner() {
   const [notifications, setNotifications] = useState([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [showNotifPanel, setShowNotifPanel] = useState(false);
+  const { on } = useWs();
 
-  const fetchNotifications = async () => {
+  const fetchNotifications = useCallback(async () => {
     try {
       const data = await api.getNotifications();
       setNotifications(data.notifications || []);
@@ -47,13 +49,44 @@ function LayoutInner() {
     } catch (err) {
       // silent
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000); // poll every 30s
-    return () => clearInterval(interval);
-  }, []);
+  }, [fetchNotifications]);
+
+  // Real-time notification updates via WebSocket
+  useEffect(() => {
+    const unsub = on('notifications', (event, data) => {
+      switch (event) {
+        case 'created':
+          setNotifications(prev => [data, ...prev]);
+          setUnreadCount(prev => prev + 1);
+          break;
+        case 'read':
+          setNotifications(prev => prev.map(n =>
+            (n.id || n._id) === (data.id || data._id) ? { ...n, read: true } : n
+          ));
+          setUnreadCount(prev => Math.max(0, prev - 1));
+          break;
+        case 'all_read':
+          setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+          setUnreadCount(0);
+          break;
+        case 'deleted':
+          setNotifications(prev => prev.filter(n => (n.id || n._id) !== data.id));
+          break;
+        case 'cleared':
+          setNotifications([]);
+          setUnreadCount(0);
+          break;
+        default:
+          // Refresh on any other event
+          fetchNotifications();
+      }
+    });
+    return unsub;
+  }, [on, fetchNotifications]);
 
   const markAllRead = async () => {
     try {

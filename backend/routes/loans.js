@@ -2,6 +2,7 @@ const express     = require('express');
 const Loan        = require('../models/Loan');
 const LoanPayment = require('../models/LoanPayment');
 const requireAuth = require('../middleware/auth');
+const { broadcast } = require('../websocket');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -45,6 +46,7 @@ router.get('/:id', async (req, res) => {
 router.post('/', async (req, res) => {
   try {
     const loan = await Loan.create(req.body);
+    broadcast('loans', 'created', loan);
     res.status(201).json(loan);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -60,6 +62,7 @@ router.patch('/:id', async (req, res) => {
       { new: true, runValidators: true }
     );
     if (!loan) return res.status(404).json({ error: 'Loan not found' });
+    broadcast('loans', 'updated', loan);
     res.json(loan);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -72,6 +75,7 @@ router.delete('/:id', async (req, res) => {
     await LoanPayment.deleteMany({ loan_id: req.params.id });
     const loan = await Loan.findByIdAndDelete(req.params.id);
     if (!loan) return res.status(404).json({ error: 'Loan not found' });
+    broadcast('loans', 'deleted', { id: req.params.id });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

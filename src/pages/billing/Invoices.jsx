@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Receipt, Search, Package, LayoutGrid, LayoutList, FileText } from 'lucide-react';
 import { api } from '../../api';
+import { useWs } from '../../contexts/WebSocketContext';
 import Pagination from '../../components/Pagination';
 import PremiumLoader from '../../components/PremiumLoader';
 import InvoiceTemplate from '../../components/InvoiceTemplate';
@@ -15,11 +16,7 @@ const Invoices = () => {
   const [viewMode, setViewMode] = useState('list'); // 'list' | 'card'
   const ITEMS_PER_PAGE = 12;
 
-  useEffect(() => {
-    fetchInvoices();
-  }, []);
-
-  const fetchInvoices = async () => {
+  const fetchInvoices = useCallback(async () => {
     setLoading(true);
     try {
       const data = await api.getInvoices();
@@ -28,7 +25,23 @@ const Invoices = () => {
       console.error('Failed to load invoices:', err.message);
     }
     setLoading(false);
-  };
+  }, []);
+
+  // Real-time invoice updates via WebSocket
+  const { on } = useWs();
+  useEffect(() => {
+    const unsub = on('invoices', (event, data) => {
+      // On any invoice change, refresh the full list since invoices have complex populated data
+      if (['created', 'updated', 'deleted', 'items_created'].includes(event)) {
+        fetchInvoices();
+      }
+    });
+    return unsub;
+  }, [on, fetchInvoices]);
+
+  useEffect(() => {
+    fetchInvoices();
+  }, [fetchInvoices]);
 
   const filteredInvoices = invoices.filter(inv =>
     inv.id.toString().includes(searchTerm) ||

@@ -1,6 +1,7 @@
 const express     = require('express');
 const VaultStore  = require('../models/VaultStore');
 const requireAuth = require('../middleware/auth');
+const { broadcast } = require('../websocket');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -27,6 +28,7 @@ router.post('/', async (req, res) => {
       { $set: { device_id, ...fields } },
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
+    broadcast('vault', 'updated', { device_id });
     res.json(row);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -39,6 +41,7 @@ router.delete('/', async (req, res) => {
     const { device_id } = req.query;
     if (!device_id) return res.status(400).json({ error: 'device_id required' });
     await VaultStore.deleteOne({ device_id });
+    broadcast('vault', 'deleted', { device_id });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

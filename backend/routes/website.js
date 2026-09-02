@@ -4,6 +4,7 @@ const WebsiteSettings = require('../models/WebsiteSettings');
 const Product = require('../models/Product');
 const requireAuth = require('../middleware/auth');
 const cloudinary = require('cloudinary').v2;
+const { broadcast } = require('../websocket');
 
 // Configure Cloudinary if env keys exist
 if (process.env.CLOUDINARY_CLOUD_NAME && process.env.CLOUDINARY_API_KEY && process.env.CLOUDINARY_API_SECRET) {
@@ -87,6 +88,7 @@ router.patch('/settings', requireAuth, async (req, res, next) => {
       );
     }
 
+    broadcast('website', 'updated', settings);
     res.json(settings);
   } catch (err) {
     next(err);

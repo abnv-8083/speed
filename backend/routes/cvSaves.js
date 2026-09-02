@@ -1,6 +1,7 @@
 const express     = require('express');
 const CvSave      = require('../models/CvSave');
 const requireAuth = require('../middleware/auth');
+const { broadcast } = require('../websocket');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -29,6 +30,7 @@ router.post('/', async (req, res) => {
     } else {
       save = await CvSave.create({ name, template, data });
     }
+    broadcast('cv-saves', 'updated', save);
     res.status(201).json(save);
   } catch (err) {
     res.status(400).json({ error: err.message });
@@ -39,6 +41,7 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
   try {
     await CvSave.findByIdAndDelete(req.params.id);
+    broadcast('cv-saves', 'deleted', { id: req.params.id });
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: err.message });

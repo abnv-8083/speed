@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { useLocation } from 'react-router-dom';
 import {
   Printer, Search, RefreshCw, Plus, AlertTriangle, Check,
@@ -6,6 +6,7 @@ import {
   Wifi, WifiOff, Clock,
 } from 'lucide-react';
 import { api } from '../../api';
+import { useWs } from '../../contexts/WebSocketContext';
 import { useToast } from '../../components/ToastContext';
 import PremiumLoader from '../../components/PremiumLoader';
 import AppModal from '../../components/AppModal';
@@ -83,9 +84,40 @@ export default function PrintingHistory() {
   // Agent connection status
   const [agentStatus, setAgentStatus]   = useState(null); // null = loading, { connected, last_seen }
 
-  useEffect(() => { fetchAll(); }, []);
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    await Promise.all([fetchStocks(), fetchLogs(), fetchPrinterConfigs()]);
+    setLoading(false);
+  }, []);
 
-  // Poll agent status every 10 s
+  // Real-time updates via WebSocket
+  const { on } = useWs();
+  useEffect(() => {
+    const unsubProduct = on('products', (event) => {
+      if (['created', 'updated', 'deleted'].includes(event)) fetchStocks();
+    });
+    const unsubPrintLog = on('print-logs', (event, data) => {
+      switch (event) {
+        case 'created':
+          setLogs(prev => [data, ...prev]);
+          break;
+        case 'updated':
+          setLogs(prev => prev.map(l => l.id === data.id ? data : l));
+          break;
+        default:
+          fetchLogs();
+      }
+    });
+    const unsubPrinter = on('printer-configs', () => fetchPrinterConfigs());
+    const unsubAgent = on('agent', (event, data) => {
+      setAgentStatus(data);
+    });
+    return () => { unsubProduct(); unsubPrintLog(); unsubPrinter(); unsubAgent(); };
+  }, [on, fetchStocks]);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  // Poll agent status every 10 s (fallback if WS not connected)
   useEffect(() => {
     const checkStatus = async () => {
       try {
@@ -99,12 +131,6 @@ export default function PrintingHistory() {
     const iv = setInterval(checkStatus, 10000);
     return () => clearInterval(iv);
   }, []);
-
-  const fetchAll = async () => {
-    setLoading(true);
-    await Promise.all([fetchStocks(), fetchLogs(), fetchPrinterConfigs()]);
-    setLoading(false);
-  };
 
   const fetchStocks = async () => {
     try {
