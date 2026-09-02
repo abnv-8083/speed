@@ -399,13 +399,13 @@ const SalesReport = () => {
   }, [acctDate]);
 
   useEffect(() => {
-    if (activeTab === 'Accounts') fetchAccounting();
+    if (activeTab === 'Accounts' || activeTab === 'Overview') fetchAccounting();
   }, [activeTab, fetchAccounting]);
 
   // Real-time accounting updates
   useEffect(() => {
     const unsub = on('accounting', () => {
-      if (activeTab === 'Accounts') fetchAccounting();
+      if (activeTab === 'Accounts' || activeTab === 'Overview') fetchAccounting();
     });
     return unsub;
   }, [on, activeTab, fetchAccounting]);
@@ -887,6 +887,52 @@ const SalesReport = () => {
                   <MetricCard label="Avg. Order" value={`₹${metrics.avgOrder.toFixed(2)}`} accent="neutral" icon={<Activity size={18}/>} />
                 </div>
               </div>
+
+              {/* ═══ ROW 5: Account Balances ═══ */}
+              {acctData && (
+                <div className="sr-overview-section">
+                  <h3 className="sr-overview-section-title">
+                    <Wallet size={15} /> Account Balances
+                    <span
+                      className="sr-overview-section-hint"
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => setActiveTab('Accounts')}
+                    >
+                      View full accounts <ChevronRight size={12} style={{ display: 'inline' }} />
+                    </span>
+                  </h3>
+                  <div className="sr-overview-stats-grid sr-overview-stats-grid--4">
+                    <div className="sr-acct-mini-card glass-panel">
+                      <div className="sr-acct-mini-icon" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>💵</div>
+                      <div className="sr-acct-mini-info">
+                        <span className="sr-acct-mini-label">Cash Box</span>
+                        <span className="sr-acct-mini-value" style={{ color: '#10b981' }}>₹{acctData.balance.cash.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <div className="sr-acct-mini-card glass-panel">
+                      <div className="sr-acct-mini-icon" style={{ background: 'rgba(139,92,246,0.12)', color: '#8b5cf6' }}>🏦</div>
+                      <div className="sr-acct-mini-info">
+                        <span className="sr-acct-mini-label">Bank Account</span>
+                        <span className="sr-acct-mini-value" style={{ color: '#8b5cf6' }}>₹{acctData.balance.bank.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <div className="sr-acct-mini-card glass-panel">
+                      <div className="sr-acct-mini-icon" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>💰</div>
+                      <div className="sr-acct-mini-info">
+                        <span className="sr-acct-mini-label">Total</span>
+                        <span className="sr-acct-mini-value" style={{ color: '#f59e0b' }}>₹{acctData.balance.total.toFixed(2)}</span>
+                      </div>
+                    </div>
+                    <div className="sr-acct-mini-card glass-panel">
+                      <div className="sr-acct-mini-icon" style={{ background: 'rgba(99,102,241,0.12)', color: '#6366f1' }}>🔄</div>
+                      <div className="sr-acct-mini-info">
+                        <span className="sr-acct-mini-label">Transfers Today</span>
+                        <span className="sr-acct-mini-value" style={{ color: '#6366f1' }}>{acctData.transfers.length}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Revenue + Expenses + Profit chart */}
               <div className="sr-chart-card glass-panel">
