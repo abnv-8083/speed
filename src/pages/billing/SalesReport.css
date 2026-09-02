@@ -1108,6 +1108,104 @@
   .sr-overview-hero-click-hint { margin-left: 0; }
 }
 
+/* ── Payment Method Breakdown Modal ─────────────────────────── */
+.sr-pm-modal-kpis {
+  display: flex;
+  gap: 0;
+  flex-wrap: wrap;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+}
+
+.sr-pm-kpi-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.15rem;
+  flex: 1;
+  min-width: 90px;
+  padding: 0.45rem 0.35rem;
+  border-right: 1px solid var(--border);
+}
+
+.sr-pm-kpi-item:last-child {
+  border-right: none;
+}
+
+.sr-pm-kpi-label {
+  font-size: 0.6rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+}
+
+.sr-pm-kpi-value {
+  font-size: 1rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.sr-pm-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+
+.sr-pm-table th {
+  padding: 0.55rem 0.75rem;
+  text-align: left;
+  font-weight: 700;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  border-bottom: 1px solid var(--border);
+  background: var(--background);
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
+.sr-pm-table td {
+  padding: 0.55rem 0.75rem;
+  border-bottom: 1px solid rgba(255,255,255,0.04);
+  color: var(--text);
+  font-size: 0.82rem;
+}
+
+.sr-pm-table tr:last-child td {
+  border-bottom: none;
+}
+
+.sr-pm-table tr:hover td {
+  background: rgba(139,92,246,0.03);
+}
+
+/* ── Responsive for modal table ── */
+@media (max-width: 768px) {
+  .sr-pm-modal-kpis {
+    flex-wrap: wrap;
+  }
+  .sr-pm-kpi-item {
+    min-width: calc(33% - 0.5rem);
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+    padding: 0.4rem;
+  }
+  .sr-pm-kpi-item:nth-child(3n) {
+    border-right: none;
+  }
+  .sr-pm-table {
+    font-size: 0.75rem;
+  }
+  .sr-pm-table th,
+  .sr-pm-table td {
+    padding: 0.45rem 0.5rem;
+  }
+}
+
 /* ── Clickable metric card ────────────────────────────────────── */
 .sr-metric--clickable {
   cursor: pointer;

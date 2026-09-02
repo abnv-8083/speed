@@ -170,6 +170,9 @@ const SalesReport = () => {
   // Profit drill-down modal
   const [showProfitModal, setShowProfitModal] = useState(false);
 
+  // Payment method breakdown modal
+  const [payMethodModal, setPayMethodModal] = useState(null); // null | 'Cash' | 'UPI' | 'UPI - Bank' | 'Cash - Bank'
+
   // Transactions payment filter & pagination
   const [paymentFilter, setPaymentFilter] = useState('ALL'); // 'ALL' | 'Cash' | 'UPI' | 'UPI - Bank' | 'Cash - Bank'
   const [tablePage, setTablePage] = useState(1);
@@ -552,6 +555,67 @@ const SalesReport = () => {
     toast.success('PDF downloaded');
   };
 
+  // ── Payment Method Breakdown Data ─────────────────────────────
+  const payMethodBreakdown = useMemo(() => {
+    if (!payMethodModal) return null;
+    const invoices = salesData.filter(inv => (inv.payment_method || 'Cash') === payMethodModal);
+    const rows = [];
+    let totalRevenue = 0;
+    let totalCogs = 0;
+    let totalDiscount = 0;
+    let totalQty = 0;
+
+    invoices.forEach(inv => {
+      const items = inv.invoice_items || [];
+      const invDiscount = Number(inv.discount || 0);
+      const itemCount = items.length;
+      // Distribute discount proportionally across items
+      const invItemTotal = items.reduce((s, item) => s + Number(item.price_at_time || 0) * Number(item.quantity || 1), 0);
+
+      items.forEach((item, idx) => {
+        const sellPrice = Number(item.price_at_time || 0);
+        const costPrice = Number(item.cost_price || item.products?.cost_price || 0);
+        const qty = Number(item.quantity || 1);
+        const lineRevenue = sellPrice * qty;
+        const lineCogs = costPrice * qty;
+        // Proportional discount for this line
+        const lineDiscount = invItemTotal > 0 ? (lineRevenue / invItemTotal) * invDiscount : (idx === 0 ? invDiscount : 0);
+        const lineProfit = lineRevenue - lineCogs - lineDiscount;
+
+        totalRevenue += lineRevenue;
+        totalCogs += lineCogs;
+        totalDiscount += lineDiscount;
+        totalQty += qty;
+
+        rows.push({
+          id: `${inv.id}-${idx}`,
+          invoiceId: inv.id,
+          date: inv.created_at,
+          productName: item.product_name || item.products?.name || 'Unknown',
+          customer: inv.customer_name || 'Walk-in',
+          sellPrice,
+          costPrice,
+          qty,
+          lineRevenue,
+          lineCogs,
+          lineDiscount,
+          lineProfit,
+        });
+      });
+    });
+
+    return {
+      method: payMethodModal,
+      invoiceCount: invoices.length,
+      totalRevenue,
+      totalCogs,
+      totalDiscount,
+      totalQty,
+      totalProfit: totalRevenue - totalCogs - totalDiscount,
+      rows: rows.sort((a, b) => new Date(b.date) - new Date(a.date)),
+    };
+  }, [payMethodModal, salesData]);
+
   const isProfit = metrics.grossProfit >= 0;
 
   return (
@@ -687,18 +751,14 @@ const SalesReport = () => {
                         background: paymentFilter === m.key ? m.bgColor : undefined,
                       }}
                       onClick={() => {
-                        setPaymentFilter(m.key);
-                        setActiveTab('P&L Report');
-                        setTablePage(1);
+                        setPayMethodModal(m.key);
                       }}
                       role="button"
                       tabIndex={0}
                       onKeyDown={(e) => {
                         if (e.key === 'Enter' || e.key === ' ') {
                           e.preventDefault();
-                          setPaymentFilter(m.key);
-                          setActiveTab('P&L Report');
-                          setTablePage(1);
+                          setPayMethodModal(m.key);
                         }
                       }}
                     >
@@ -1294,6 +1354,82 @@ const SalesReport = () => {
                 })}
                 {metrics.billProfits.length === 0 && (
                   <tr><td colSpan={8} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No invoices in this date range.</td></tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </AppModal>
+      )}
+
+      {/* ── Payment Method Breakdown Modal ── */}
+      {payMethodModal && payMethodBreakdown && (
+        <AppModal
+          title={`${payMethodBreakdown.method} — Detailed Breakdown`}
+          onClose={() => setPayMethodModal(null)}
+          width="860px"
+          noPadding
+        >
+          {/* Summary KPIs */}
+          <div className="sr-pm-modal-kpis">
+            {[
+              { label: 'Invoices', value: payMethodBreakdown.invoiceCount, color: 'var(--primary)' },
+              { label: 'Total Items', value: payMethodBreakdown.totalQty, color: '#f59e0b' },
+              { label: 'Revenue', value: `₹${payMethodBreakdown.totalRevenue.toFixed(2)}`, color: 'var(--secondary)' },
+              { label: 'Cost (COGS)', value: `₹${payMethodBreakdown.totalCogs.toFixed(2)}`, color: '#f87171' },
+              { label: 'Discount', value: `-₹${payMethodBreakdown.totalDiscount.toFixed(2)}`, color: '#fb923c' },
+              { label: 'Profit', value: `₹${payMethodBreakdown.totalProfit.toFixed(2)}`, color: payMethodBreakdown.totalProfit >= 0 ? 'var(--secondary)' : '#f87171' },
+            ].map(k => (
+              <div key={k.label} className="sr-pm-kpi-item">
+                <span className="sr-pm-kpi-label">{k.label}</span>
+                <span className="sr-pm-kpi-value" style={{ color: k.color }}>{k.value}</span>
+              </div>
+            ))}
+          </div>
+
+          {/* Items Table */}
+          <div style={{ maxHeight: '55vh', overflowY: 'auto' }}>
+            <table className="sr-pm-table">
+              <thead>
+                <tr>
+                  <th>Date & Time</th>
+                  <th>Product</th>
+                  <th>Customer</th>
+                  <th style={{ textAlign: 'center' }}>Qty</th>
+                  <th className="text-right">Cost</th>
+                  <th className="text-right">Selling</th>
+                  <th className="text-right">Discount</th>
+                  <th className="text-right">Amount</th>
+                  <th className="text-right">Profit</th>
+                </tr>
+              </thead>
+              <tbody>
+                {payMethodBreakdown.rows.length === 0 ? (
+                  <tr><td colSpan={9} style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>No transactions for this payment method.</td></tr>
+                ) : (
+                  payMethodBreakdown.rows.map((row, i) => {
+                    const isPos = row.lineProfit >= 0;
+                    const d = new Date(row.date);
+                    return (
+                      <tr key={row.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
+                        <td style={{ whiteSpace: 'nowrap' }}>
+                          <div style={{ fontSize: '0.82rem' }}>{d.toLocaleDateString()}</div>
+                          <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                        </td>
+                        <td style={{ fontWeight: 600 }}>{row.productName}</td>
+                        <td>{row.customer}</td>
+                        <td style={{ textAlign: 'center', fontWeight: 700 }}>{row.qty}</td>
+                        <td className="col-num" style={{ color: '#f59e0b' }}>₹{row.costPrice.toFixed(2)}</td>
+                        <td className="col-num" style={{ color: 'var(--secondary)', fontWeight: 600 }}>₹{row.sellPrice.toFixed(2)}</td>
+                        <td className="col-num" style={{ color: row.lineDiscount > 0 ? '#fb923c' : 'var(--text-muted)' }}>
+                          {row.lineDiscount > 0 ? `-₹${row.lineDiscount.toFixed(2)}` : '—'}
+                        </td>
+                        <td className="col-num font-bold" style={{ color: 'var(--secondary)' }}>₹{row.lineRevenue.toFixed(2)}</td>
+                        <td className="col-num" style={{ color: isPos ? 'var(--secondary)' : '#f87171', fontWeight: 700 }}>
+                          {isPos ? '+' : ''}₹{row.lineProfit.toFixed(2)}
+                        </td>
+                      </tr>
+                    );
+                  })
                 )}
               </tbody>
             </table>
