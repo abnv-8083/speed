@@ -25,6 +25,7 @@ const expenseRoutes       = require('./routes/expenses');
 const workRoutes          = require('./routes/works');
 const notificationRoutes  = require('./routes/notifications');
 const websiteRoutes       = require('./routes/website');
+const accountingRoutes    = require('./routes/accounting');
 
 const app = express();
 
@@ -53,6 +54,7 @@ app.use('/api/expenses',        expenseRoutes);
 app.use('/api/works',           workRoutes);
 app.use('/api/notifications',   notificationRoutes);
 app.use('/api/website',         websiteRoutes);
+app.use('/api/accounting',      accountingRoutes);
 
 // ── Health check ──────────────────────────────────────────────
 app.get('/api/health', (_req, res) => res.json({ status: 'ok' }));

@@ -40,7 +40,7 @@ const PRESETS = [
   { label: 'Last 90 days', days: 90 },
 ];
 
-const TABS = ['Overview', 'Expenses', 'P&L Report'];
+const TABS = ['Overview', 'Expenses', 'P&L Report', 'Accounts'];
 
 // ── Custom chart tooltip ───────────────────────────────────────
 function ChartTip({ active, payload, label, prefix = '₹' }) {
@@ -177,6 +177,17 @@ const SalesReport = () => {
   const [paymentFilter, setPaymentFilter] = useState('ALL'); // 'ALL' | 'Cash' | 'UPI' | 'UPI - Bank' | 'Cash - Bank'
   const [tablePage, setTablePage] = useState(1);
   const TABLE_PAGE_SIZE = 10;
+
+  // ── Accounting state ─────────────────────────────────────────
+  const [acctDate, setAcctDate] = useState(format(new Date(), 'yyyy-MM-dd'));
+  const [acctData, setAcctData] = useState(null);
+  const [acctLoading, setAcctLoading] = useState(false);
+  const [openingForm, setOpeningForm] = useState({ cash_opening: '', bank_opening: '', note: '' });
+  const [openingSaving, setOpeningSaving] = useState(false);
+  const [transferForm, setTransferForm] = useState({ direction: 'cash_to_bank', amount: '', note: '' });
+  const [transferSaving, setTransferSaving] = useState(false);
+  const [acctHistory, setAcctHistory] = useState([]);
+  const [acctHistoryLoading, setAcctHistoryLoading] = useState(false);
 
   // ── Load ─────────────────────────────────────────────────────
   const fetchAll = useCallback(async () => {
@@ -369,6 +380,99 @@ const SalesReport = () => {
     }
     setDeleteExpenseId(null);
   };
+
+  // ── Accounting ───────────────────────────────────────────────
+  const fetchAccounting = useCallback(async () => {
+    setAcctLoading(true);
+    try {
+      const data = await api.getAccountingToday(acctDate);
+      setAcctData(data);
+      setOpeningForm({
+        cash_opening: data.opening.cash || '',
+        bank_opening: data.opening.bank || '',
+        note: data.account?.note || '',
+      });
+    } catch (err) {
+      toast.error('Failed to load account data');
+    }
+    setAcctLoading(false);
+  }, [acctDate]);
+
+  useEffect(() => {
+    if (activeTab === 'Accounts') fetchAccounting();
+  }, [activeTab, fetchAccounting]);
+
+  // Real-time accounting updates
+  useEffect(() => {
+    const unsub = on('accounting', () => {
+      if (activeTab === 'Accounts') fetchAccounting();
+    });
+    return unsub;
+  }, [on, activeTab, fetchAccounting]);
+
+  const handleOpeningSave = async () => {
+    setOpeningSaving(true);
+    try {
+      await api.setAccountingOpening({
+        date: acctDate,
+        cash_opening: Number(openingForm.cash_opening) || 0,
+        bank_opening: Number(openingForm.bank_opening) || 0,
+        note: openingForm.note,
+      });
+      toast.success('Opening balances saved');
+      fetchAccounting();
+    } catch (err) {
+      toast.error('Failed to save: ' + err.message);
+    }
+    setOpeningSaving(false);
+  };
+
+  const handleTransfer = async () => {
+    if (!transferForm.amount || Number(transferForm.amount) <= 0) return;
+    setTransferSaving(true);
+    try {
+      await api.addAccountingTransfer({
+        date: acctDate,
+        direction: transferForm.direction,
+        amount: Number(transferForm.amount),
+        note: transferForm.note,
+      });
+      toast.success('Transfer recorded');
+      setTransferForm({ direction: 'cash_to_bank', amount: '', note: '' });
+      fetchAccounting();
+    } catch (err) {
+      toast.error('Transfer failed: ' + err.message);
+    }
+    setTransferSaving(false);
+  };
+
+  const handleDeleteTransfer = async (transferId) => {
+    try {
+      await api.deleteAccountingTransfer(acctDate, transferId);
+      toast.success('Transfer removed');
+      fetchAccounting();
+    } catch (err) {
+      toast.error('Failed to remove: ' + err.message);
+    }
+  };
+
+  const fetchAcctHistory = useCallback(async () => {
+    setAcctHistoryLoading(true);
+    try {
+      const data = await api.getAccountingHistory({
+        start: format(subDays(new Date(), 29), 'yyyy-MM-dd'),
+        end: format(new Date(), 'yyyy-MM-dd'),
+      });
+      setAcctHistory(data);
+    } catch (err) {
+      toast.error('Failed to load history');
+    }
+    setAcctHistoryLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (activeTab === 'Accounts') fetchAcctHistory();
+  }, [activeTab, fetchAcctHistory]);
 
   // ── CSV export ────────────────────────────────────────────────
   const exportCSV = () => {
@@ -1272,6 +1376,336 @@ const SalesReport = () => {
                     itemsPerPage={TABLE_PAGE_SIZE} onPageChange={setTablePage} />
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* ═══ ACCOUNTS TAB ═══ */}
+          {activeTab === 'Accounts' && (
+            <div className="sr-content">
+
+              {/* ── Date Selector ── */}
+              <div className="sr-acct-date-bar glass-panel">
+                <div className="sr-acct-date-left">
+                  <Wallet size={16} />
+                  <span style={{ fontWeight: 700 }}>Daily Accounts</span>
+                </div>
+                <div className="sr-acct-date-pill">
+                  <Calendar size={13} />
+                  <input
+                    type="date"
+                    className="sr-date-input"
+                    value={acctDate}
+                    max={format(new Date(), 'yyyy-MM-dd')}
+                    onChange={e => setAcctDate(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              {acctLoading ? (
+                <div className="sr-loader"><PremiumLoader text="Loading accounts…" /></div>
+              ) : acctData && (
+                <>
+                  {/* ── Balance Hero Cards ── */}
+                  <div className="sr-acct-hero-row">
+                    <div className="sr-acct-hero-card glass-panel" style={{ '--hero-color': '#10b981' }}>
+                      <div className="sr-acct-hero-icon" style={{ background: 'rgba(16,185,129,0.12)', color: '#10b981' }}>
+                        💵
+                      </div>
+                      <div className="sr-acct-hero-info">
+                        <span className="sr-acct-hero-label">Cash Box</span>
+                        <span className="sr-acct-hero-value" style={{ color: '#10b981' }}>
+                          ₹{acctData.balance.cash.toFixed(2)}
+                        </span>
+                        <span className="sr-acct-hero-sub">
+                          Opening: ₹{acctData.opening.cash.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="sr-acct-hero-card glass-panel" style={{ '--hero-color': '#8b5cf6' }}>
+                      <div className="sr-acct-hero-icon" style={{ background: 'rgba(139,92,246,0.12)', color: '#8b5cf6' }}>
+                        🏦
+                      </div>
+                      <div className="sr-acct-hero-info">
+                        <span className="sr-acct-hero-label">Bank Account</span>
+                        <span className="sr-acct-hero-value" style={{ color: '#8b5cf6' }}>
+                          ₹{acctData.balance.bank.toFixed(2)}
+                        </span>
+                        <span className="sr-acct-hero-sub">
+                          Opening: ₹{acctData.opening.bank.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="sr-acct-hero-card glass-panel" style={{ '--hero-color': '#f59e0b' }}>
+                      <div className="sr-acct-hero-icon" style={{ background: 'rgba(245,158,11,0.12)', color: '#f59e0b' }}>
+                        💰
+                      </div>
+                      <div className="sr-acct-hero-info">
+                        <span className="sr-acct-hero-label">Total Balance</span>
+                        <span className="sr-acct-hero-value" style={{ color: '#f59e0b' }}>
+                          ₹{acctData.balance.total.toFixed(2)}
+                        </span>
+                        <span className="sr-acct-hero-sub">
+                          Both accounts combined
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Activity Summary ── */}
+                  <div className="sr-acct-section">
+                    <h3 className="sr-overview-section-title">Today's Activity</h3>
+                    <div className="sr-acct-activity-grid">
+                      <div className="sr-acct-activity-card">
+                        <span className="sr-acct-activity-label" style={{ color: '#10b981' }}>Cash Received</span>
+                        <span className="sr-acct-activity-value" style={{ color: '#10b981' }}>+₹{acctData.summary.cashIn.toFixed(2)}</span>
+                      </div>
+                      <div className="sr-acct-activity-card">
+                        <span className="sr-acct-activity-label" style={{ color: '#f87171' }}>Cash Spent</span>
+                        <span className="sr-acct-activity-value" style={{ color: '#f87171' }}>-₹{acctData.summary.cashOut.toFixed(2)}</span>
+                      </div>
+                      <div className="sr-acct-activity-card">
+                        <span className="sr-acct-activity-label" style={{ color: '#8b5cf6' }}>Bank Received</span>
+                        <span className="sr-acct-activity-value" style={{ color: '#8b5cf6' }}>+₹{acctData.summary.bankIn.toFixed(2)}</span>
+                      </div>
+                      <div className="sr-acct-activity-card">
+                        <span className="sr-acct-activity-label" style={{ color: '#f87171' }}>Bank Spent</span>
+                        <span className="sr-acct-activity-value" style={{ color: '#f87171' }}>-₹{acctData.summary.bankOut.toFixed(2)}</span>
+                      </div>
+                      {acctData.summary.cashToBank > 0 && (
+                        <div className="sr-acct-activity-card">
+                          <span className="sr-acct-activity-label" style={{ color: '#6366f1' }}>Cash → Bank</span>
+                          <span className="sr-acct-activity-value" style={{ color: '#6366f1' }}>-₹{acctData.summary.cashToBank.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {acctData.summary.bankToCash > 0 && (
+                        <div className="sr-acct-activity-card">
+                          <span className="sr-acct-activity-label" style={{ color: '#0ea5e9' }}>Bank → Cash</span>
+                          <span className="sr-acct-activity-value" style={{ color: '#0ea5e9' }}>+₹{acctData.summary.bankToCash.toFixed(2)}</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── Two Column: Opening Balance + Transfer ── */}
+                  <div className="sr-acct-two-col">
+                    {/* Opening Balance */}
+                    <div className="sr-acct-panel glass-panel">
+                      <h3 className="sr-acct-panel-title">Opening Balance</h3>
+                      <p className="sr-acct-panel-desc">Set the starting cash and bank balance for this day.</p>
+                      <div className="sr-acct-form-row">
+                        <div className="form-group" style={{ flex: 1 }}>
+                          <label className="form-label">💵 Cash Box</label>
+                          <input
+                            type="number"
+                            className="input-field"
+                            value={openingForm.cash_opening}
+                            onChange={e => setOpeningForm(f => ({ ...f, cash_opening: e.target.value }))}
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                          />
+                        </div>
+                        <div className="form-group" style={{ flex: 1 }}>
+                          <label className="form-label">🏦 Bank Account</label>
+                          <input
+                            type="number"
+                            className="input-field"
+                            value={openingForm.bank_opening}
+                            onChange={e => setOpeningForm(f => ({ ...f, bank_opening: e.target.value }))}
+                            min="0"
+                            step="0.01"
+                            placeholder="0.00"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Note (optional)</label>
+                        <input
+                          className="input-field"
+                          value={openingForm.note}
+                          onChange={e => setOpeningForm(f => ({ ...f, note: e.target.value }))}
+                          placeholder="e.g. Start of business day"
+                        />
+                      </div>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleOpeningSave}
+                        disabled={openingSaving}
+                        style={{ width: '100%', marginTop: '0.5rem' }}
+                      >
+                        {openingSaving ? 'Saving…' : 'Save Opening Balance'}
+                      </button>
+                    </div>
+
+                    {/* Transfer Between Accounts */}
+                    <div className="sr-acct-panel glass-panel">
+                      <h3 className="sr-acct-panel-title">Transfer Between Accounts</h3>
+                      <p className="sr-acct-panel-desc">Move money between Cash Box and Bank Account (1:1, no fees).</p>
+                      <div className="sr-acct-transfer-btns">
+                        <button
+                          className={`btn ${transferForm.direction === 'cash_to_bank' ? 'btn-primary' : 'btn-secondary'}`}
+                          onClick={() => setTransferForm(f => ({ ...f, direction: 'cash_to_bank' }))}
+                          style={{ flex: 1 }}
+                        >
+                          💵 → 🏦 Cash to Bank
+                        </button>
+                        <button
+                          className={`btn ${transferForm.direction === 'bank_to_cash' ? 'btn-primary' : 'btn-secondary'}`}
+                          onClick={() => setTransferForm(f => ({ ...f, direction: 'bank_to_cash' }))}
+                          style={{ flex: 1 }}
+                        >
+                          🏦 → 💵 Bank to Cash
+                        </button>
+                      </div>
+                      <div className="form-group" style={{ marginTop: '0.75rem' }}>
+                        <label className="form-label">Amount (₹)</label>
+                        <input
+                          type="number"
+                          className="input-field"
+                          value={transferForm.amount}
+                          onChange={e => setTransferForm(f => ({ ...f, amount: e.target.value }))}
+                          min="0.01"
+                          step="0.01"
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label className="form-label">Note (optional)</label>
+                        <input
+                          className="input-field"
+                          value={transferForm.note}
+                          onChange={e => setTransferForm(f => ({ ...f, note: e.target.value }))}
+                          placeholder="e.g. Customer paid via UPI, gave cash"
+                        />
+                      </div>
+                      <button
+                        className="btn btn-primary"
+                        onClick={handleTransfer}
+                        disabled={transferSaving || !transferForm.amount || Number(transferForm.amount) <= 0}
+                        style={{ width: '100%', marginTop: '0.5rem' }}
+                      >
+                        {transferSaving ? 'Processing…' : 'Record Transfer'}
+                      </button>
+
+                      {/* Today's Transfers List */}
+                      {acctData.transfers.length > 0 && (
+                        <div style={{ marginTop: '1rem' }}>
+                          <h4 style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+                            Today's Transfers
+                          </h4>
+                          {acctData.transfers.map(t => (
+                            <div key={t._id} className="sr-acct-transfer-row">
+                              <div>
+                                <span style={{ fontWeight: 600, fontSize: '0.82rem' }}>
+                                  {t.direction === 'cash_to_bank' ? '💵 → 🏦' : '🏦 → 💵'}
+                                </span>
+                                {t.note && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginLeft: '0.5rem' }}>{t.note}</span>}
+                              </div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                <span style={{ fontWeight: 700, color: 'var(--text)' }}>₹{Number(t.amount).toFixed(2)}</span>
+                                <button
+                                  className="sr-exp-btn sr-exp-btn--del"
+                                  onClick={() => handleDeleteTransfer(t._id)}
+                                  title="Remove transfer"
+                                >
+                                  <Trash2 size={12} />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* ── Transaction Detail ── */}
+                  <div className="sr-acct-section">
+                    <h3 className="sr-overview-section-title">Transaction Details</h3>
+                    <div className="sr-acct-two-col">
+                      {/* Cash Box Transactions */}
+                      <div className="sr-acct-panel glass-panel">
+                        <h3 className="sr-acct-panel-title" style={{ color: '#10b981' }}>💵 Cash Box</h3>
+                        {acctData.activity.salesCash.length === 0 && acctData.activity.expenseList.filter(e => e.account === 'cash').length === 0 ? (
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', padding: '1rem 0' }}>No cash transactions today.</p>
+                        ) : (
+                          <div className="sr-acct-txn-list">
+                            {acctData.activity.salesCash.map(s => (
+                              <div key={s.id} className="sr-acct-txn-row sr-acct-txn--in">
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{s.name}</div>
+                                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{s.customer} · {new Date(s.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                </div>
+                                <span style={{ fontWeight: 700, color: '#10b981' }}>+₹{(s.amount - (s.discount || 0)).toFixed(2)}</span>
+                              </div>
+                            ))}
+                            {acctData.activity.expenseList.filter(e => e.account === 'cash').map(e => (
+                              <div key={e.id} className="sr-acct-txn-row sr-acct-txn--out">
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{e.name}</div>
+                                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{e.category} · {new Date(e.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                </div>
+                                <span style={{ fontWeight: 700, color: '#f87171' }}>-₹{e.amount.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Bank Account Transactions */}
+                      <div className="sr-acct-panel glass-panel">
+                        <h3 className="sr-acct-panel-title" style={{ color: '#8b5cf6' }}>🏦 Bank Account</h3>
+                        {acctData.activity.salesBank.length === 0 && acctData.activity.expenseList.filter(e => e.account === 'bank').length === 0 ? (
+                          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', padding: '1rem 0' }}>No bank transactions today.</p>
+                        ) : (
+                          <div className="sr-acct-txn-list">
+                            {acctData.activity.salesBank.map(s => (
+                              <div key={s.id} className="sr-acct-txn-row sr-acct-txn--in">
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{s.name}</div>
+                                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{s.customer} · {new Date(s.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                </div>
+                                <span style={{ fontWeight: 700, color: '#8b5cf6' }}>+₹{(s.amount - (s.discount || 0)).toFixed(2)}</span>
+                              </div>
+                            ))}
+                            {acctData.activity.expenseList.filter(e => e.account === 'bank').map(e => (
+                              <div key={e.id} className="sr-acct-txn-row sr-acct-txn--out">
+                                <div>
+                                  <div style={{ fontWeight: 600, fontSize: '0.82rem' }}>{e.name}</div>
+                                  <div style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>{e.category} · {new Date(e.time).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</div>
+                                </div>
+                                <span style={{ fontWeight: 700, color: '#f87171' }}>-₹{e.amount.toFixed(2)}</span>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ── Daily History ── */}
+                  {acctHistory.length > 0 && (
+                    <div className="sr-acct-section">
+                      <h3 className="sr-overview-section-title">Recent Days</h3>
+                      <div className="sr-acct-history-list glass-panel">
+                        <div className="sr-acct-history-header">
+                          <span>Date</span>
+                          <span className="text-right">Cash Box</span>
+                          <span className="text-right">Bank</span>
+                          <span className="text-right">Total</span>
+                        </div>
+                        {acctHistory.slice(0, 14).map(day => (
+                          <div key={day.date} className="sr-acct-history-row">
+                            <span style={{ fontWeight: 600 }}>{day.date}</span>
+                            <span className="text-right" style={{ color: '#10b981' }}>₹{day.balance.cash.toFixed(2)}</span>
+                            <span className="text-right" style={{ color: '#8b5cf6' }}>₹{day.balance.bank.toFixed(2)}</span>
+                            <span className="text-right font-bold">₹{day.balance.total.toFixed(2)}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
             </div>
           )}
         </>

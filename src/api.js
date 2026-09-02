@@ -195,6 +195,16 @@ export const api = {
   deleteNotification:     (id)   => request('DELETE', `/api/notifications/${id}`),
   clearNotifications:     ()     => request('DELETE', '/api/notifications'),
 
+  // ── Accounting ──────────────────────────────────────────────
+  getAccountingToday: (date) => request('GET', `/api/accounting/today${date ? `?date=${date}` : ''}`),
+  setAccountingOpening: (body) => request('PUT', '/api/accounting/opening', body),
+  addAccountingTransfer: (body) => request('POST', '/api/accounting/transfer', body),
+  deleteAccountingTransfer: (date, transferId) => request('DELETE', `/api/accounting/transfer/${transferId}?date=${date}`),
+  getAccountingHistory: (params = {}) => {
+    const qs = new URLSearchParams(params).toString();
+    return request('GET', `/api/accounting/history${qs ? `?${qs}` : ''}`);
+  },
+
   // ── Website Settings (Public) ─────────────────────────────
   getWebsiteSettings: () => request('GET', '/api/website/settings'),
   getWebsiteServices: () => request('GET', '/api/website/services'),
