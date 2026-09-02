@@ -99,7 +99,10 @@ export default function PrintingHistory() {
     const unsubPrintLog = on('print-logs', (event, data) => {
       switch (event) {
         case 'created':
-          setLogs(prev => [data, ...prev]);
+          setLogs(prev => {
+            if (prev.some(l => l.id === data.id)) return prev;
+            return [data, ...prev];
+          });
           break;
         case 'updated':
           setLogs(prev => prev.map(l => l.id === data.id ? data : l));

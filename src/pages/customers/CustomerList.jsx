@@ -52,7 +52,10 @@ export default function CustomerList() {
     const unsub = on('customers', (event, data) => {
       switch (event) {
         case 'created':
-          setCustomers(prev => [data, ...prev]);
+          setCustomers(prev => {
+            if (prev.some(c => c.id === data.id)) return prev;
+            return [data, ...prev];
+          });
           break;
         case 'updated':
           setCustomers(prev => prev.map(c => c.id === data.id ? data : c));

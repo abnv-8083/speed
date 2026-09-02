@@ -345,8 +345,8 @@ const SalesReport = () => {
         setExpenses(prev => prev.map(e => e.id === updated.id ? updated : e));
         toast.success('Expense updated');
       } else {
-        const created = await api.createExpense(data);
-        setExpenses(prev => [created, ...prev]);
+        await api.createExpense(data);
+        fetchAll();
         toast.success('Expense added');
       }
       setExpenseModal(null);

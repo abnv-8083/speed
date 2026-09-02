@@ -78,7 +78,10 @@ const WorkList = () => {
     const unsub = on('works', (event, data) => {
       switch (event) {
         case 'created':
-          setWorks(prev => [data, ...prev]);
+          setWorks(prev => {
+            if (prev.some(w => (w._id || w.id) === (data._id || data.id))) return prev;
+            return [data, ...prev];
+          });
           fetchStats();
           break;
         case 'updated':

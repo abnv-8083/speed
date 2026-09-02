@@ -75,7 +75,10 @@ const Financial = () => {
     const unsub = on('loans', (event, data) => {
       switch (event) {
         case 'created':
-          setLoans(prev => [data, ...prev]);
+          setLoans(prev => {
+            if (prev.some(l => l.id === data.id)) return prev;
+            return [data, ...prev];
+          });
           break;
         case 'updated':
           setLoans(prev => prev.map(l => l.id === data.id ? data : l));

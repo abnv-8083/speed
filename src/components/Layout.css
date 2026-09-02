@@ -186,13 +186,35 @@
   margin-left: var(--sidebar-collapsed-width);
 }
 
+/* Mobile sidebar backdrop */
+.mobile-sidebar-backdrop {
+  display: none;
+}
+
+.hidden-mobile {
+  display: flex;
+}
+
 @media (max-width: 768px) {
   .layout-sidebar {
     transform: translateX(-100%);
+    width: 260px !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  .layout-sidebar.collapsed {
+    width: 260px !important;
   }
   
   .layout-sidebar.mobile-open {
     transform: translateX(0);
+  }
+  
+  .layout-sidebar.mobile-open ~ .mobile-sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.5);
+    z-index: 99;
   }
   
   .main-content {
@@ -200,11 +222,44 @@
   }
   
   .mobile-toggle {
-    display: block;
+    display: flex !important;
+  }
+  .hidden-mobile {
+    display: none !important;
   }
   
   .layout-header {
     padding: 0 1rem;
+    height: 60px;
+  }
+  .layout-header--with-subnav {
+    flex-wrap: wrap;
+    height: auto;
+    min-height: 60px;
+  }
+  .header-subnav {
+    margin-left: 0;
+    padding-left: 0;
+    border-left: none;
+    padding: 0 1rem 0.5rem 1rem;
+    overflow-x: auto;
+    width: 100%;
+  }
+  .header-title {
+    font-size: 1rem;
+  }
+  .header-right {
+    gap: 0.4rem;
+  }
+  .user-profile {
+    display: none;
+  }
+  .layout-main {
+    padding: 1rem;
+  }
+  .notif-panel {
+    width: calc(100vw - 2rem);
+    right: -2rem;
   }
 }
 

@@ -55,7 +55,10 @@ const Products = () => {
     const unsub = on('products', (event, data) => {
       switch (event) {
         case 'created':
-          setProducts(prev => [...prev, data]);
+          setProducts(prev => {
+            if (prev.some(p => p.id === data.id)) return prev;
+            return [...prev, data];
+          });
           break;
         case 'updated':
           setProducts(prev => prev.map(p => p.id === data.id ? data : p));

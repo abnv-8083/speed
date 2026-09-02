@@ -378,7 +378,11 @@ export default function QuickBill() {
     const unsubBill = on('quickbill', (event, data) => {
       switch (event) {
         case 'created':
-          setBills(prev => [data, ...prev]);
+          // Skip if we already added this bill optimistically
+          setBills(prev => {
+            if (prev.some(b => b.id === data.id)) return prev;
+            return [data, ...prev];
+          });
           setSummary(prev => ({
             ...prev,
             totalAmount: (prev.totalAmount || 0) + Number(data.total || 0),
@@ -758,13 +762,22 @@ export default function QuickBill() {
   };
 
   // ── Create bill in DB ─────────────────────────────────────────
+  // Track the bill we just created to avoid duplicate from WebSocket
+  const pendingBillRef = useRef(null);
+
   const createBill = async (items) => {
     if (!items || items.length === 0) return;
     setSaving(true);
     try {
       const total = items.reduce((s, i) => s + i.line_total, 0);
       const newBill = await api.createQuickBill({ items, total, payment_method: payMethod });
-      setBills(prev => [newBill, ...prev]);
+      // Mark this bill as self-created so WebSocket handler skips the duplicate
+      pendingBillRef.current = newBill.id;
+      // Optimistic update — WebSocket 'created' will dedup
+      setBills(prev => {
+        if (prev.some(b => b.id === newBill.id)) return prev;
+        return [newBill, ...prev];
+      });
       setSummary(prev => ({
         totalAmount: prev.totalAmount + total,
         billCount:   prev.billCount + 1,

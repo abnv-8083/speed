@@ -980,15 +980,6 @@
   animation: qbDropIn 0.2s ease;
 }
 
-/* ── Responsive ───────────────────────────────────────────────── */
-@media (max-width: 900px) {
-  .qb-root { flex-direction: column; overflow-y: auto; }
-  .qb-right { flex: none; max-width: 100%; height: auto; }
-  .qb-left  { height: auto; overflow: visible; }
-  .qb-bill-list { overflow-y: visible; }
-  .qb-summary { height: auto; }
-}
-
 /* ── Always-visible bill row header parts ─────────────────────── */
 .qb-bill-row-left {
   display: flex;
@@ -1342,4 +1333,275 @@
   font-size: 0.75rem;
   color: var(--text-muted);
   text-align: center;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   RESPONSIVE — TABLET & MOBILE
+═══════════════════════════════════════════════════════════════ */
+
+/* ── Tablet breakpoint ──────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .qb-root {
+    flex-direction: column;
+    overflow-y: auto;
+    height: auto;
+  }
+
+  .qb-right {
+    flex: none;
+    max-width: 100%;
+    height: auto;
+    min-width: 0;
+  }
+
+  .qb-left {
+    height: auto;
+    overflow: visible;
+  }
+
+  .qb-bill-list {
+    overflow-y: visible;
+  }
+
+  .qb-summary {
+    height: auto;
+  }
+
+  .qb-summary-stats {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* ── Mobile breakpoint ─────────────────────────────────────── */
+@media (max-width: 768px) {
+  /* Full-width layout */
+  .qb-root {
+    flex-direction: column;
+    gap: 0.75rem;
+    height: auto;
+    overflow: visible;
+    padding-bottom: 1rem;
+  }
+
+  .qb-left {
+    height: auto;
+    overflow: visible;
+    gap: 0.65rem;
+  }
+
+  .qb-right {
+    display: none; /* Hide summary on mobile — shown in compact form below */
+  }
+
+  /* ── Entry bar: stack fields vertically ── */
+  .qb-inline-entry-bar {
+    padding: 0.65rem;
+  }
+
+  .qb-inline-fields {
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .qb-inline-field {
+    width: 100%;
+  }
+
+  .qb-field-search,
+  .qb-field-qty,
+  .qb-field-price,
+  .qb-field-discount,
+  .qb-field-total,
+  .qb-field-method {
+    flex: none;
+    min-width: 0;
+  }
+
+  .qb-inline-action {
+    width: 100%;
+  }
+
+  .qb-inline-add-btn {
+    width: 100%;
+    justify-content: center;
+    height: 42px;
+    font-size: 0.95rem;
+  }
+
+  .qb-method-select {
+    height: 42px;
+    font-size: 0.9rem;
+  }
+
+  /* Quantity + method row side by side */
+  .qb-inline-fields > .qb-field-qty,
+  .qb-inline-fields > .qb-field-method {
+    flex: 1 1 0;
+  }
+
+  .qb-dropdown {
+    width: 100% !important;
+    max-width: 100%;
+  }
+
+  .qb-field-search .qb-dropdown {
+    width: 100% !important;
+    max-width: 100%;
+    left: 0;
+    right: 0;
+  }
+
+  /* ── Compact inline summary for mobile ── */
+  .qb-mobile-summary {
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    padding: 0.65rem;
+    scrollbar-width: none;
+  }
+  .qb-mobile-summary::-webkit-scrollbar { display: none; }
+
+  .qb-mobile-stat {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.5rem 0.75rem;
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    min-width: fit-content;
+  }
+
+  .qb-mobile-stat-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    text-transform: uppercase;
+  }
+
+  .qb-mobile-stat-value {
+    font-size: 0.95rem;
+    font-weight: 800;
+    color: var(--text);
+  }
+
+  /* ── Bill list header ── */
+  .qb-bill-list-header {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding: 0.65rem;
+  }
+
+  .qb-list-header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .qb-history-btn {
+    font-size: 0.72rem;
+    padding: 0.3rem 0.6rem;
+  }
+
+  /* ── Bill rows: compact mobile layout ── */
+  .qb-single-bill-row {
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    padding: 0.6rem 0.75rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .qb-bill-badge-group {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+
+  .qb-bill-item-name {
+    flex: 1 1 100%;
+    font-size: 0.85rem;
+  }
+
+  .qb-bill-item-qty {
+    min-width: 25px;
+    font-size: 0.8rem;
+  }
+
+  .qb-bill-item-price {
+    min-width: 50px;
+    font-size: 0.8rem;
+  }
+
+  .qb-bill-item-total {
+    font-size: 0.85rem;
+    min-width: 60px;
+  }
+
+  .qb-bill-time-text {
+    display: none;
+  }
+
+  .qb-bill-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* ── Selection bar ── */
+  .qb-selection-bar {
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.5rem;
+  }
+
+  .qb-selection-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .qb-selection-right {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  /* ── Empty state ── */
+  .qb-empty-bills {
+    padding: 2rem 1rem;
+  }
+
+  .qb-empty-bills svg {
+    width: 32px;
+    height: 32px;
+  }
+}
+
+/* ── Small mobile ─────────────────────────────────────────── */
+@media (max-width: 480px) {
+  .qb-inline-fields {
+    gap: 0.4rem;
+  }
+
+  .qb-inline-input {
+    padding: 0.5rem 0.65rem;
+    font-size: 0.85rem;
+  }
+
+  .qb-stat-card {
+    padding: 0.5rem;
+  }
+
+  .qb-stat-value {
+    font-size: 0.9rem;
+  }
+
+  .qb-stat-label {
+    font-size: 0.6rem;
+  }
+
+  .qb-bill-badge {
+    font-size: 0.72rem;
+    padding: 0.1rem 0.4rem;
+  }
+
+  .qb-bill-item-total {
+    font-size: 0.82rem;
+  }
 }

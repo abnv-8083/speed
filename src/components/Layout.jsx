@@ -150,6 +150,14 @@ function LayoutInner() {
         </nav>
       </aside>
 
+      {/* ── Mobile backdrop ── */}
+      {mobileOpen && (
+        <div
+          className="mobile-sidebar-backdrop"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* ── Main ── */}
       <div className={`main-content ${isCollapsed ? 'sidebar-collapsed' : ''}`}>
 
@@ -160,7 +168,6 @@ function LayoutInner() {
             <button
               className="btn-icon mobile-toggle"
               onClick={() => setMobileOpen(!mobileOpen)}
-              style={{ display: 'none' }}
             >
               <Menu size={20} />
             </button>
