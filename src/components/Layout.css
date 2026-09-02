@@ -112,6 +112,7 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  min-width: 0;
 }
 
 .header-title {
@@ -196,19 +197,22 @@
 }
 
 @media (max-width: 768px) {
+  /* ── Sidebar: fully hidden off-screen on mobile ── */
   .layout-sidebar {
     transform: translateX(-100%);
     width: 260px !important;
+    min-width: 260px !important;
     transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    pointer-events: none;
   }
   .layout-sidebar.collapsed {
     width: 260px !important;
+    min-width: 260px !important;
   }
-  
   .layout-sidebar.mobile-open {
     transform: translateX(0);
+    pointer-events: auto;
   }
-  
   .layout-sidebar.mobile-open ~ .mobile-sidebar-backdrop {
     display: block;
     position: fixed;
@@ -216,50 +220,89 @@
     background: rgba(0,0,0,0.5);
     z-index: 99;
   }
-  
+
+  /* ── Main: no left margin on mobile ── */
   .main-content {
     margin-left: 0 !important;
   }
-  
+
+  /* ── Show mobile toggle, hide desktop-only elements ── */
   .mobile-toggle {
     display: flex !important;
   }
   .hidden-mobile {
     display: none !important;
   }
-  
+
+  /* ── Header: two-row layout on mobile ── */
   .layout-header {
-    padding: 0 1rem;
-    height: 60px;
-  }
-  .layout-header--with-subnav {
-    flex-wrap: wrap;
+    padding: 0 0.75rem;
     height: auto;
-    min-height: 60px;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0;
   }
+
+  .header-left {
+    flex: 1 1 100%;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0;
+    padding-right: 180px;
+    min-width: 0;
+  }
+
+  .header-title {
+    font-size: 1rem;
+    flex: 1;
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Subnav tabs: second row, full width */
   .header-subnav {
     margin-left: 0;
     padding-left: 0;
     border-left: none;
-    padding: 0 1rem 0.5rem 1rem;
+    padding: 0 0 0.65rem 0;
     overflow-x: auto;
     width: 100%;
+    gap: 0.3rem;
+    -webkit-overflow-scrolling: touch;
   }
-  .header-title {
-    font-size: 1rem;
+
+  .header-tab {
+    font-size: 0.78rem;
+    padding: 0.35rem 0.7rem;
+    flex-shrink: 0;
   }
+
+  /* Right: compact actions row */
   .header-right {
-    gap: 0.4rem;
+    position: absolute;
+    top: 0;
+    right: 0.75rem;
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    height: 44px;
+    z-index: 91;
   }
+
   .user-profile {
     display: none;
   }
+
   .layout-main {
-    padding: 1rem;
+    padding: 0.75rem;
   }
+
   .notif-panel {
-    width: calc(100vw - 2rem);
-    right: -2rem;
+    width: calc(100vw - 1.5rem);
+    right: -0.5rem;
   }
 }
 
