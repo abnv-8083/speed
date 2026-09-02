@@ -270,6 +270,7 @@ const SalesReport = () => {
         profit:       invProfit,
         margin:       invRevenue > 0 ? (invProfit / invRevenue) * 100 : 0,
         itemCount:    inv.invoice_items?.length || 0,
+        products:     (inv.invoice_items || []).map(i => i.product_name).filter(Boolean).join(', '),
       });
     });
 
@@ -369,10 +370,11 @@ const SalesReport = () => {
   // ── CSV export ────────────────────────────────────────────────
   const exportCSV = () => {
     let csv = 'data:text/csv;charset=utf-8,';
-    csv += 'Type,Date,Reference,Customer,Payment Method,Discount,Amount\n';
+    csv += 'Type,Date,Products,Customer,Payment Method,Discount,Amount\n';
     salesData.forEach(inv => {
       const pm = inv.payment_method || 'Cash';
-      csv += `Revenue,${new Date(inv.created_at).toLocaleDateString()},INV-${String(inv.id).slice(-6)},${inv.customer_name || 'Walk-in'},${pm},${inv.discount || 0},${inv.total_amount}\n`;
+      const productNames = (inv.invoice_items || []).map(i => i.product_name).filter(Boolean).join(' + ') || '—';
+      csv += `Revenue,${new Date(inv.created_at).toLocaleDateString()},"${productNames}",${inv.customer_name || 'Walk-in'},${pm},${inv.discount || 0},${inv.total_amount}\n`;
     });
     expenses.forEach(e => {
       csv += `Expense,${e.expense_date},EXP,${e.title} (${e.category}),—,—,${e.amount}\n`;
@@ -413,9 +415,10 @@ const SalesReport = () => {
       const isCashBank = pm === 'CASH - BANK';
       const badgeBg = isUpi ? '#ede9fe' : isUpiBank ? '#e0e7ff' : isCashBank ? '#d1fae5' : '#dcfce7';
       const badgeColor = isUpi ? '#7c3aed' : isUpiBank ? '#6366f1' : isCashBank ? '#059669' : '#15803d';
+      const productNames = (inv.invoice_items || []).map(i => i.product_name).filter(Boolean).join(', ') || '—';
       return `<tr style="${i % 2 === 0 ? '' : 'background:#f8fafc'};page-break-inside:avoid">
         <td style="padding:4px 8px;font-size:10px;color:#64748b;white-space:nowrap">${new Date(inv.created_at).toLocaleDateString()}</td>
-        <td style="padding:4px 8px;font-size:10px;font-family:monospace;color:#6366f1">INV-${String(inv.id).slice(-6).padStart(6,'0')}</td>
+        <td style="padding:4px 8px;font-size:10px;color:#1e293b">${productNames}</td>
         <td style="padding:4px 8px;font-size:10px">${inv.customer_name || 'Walk-in'}</td>
         <td style="padding:4px 8px;text-align:center;font-size:9px"><span style="background:${badgeBg};color:${badgeColor};font-weight:700;padding:1px 5px;border-radius:3px">${inv.payment_method || 'Cash'}</span></td>
         <td style="padding:4px 8px;text-align:right;font-size:10px;color:#f87171">${inv.discount > 0 ? `-₹${Number(inv.discount).toFixed(2)}` : '—'}</td>
@@ -510,7 +513,7 @@ const SalesReport = () => {
           <table class="pdf-tbl" style="border-radius:6px;overflow:hidden">
             <thead><tr style="background:#f1f5f9">
               <th style="${thStyle}">Date</th>
-              <th style="${thStyle}">Invoice</th>
+              <th style="${thStyle}">Product</th>
               <th style="${thStyle}">Customer</th>
               <th style="${thStyle};text-align:center">Method</th>
               <th style="${thStyle};text-align:right">Discount</th>
@@ -1136,7 +1139,7 @@ const SalesReport = () => {
                     <thead>
                       <tr>
                         <th>Date</th>
-                        <th>Invoice</th>
+                        <th>Product</th>
                         <th>Customer</th>
                         <th style={{ textAlign: 'center' }}>Method</th>
                         {filteredSalesData.some(inv => (inv.payment_method || '') === 'UPI - Bank' || (inv.payment_method || '') === 'Cash - Bank') && (
@@ -1170,7 +1173,7 @@ const SalesReport = () => {
                             return (
                               <tr key={inv.id} className={idx % 2 === 0 ? 'row-even' : 'row-odd'}>
                                 <td>{new Date(inv.created_at).toLocaleDateString()}</td>
-                                <td className="inv-id-cell">INV-{String(inv.id).slice(-6).padStart(6,'0')}</td>
+                                <td style={{ fontSize: '0.82rem', color: 'var(--text)' }}>{(inv.invoice_items || []).map(i => i.product_name).filter(Boolean).join(', ') || '—'}</td>
                                 <td>{inv.customer_name || 'Walk-in'}</td>
                                 <td style={{ textAlign: 'center' }}>
                                   <span className={`sr-pay-badge ${payM === 'UPI' ? 'sr-pay-badge--upi' : payM === 'UPI - Bank' ? 'sr-pay-badge--upi-bank' : payM === 'Cash - Bank' ? 'sr-pay-badge--cash-bank' : 'sr-pay-badge--cash'}`}>
@@ -1245,8 +1248,8 @@ const SalesReport = () => {
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.82rem' }}>
               <thead>
                 <tr style={{ background: 'var(--background)', position: 'sticky', top: 0 }}>
-                  {['Date', 'Invoice', 'Customer', 'Method', 'Revenue', 'COGS', 'Profit', 'Margin'].map(h => (
-                    <th key={h} style={{ padding: '0.55rem 0.85rem', textAlign: h === 'Date' || h === 'Invoice' || h === 'Customer' ? 'left' : h === 'Method' ? 'center' : 'right', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
+                  {['Date', 'Product', 'Customer', 'Method', 'Revenue', 'COGS', 'Profit', 'Margin'].map(h => (
+                    <th key={h} style={{ padding: '0.55rem 0.85rem', textAlign: h === 'Date' || h === 'Product' || h === 'Customer' ? 'left' : h === 'Method' ? 'center' : 'right', fontWeight: 700, fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', borderBottom: '1px solid var(--border)' }}>{h}</th>
                   ))}
                 </tr>
               </thead>
@@ -1257,7 +1260,7 @@ const SalesReport = () => {
                   return (
                     <tr key={b.id} style={{ background: i % 2 === 0 ? 'transparent' : 'rgba(255,255,255,0.02)' }}>
                       <td style={{ padding: '0.6rem 0.85rem', color: 'var(--text-muted)' }}>{format(new Date(b.date), 'dd MMM yy')}</td>
-                      <td style={{ padding: '0.6rem 0.85rem', fontFamily: 'monospace', color: 'var(--primary)', fontWeight: 700 }}>INV-{String(b.id).slice(-6).padStart(6,'0')}</td>
+                      <td style={{ padding: '0.6rem 0.85rem', fontSize: '0.82rem', color: 'var(--text)' }}>{b.products || '—'}</td>
                       <td style={{ padding: '0.6rem 0.85rem', color: 'var(--text)' }}>{b.customer}</td>
                       <td style={{ padding: '0.6rem 0.85rem', textAlign: 'center' }}>
                         <span className={`sr-pay-badge ${payCls}`}>
