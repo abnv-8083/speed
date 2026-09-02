@@ -923,7 +923,15 @@
 /* ── Shared table styles (re-used from old CSS) ───────────────── */
 .table-responsive { overflow-x: auto; }
 
-.report-table { width: 100%; border-collapse: collapse; }
+.report-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+
+/* Column widths for the 6-column transaction table (Date, Product, Customer, Method, Discount, Amount) */
+.report-table colgroup .col-date   { width: 12%; }
+.report-table colgroup .col-product { width: 28%; }
+.report-table colgroup .col-customer { width: 18%; }
+.report-table colgroup .col-method  { width: 14%; }
+.report-table colgroup .col-discount { width: 13%; }
+.report-table colgroup .col-amount   { width: 15%; }
 
 .report-table th {
   text-align: left;
@@ -945,8 +953,19 @@
   color: var(--text);
 }
 
+/* Right-align numeric columns */
+.report-table .col-num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .report-table tr:last-child td { border-bottom: none; }
 .report-table tr:hover td { background: rgba(139,92,246,0.03); }
+
+.text-right { text-align: right; }
+.text-error { color: var(--error); }
+.text-success { color: var(--success); }
+.font-bold { font-weight: 700; }
 
 .row-even { background: transparent; }
 .row-odd  { background: rgba(255,255,255,0.02); }
