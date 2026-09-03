@@ -58,6 +58,7 @@ const WorkDetail = () => {
   const [customerDocs, setCustomerDocs] = useState([]);
   const [loadingCustomerDocs, setLoadingCustomerDocs] = useState(false);
   const [attachingDoc, setAttachingDoc] = useState(null);
+  const [deletingDocId, setDeletingDocId] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
 
   const fetchWork = useCallback(async ({ silent = false } = {}) => {
@@ -253,11 +254,13 @@ const WorkDetail = () => {
   const deleteDocument = async (docId) => {
     const confirmed = await modal.confirm('Delete Document', 'Remove this document?');
     if (!confirmed) return;
+    setDeletingDocId(docId);
     try {
       await api.deleteWorkDocument(id, docId);
-      fetchWork({ silent: true });
       toast.success('Document deleted');
+      await fetchWork({ silent: true });
     } catch (err) { toast.error('Failed: ' + err.message); }
+    setDeletingDocId(null);
   };
 
   // ── Helpers ───────────────────────────────────────────────────
@@ -515,9 +518,10 @@ const WorkDetail = () => {
                 {work.documents.map((doc) => {
                   const isImage = doc.file_type?.startsWith('image/');
                   const isPdf = doc.file_type?.includes('pdf');
+                  const isDeleting = deletingDocId === doc._id;
                   return (
-                    <div key={doc._id} className="wd-doc-card">
-                      <div className="wd-doc-thumb" onClick={() => setPreviewDoc(doc)}>
+                    <div key={doc._id} className={`wd-doc-card ${isDeleting ? 'wd-doc-deleting' : ''}`}>
+                      <div className="wd-doc-thumb" onClick={() => !isDeleting && setPreviewDoc(doc)}>
                         {isImage && doc.data ? <img src={doc.data} alt={doc.name} /> :
                          isPdf ? <div className="wd-doc-icon"><FileText size={24} /> PDF</div> :
                          <div className="wd-doc-icon"><FileText size={24} /></div>}

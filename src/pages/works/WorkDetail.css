@@ -609,6 +609,14 @@
 
 .wd-doc-skeleton { pointer-events: none; }
 
+.wd-doc-deleting {
+  pointer-events: none;
+  opacity: 0.35;
+  transform: scale(0.96);
+  filter: grayscale(0.6);
+  transition: all 0.3s ease;
+}
+
 .wd-doc-skeleton .wd-doc-thumb { position: relative; }
 
 .wd-skeleton-shimmer {
