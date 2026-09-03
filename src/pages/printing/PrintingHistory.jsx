@@ -84,57 +84,6 @@ export default function PrintingHistory() {
   // Agent connection status
   const [agentStatus, setAgentStatus]   = useState(null); // null = loading, { connected, last_seen }
 
-  const fetchAll = useCallback(async () => {
-    setLoading(true);
-    await Promise.all([fetchStocks(), fetchLogs(), fetchPrinterConfigs()]);
-    setLoading(false);
-  }, []);
-
-  // Real-time updates via WebSocket
-  const { on } = useWs();
-  useEffect(() => {
-    const unsubProduct = on('products', (event) => {
-      if (['created', 'updated', 'deleted'].includes(event)) fetchStocks();
-    });
-    const unsubPrintLog = on('print-logs', (event, data) => {
-      switch (event) {
-        case 'created':
-          setLogs(prev => {
-            if (prev.some(l => l.id === data.id)) return prev;
-            return [data, ...prev];
-          });
-          break;
-        case 'updated':
-          setLogs(prev => prev.map(l => l.id === data.id ? data : l));
-          break;
-        default:
-          fetchLogs();
-      }
-    });
-    const unsubPrinter = on('printer-configs', () => fetchPrinterConfigs());
-    const unsubAgent = on('agent', (event, data) => {
-      setAgentStatus(data);
-    });
-    return () => { unsubProduct(); unsubPrintLog(); unsubPrinter(); unsubAgent(); };
-  }, [on, fetchStocks]);
-
-  useEffect(() => { fetchAll(); }, [fetchAll]);
-
-  // Poll agent status every 10 s (fallback if WS not connected)
-  useEffect(() => {
-    const checkStatus = async () => {
-      try {
-        const s = await api.getAgentStatus();
-        setAgentStatus(s);
-      } catch {
-        setAgentStatus({ connected: false, last_seen: null });
-      }
-    };
-    checkStatus();
-    const iv = setInterval(checkStatus, 10000);
-    return () => clearInterval(iv);
-  }, []);
-
   const fetchStocks = async () => {
     try {
       const data = await api.getProducts({ is_print: 'true' });
@@ -165,6 +114,58 @@ export default function PrintingHistory() {
       setPrinterConfigs(data || []);
     } catch { setPrinterConfigs([]); }
   };
+
+  // Real-time updates via WebSocket
+  const { on } = useWs();
+
+  const fetchAll = useCallback(async () => {
+    setLoading(true);
+    await Promise.all([fetchStocks(), fetchLogs(), fetchPrinterConfigs()]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => { fetchAll(); }, [fetchAll]);
+
+  useEffect(() => {
+    const unsubProduct = on('products', (event) => {
+      if (['created', 'updated', 'deleted'].includes(event)) fetchStocks();
+    });
+    const unsubPrintLog = on('print-logs', (event, data) => {
+      switch (event) {
+        case 'created':
+          setLogs(prev => {
+            if (prev.some(l => l.id === data.id)) return prev;
+            return [data, ...prev];
+          });
+          break;
+        case 'updated':
+          setLogs(prev => prev.map(l => l.id === data.id ? data : l));
+          break;
+        default:
+          fetchLogs();
+      }
+    });
+    const unsubPrinter = on('printer-configs', () => fetchPrinterConfigs());
+    const unsubAgent = on('agent', (event, data) => {
+      setAgentStatus(data);
+    });
+    return () => { unsubProduct(); unsubPrintLog(); unsubPrinter(); unsubAgent(); };
+  }, [on, fetchStocks]);
+
+  // Poll agent status every 10 s (fallback if WS not connected)
+  useEffect(() => {
+    const checkStatus = async () => {
+      try {
+        const s = await api.getAgentStatus();
+        setAgentStatus(s);
+      } catch {
+        setAgentStatus({ connected: false, last_seen: null });
+      }
+    };
+    checkStatus();
+    const iv = setInterval(checkStatus, 10000);
+    return () => clearInterval(iv);
+  }, []);
 
   const getStock = (size, mode) => {
     const found = stocks.find(s => s.size === size && s.mode === mode);
