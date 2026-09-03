@@ -10,7 +10,8 @@ import {
   MessageSquare, Clock, CheckCircle, XCircle,
   Briefcase, Calendar, Users, Mic, MicOff,
   Download, Eye, Upload, Link as LinkIcon, Loader2, Send,
-  Edit2, Check, Volume2, AlertOctagon, Phone, Mail
+  Edit2, Check, Volume2, AlertOctagon, Phone, Mail,
+  ZoomIn, ZoomOut, RotateCw, Maximize2
 } from 'lucide-react';
 import './WorkDetail.css';
 
@@ -60,6 +61,10 @@ const WorkDetail = () => {
   const [attachingDoc, setAttachingDoc] = useState(null);
   const [deletingDocId, setDeletingDocId] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
+  const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isPanning, setIsPanning] = useState(false);
+  const panStartRef = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
 
   const fetchWork = useCallback(async ({ silent = false } = {}) => {
     try {
@@ -269,6 +274,34 @@ const WorkDetail = () => {
 
   const isOverdue = work && work.end_date && !['completed', 'closed'].includes(work.status) && new Date(work.end_date) < new Date();
   const openIssues = (work?.issues || []).filter(i => i.status !== 'resolved').length;
+
+  // ── Image Zoom helpers ────────────────────────────────────
+  const zoomIn = () => setZoom(z => Math.min(z + 0.25, 5));
+  const zoomOut = () => setZoom(z => Math.max(z - 0.25, 0.25));
+  const zoomReset = () => { setZoom(1); setPan({ x: 0, y: 0 }); };
+
+  const handlePreviewWheel = (e) => {
+    if (!previewDoc?.file_type?.startsWith('image/')) return;
+    e.preventDefault();
+    const delta = e.deltaY > 0 ? -0.15 : 0.15;
+    setZoom(z => Math.min(Math.max(z + delta, 0.25), 5));
+  };
+
+  const handlePanStart = (e) => {
+    if (zoom <= 1) return;
+    e.preventDefault();
+    setIsPanning(true);
+    panStartRef.current = { x: e.clientX, y: e.clientY, panX: pan.x, panY: pan.y };
+  };
+
+  const handlePanMove = (e) => {
+    if (!isPanning) return;
+    const dx = e.clientX - panStartRef.current.x;
+    const dy = e.clientY - panStartRef.current.y;
+    setPan({ x: panStartRef.current.panX + dx, y: panStartRef.current.panY + dy });
+  };
+
+  const handlePanEnd = () => setIsPanning(false);
 
   if (loading) return (
     <div className="wd-root">
@@ -659,18 +692,49 @@ const WorkDetail = () => {
       {/* Document Preview */}
       {previewDoc && (
         <Portal>
-          <div className="wd-preview-overlay" onClick={() => setPreviewDoc(null)}>
+          <div
+            className="wd-preview-overlay"
+            onClick={() => { setPreviewDoc(null); zoomReset(); }}
+            onMouseMove={handlePanMove}
+            onMouseUp={handlePanEnd}
+            onMouseLeave={handlePanEnd}
+          >
             <div className="wd-preview-modal" onClick={e => e.stopPropagation()}>
               <div className="wd-preview-header">
                 <span>{previewDoc.name}</span>
                 <div className="wd-preview-actions">
+                  {/* Zoom controls (images only) */}
+                  {previewDoc.file_type?.startsWith('image/') && (
+                    <>
+                      <button onClick={zoomOut} title="Zoom out"><ZoomOut size={16} /></button>
+                      <span className="wd-preview-zoom-label" title="Click to reset">{Math.round(zoom * 100)}%</span>
+                      <button onClick={zoomIn} title="Zoom in"><ZoomIn size={16} /></button>
+                      <button onClick={zoomReset} title="Reset zoom"><Maximize2 size={16} /></button>
+                      <span style={{ width: 1, height: 16, background: 'var(--border)', margin: '0 2px' }} />
+                    </>
+                  )}
                   <a href={previewDoc.data || previewDoc.file_url} download={previewDoc.name}><Download size={16} /></a>
-                  <button onClick={() => setPreviewDoc(null)}><X size={18} /></button>
+                  <button onClick={() => { setPreviewDoc(null); zoomReset(); }}><X size={18} /></button>
                 </div>
               </div>
-              <div className="wd-preview-body">
+              <div
+                className="wd-preview-body"
+                onWheel={handlePreviewWheel}
+              >
                 {previewDoc.file_type?.startsWith('image/') ? (
-                  <img src={previewDoc.data || previewDoc.file_url} alt={previewDoc.name} />
+                  <img
+                    src={previewDoc.data || previewDoc.file_url}
+                    alt={previewDoc.name}
+                    className="wd-preview-image"
+                    style={{
+                      transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+                      cursor: zoom > 1 ? (isPanning ? 'grabbing' : 'grab') : 'zoom-in',
+                      transition: isPanning ? 'none' : 'transform 0.2s ease',
+                    }}
+                    onMouseDown={handlePanStart}
+                    onClick={() => { if (zoom <= 1) zoomIn(); }}
+                    draggable={false}
+                  />
                 ) : previewDoc.file_type?.includes('pdf') ? (
                   <iframe src={previewDoc.data || previewDoc.file_url} title={previewDoc.name} />
                 ) : (
