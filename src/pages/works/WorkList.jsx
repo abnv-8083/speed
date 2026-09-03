@@ -64,9 +64,9 @@ const WorkList = () => {
     }
   }, [searchTerm, filterStatus]);
 
-  const fetchStats = async () => {
+  const fetchStats = useCallback(async () => {
     try { const data = await api.getWorkStats(); setStats(data); } catch {}
-  };
+  }, []);
 
   const fetchCustomers = async () => {
     try { const data = await api.getCustomers(); setCustomers(data || []); } catch {}

@@ -69,7 +69,7 @@ const WorkDetail = () => {
     } finally {
       setLoading(false);
     }
-  }, [id]);
+  }, [id, navigate, toast]);
 
   useEffect(() => { fetchWork(); }, [fetchWork]);
 
