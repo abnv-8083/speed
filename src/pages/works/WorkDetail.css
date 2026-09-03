@@ -605,6 +605,49 @@
 
 .wd-cust-doc-attach:hover { background: var(--primary); color: white; }
 
+/* ── Skeleton Upload Card ──────────────────────────────────────── */
+
+.wd-doc-skeleton { pointer-events: none; }
+
+.wd-doc-skeleton .wd-doc-thumb { position: relative; }
+
+.wd-skeleton-shimmer {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    110deg,
+    var(--surface) 30%,
+    rgba(139, 92, 246, 0.08) 50%,
+    var(--surface) 70%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-shimmer 1.5s ease-in-out infinite;
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.wd-skeleton-uploading {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  color: var(--primary);
+  font-size: 0.7rem;
+  font-weight: 600;
+  z-index: 1;
+}
+
+.wd-skeleton-uploading .spin {
+  width: 18px;
+  height: 18px;
+}
+
 /* ── Document Preview ────────────────────────────────────────── */
 
 .wd-preview-overlay {

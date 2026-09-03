@@ -53,6 +53,7 @@ const WorkDetail = () => {
 
   // Document state
   const [uploading, setUploading] = useState(false);
+  const [uploadingFile, setUploadingFile] = useState(null); // { name, type, size }
   const [showCustomerDocs, setShowCustomerDocs] = useState(false);
   const [customerDocs, setCustomerDocs] = useState([]);
   const [loadingCustomerDocs, setLoadingCustomerDocs] = useState(false);
@@ -211,6 +212,7 @@ const WorkDetail = () => {
     const file = e.target.files?.[0];
     if (!file) return;
     setUploading(true);
+    setUploadingFile({ name: file.name, type: file.type, size: file.size });
     const reader = new FileReader();
     reader.onload = async () => {
       try {
@@ -219,6 +221,7 @@ const WorkDetail = () => {
         toast.success('Document uploaded');
       } catch (err) { toast.error('Upload failed: ' + err.message); }
       setUploading(false);
+      setUploadingFile(null);
     };
     reader.readAsDataURL(file);
   };
@@ -486,10 +489,29 @@ const WorkDetail = () => {
               </div>
             </div>
 
-            {(work.documents || []).length === 0 ? (
+            {(work.documents || []).length === 0 && !uploading ? (
               <div className="wd-empty-inline"><FileText size={28} /><p>No documents yet.</p></div>
             ) : (
               <div className="wd-docs-grid">
+                {/* Skeleton upload card */}
+                {uploading && uploadingFile && (
+                  <div className="wd-doc-card wd-doc-skeleton">
+                    <div className="wd-doc-thumb">
+                      <div className="wd-skeleton-shimmer wd-skeleton-thumb" />
+                      <div className="wd-skeleton-uploading">
+                        <Spinner size={16} />
+                        <span>Uploading…</span>
+                      </div>
+                    </div>
+                    <div className="wd-doc-info">
+                      <span className="wd-doc-name" title={uploadingFile.name}>{uploadingFile.name}</span>
+                      <span className="wd-doc-meta">{uploadingFile.size ? `${(uploadingFile.size / 1024).toFixed(1)} KB` : ''}</span>
+                    </div>
+                    <div className="wd-doc-actions" style={{ opacity: 0.4 }}>
+                      <span style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '0.35rem', color: 'var(--text-muted)', fontSize: '0.7rem' }}><Spinner size={11} /> Saving…</span>
+                    </div>
+                  </div>
+                )}
                 {work.documents.map((doc) => {
                   const isImage = doc.file_type?.startsWith('image/');
                   const isPdf = doc.file_type?.includes('pdf');
