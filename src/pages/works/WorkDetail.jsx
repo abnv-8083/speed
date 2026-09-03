@@ -60,7 +60,7 @@ const WorkDetail = () => {
   const [attachingDoc, setAttachingDoc] = useState(null);
   const [previewDoc, setPreviewDoc] = useState(null);
 
-  const fetchWork = useCallback(async () => {
+  const fetchWork = useCallback(async ({ silent = false } = {}) => {
     try {
       const data = await api.getWork(id);
       setWork(data);
@@ -68,7 +68,7 @@ const WorkDetail = () => {
       toast.error('Failed to load work');
       navigate('/admin/billing/works');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [id, navigate, toast]);
 
@@ -109,7 +109,7 @@ const WorkDetail = () => {
         contact_email: editForm.contact_email, end_date: endDateTime,
       });
       setShowEditModal(false);
-      fetchWork();
+      fetchWork({ silent: true });
       toast.success('Work updated');
     } catch (err) { toast.error('Failed: ' + err.message); }
     setSaving(false);
@@ -140,7 +140,7 @@ const WorkDetail = () => {
           setIssueForm({ title: '', description: '', note_type: 'text' });
           setAudioBlob(null);
           setShowAddIssue(false);
-          fetchWork();
+          fetchWork({ silent: true });
           toast.success('Issue added');
         };
         reader.readAsDataURL(audioBlob);
@@ -148,7 +148,7 @@ const WorkDetail = () => {
         await api.addWorkIssue(id, body);
         setIssueForm({ title: '', description: '', note_type: 'text' });
         setShowAddIssue(false);
-        fetchWork();
+        fetchWork({ silent: true });
         toast.success('Issue added');
       }
     } catch (err) { toast.error('Failed: ' + err.message); }
@@ -158,7 +158,7 @@ const WorkDetail = () => {
   const updateIssueStatus = async (issueId, newStatus) => {
     try {
       await api.updateWorkIssue(id, issueId, { status: newStatus });
-      fetchWork();
+      fetchWork({ silent: true });
     } catch (err) { toast.error('Failed: ' + err.message); }
   };
 
@@ -167,7 +167,7 @@ const WorkDetail = () => {
     if (!confirmed) return;
     try {
       await api.deleteWorkIssue(id, issueId);
-      fetchWork();
+      fetchWork({ silent: true });
       toast.success('Issue deleted');
     } catch (err) { toast.error('Failed: ' + err.message); }
   };
@@ -217,8 +217,8 @@ const WorkDetail = () => {
     reader.onload = async () => {
       try {
         await api.addWorkDocument(id, { name: file.name, file_type: file.type, file_size: file.size, data: reader.result });
-        fetchWork();
         toast.success('Document uploaded');
+        await fetchWork({ silent: true });
       } catch (err) { toast.error('Upload failed: ' + err.message); }
       setUploading(false);
       setUploadingFile(null);
@@ -244,7 +244,7 @@ const WorkDetail = () => {
       const custId = work.customer_id._id || work.customer_id.id || work.customer_id;
       await api.addWorkDocumentFromCustomer(id, { customer_id: custId, document_id: docId });
       setShowCustomerDocs(false);
-      fetchWork();
+      fetchWork({ silent: true });
       toast.success('Document attached');
     } catch (err) { toast.error('Failed: ' + err.message); }
     setAttachingDoc(null);
@@ -255,7 +255,7 @@ const WorkDetail = () => {
     if (!confirmed) return;
     try {
       await api.deleteWorkDocument(id, docId);
-      fetchWork();
+      fetchWork({ silent: true });
       toast.success('Document deleted');
     } catch (err) { toast.error('Failed: ' + err.message); }
   };
