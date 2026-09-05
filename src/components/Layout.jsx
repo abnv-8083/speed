@@ -180,6 +180,7 @@ function LayoutInner() {
                   <NavLink
                     key={tab.to}
                     to={tab.to}
+                    end={!!tab.end}
                     className={({ isActive }) => `header-tab ${isActive ? 'header-tab--active' : ''}`}
                   >
                     {tab.icon && <tab.icon size={15} />}

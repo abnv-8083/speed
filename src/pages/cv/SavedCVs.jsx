@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   FileText, Download, Trash2, Edit3,
-  Clock, Search, X, AlertTriangle, FolderOpen, Loader, RefreshCw, Plus,
+  Clock, Search, X, AlertTriangle, Loader, RefreshCw, Plus,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CVPreview from './CVPreview';
@@ -67,7 +67,7 @@ export default function SavedCVs() {
   // ── Open in editor via sessionStorage ─────────────────────
   const handleEdit = (sv) => {
     sessionStorage.setItem('cv_load_id', sv.id);
-    navigate('/cv');
+    navigate('/admin/cv');
   };
 
   // ── Download PDF from hidden preview ──────────────────────
@@ -92,22 +92,28 @@ export default function SavedCVs() {
   };
 
   return (
-    <div className="saved-cvs-layout">
+    <div className="saved-cvs-layout animate-fade-in">
 
-      {/* ── Toolbar (no back button — uses global header) ── */}
-      <div className="saved-cvs-toolbar glass-panel">
-        <div className="saved-cvs-search">
-          <Search size={15} />
-          <input placeholder="Search by name or template…" value={search} onChange={e => setSearch(e.target.value)} />
-          {search && <button onClick={() => setSearch('')}><X size={13}/></button>}
+      {/* ── Module header (billing-style: title + search/actions) ── */}
+      <header className="saved-cvs-headbar glass-panel">
+        <div className="saved-cvs-headbar-text">
+          <h2 className="saved-cvs-headbar-title">Saved CVs</h2>
+          <p className="saved-cvs-headbar-sub">Preview, download, or reopen any draft you&apos;ve saved to the cloud.</p>
         </div>
-        <button className="btn-icon" onClick={loadSaves} title="Refresh" disabled={loading}>
-          <RefreshCw size={16} className={loading ? 'spin' : ''} />
-        </button>
-        <button className="btn btn-primary" onClick={() => navigate('/cv')}>
-          <Plus size={16} /> New CV
-        </button>
-      </div>
+        <div className="saved-cvs-toolbar">
+          <div className="saved-cvs-search">
+            <Search size={15} />
+            <input placeholder="Search by name or template…" value={search} onChange={e => setSearch(e.target.value)} />
+            {search && <button onClick={() => setSearch('')}><X size={13}/></button>}
+          </div>
+          <button className="btn-icon" onClick={loadSaves} title="Refresh" disabled={loading}>
+            <RefreshCw size={16} className={loading ? 'spin' : ''} />
+          </button>
+          <button className="btn btn-primary" onClick={() => navigate('/admin/cv')}>
+            <Plus size={16} /> New CV
+          </button>
+        </div>
+      </header>
 
       <main className="saved-cvs-main">
         {/* Loading state */}
@@ -121,7 +127,7 @@ export default function SavedCVs() {
             <FileText size={56} strokeWidth={1} />
             <h3>No saved CVs yet</h3>
             <p>Save a CV draft from the editor and it will appear here.</p>
-            <button className="btn btn-primary" onClick={() => navigate('/cv')}>Create your first CV</button>
+            <button className="btn btn-primary" onClick={() => navigate('/admin/cv')}>Create your first CV</button>
           </div>
         ) : filtered.length === 0 ? (
           <div className="saved-cvs-empty">

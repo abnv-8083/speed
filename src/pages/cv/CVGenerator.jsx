@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Download, Eye, ChevronRight, ChevronDown, Check,
+  Download, Eye, ChevronDown, Check,
   Save, FolderOpen, Trash2, X, Clock, FileText, Loader,
   PanelRight, Minimize2, Maximize2, Paintbrush,
 } from 'lucide-react';
@@ -259,75 +259,124 @@ export default function CVGenerator() {
   return (
     <div className="cvgen-layout">
 
-      {/* ── Slim action bar (no back button — uses global header) ── */}
-      <div className="cvgen-action-bar glass-panel">
-        <div className="cvgen-breadcrumb">
-          <button
-            className={`cvgen-crumb ${step === 'template' ? 'active' : step !== 'template' ? 'done' : ''}`}
-            onClick={() => setStep('template')}
-          >
-            {step !== 'template' ? <Check size={12} /> : null} Template
-          </button>
-          <ChevronRight size={13} />
-          <button
-            className={`cvgen-crumb ${step === 'edit' ? 'active' : step === 'preview' ? 'done' : ''}`}
-            disabled={step === 'template'}
-            onClick={() => setStep('edit')}
-          >
-            {step === 'preview' ? <Check size={12} /> : null} Edit
-          </button>
-          <ChevronRight size={13} />
-          <button
-            className={`cvgen-crumb ${step === 'preview' ? 'active' : ''}`}
-            disabled={step !== 'edit' && step !== 'preview'}
-            onClick={() => setStep('preview')}
-          >
-            Preview
-          </button>
-        </div>
-
-        <div className="cvgen-action-bar-right">
-          {step !== 'template' && (
+      {/* ── Module header (billing-style: title + actions) ── */}
+      <header className="cvgen-headbar glass-panel">
+        <div className="cvgen-headbar-text">
+          {step === 'template' && (
             <>
-              <button className="btn-save-draft" onClick={() => setShowSaveModal(true)}>
-                <Save size={15} /> {currentSaveId ? 'Update' : 'Save Draft'}
-              </button>
-              {step === 'edit' && (
-                <>
-                  <button
-                    className={`cvgen-step-btn ${showLivePreview ? 'cvgen-step-btn--on' : ''}`}
-                    onClick={() => setShowLivePreview(v => !v)}
-                    title={showLivePreview ? 'Hide live preview' : 'Show live preview'}
-                  >
-                    <PanelRight size={15} /> {showLivePreview ? 'Hide Preview' : 'Live Preview'}
-                  </button>
-                  <button className="btn btn-primary" onClick={() => setStep('preview')}>
-                    <Eye size={15} /> Preview
-                  </button>
-                </>
-              )}
-              {step === 'preview' && (
-                <button className="btn btn-accent" onClick={handleDownloadPDF}>
-                  <Download size={15} /> Download PDF
-                </button>
-              )}
+              <h2 className="cvgen-headbar-title">Choose a Template</h2>
+              <p className="cvgen-headbar-sub">Pick a layout you like, then fill it in — you can switch templates any time while editing.</p>
             </>
           )}
-          {step === 'template' && (
-            <button className="btn btn-secondary" onClick={() => navigate('/cv/saved')}>
-              <FolderOpen size={15} /> View Saved CVs
-            </button>
+          {step === 'edit' && (
+            <>
+              <h2 className="cvgen-headbar-title">Edit Your CV</h2>
+              <p className="cvgen-headbar-sub">
+                Editing with the <b>{activeTemplate.name}</b> template — changes reflect in the live preview instantly.
+              </p>
+            </>
+          )}
+          {step === 'preview' && (
+            <>
+              <h2 className="cvgen-headbar-title">{'Preview & Download'}</h2>
+              <p className="cvgen-headbar-sub">Your CV is ready — export it as a PDF or save a draft to finish later.</p>
+            </>
           )}
         </div>
-      </div>
+
+        <div className="cvgen-headbar-controls">
+          {/* Step flow */}
+          <div className="cvgen-steps" role="tablist" aria-label="CV builder steps">
+            <button
+              type="button"
+              role="tab"
+              aria-selected={step === 'template'}
+              className={`cvgen-step ${step === 'template' ? 'cvgen-step--active' : ''} ${step !== 'template' ? 'cvgen-step--done' : ''}`}
+              onClick={() => setStep('template')}
+            >
+              {step !== 'template' && <Check size={12} />} Template
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={step === 'edit'}
+              className={`cvgen-step ${step === 'edit' ? 'cvgen-step--active' : ''} ${step === 'preview' ? 'cvgen-step--done' : ''}`}
+              disabled={step === 'template'}
+              onClick={() => setStep('edit')}
+            >
+              {step === 'preview' && <Check size={12} />} Edit
+            </button>
+            <button
+              type="button"
+              role="tab"
+              aria-selected={step === 'preview'}
+              className={`cvgen-step ${step === 'preview' ? 'cvgen-step--active' : ''}`}
+              disabled={step === 'template'}
+              onClick={() => setStep('preview')}
+            >
+              Preview
+            </button>
+          </div>
+
+          {/* Per-step actions */}
+          {step === 'template' ? (
+            <div className="cvgen-headbar-actions">
+              <button className="btn btn-outline" onClick={() => navigate('/admin/cv/saved')}>
+                <FolderOpen size={15} /> Saved CVs
+              </button>
+            </div>
+          ) : step === 'edit' ? (
+            <div className="cvgen-headbar-actions">
+              <button className="btn-save-draft" onClick={() => setShowSaveModal(true)}>
+                <Save size={15} /> {currentSaveId ? 'Update Draft' : 'Save Draft'}
+              </button>
+              <button
+                className={`cvgen-step-btn ${showLivePreview ? 'cvgen-step-btn--on' : ''}`}
+                onClick={() => setShowLivePreview(v => !v)}
+                title={showLivePreview ? 'Hide live preview' : 'Show live preview'}
+              >
+                <PanelRight size={15} /> {showLivePreview ? 'Hide Preview' : 'Show Preview'}
+              </button>
+              <button className="btn btn-primary" onClick={() => setStep('preview')}>
+                <Eye size={15} /> Preview
+              </button>
+            </div>
+          ) : (
+            <div className="cvgen-headbar-actions">
+              <div className="cvgen-scale-toggle">
+                <button
+                  className={`cvgen-toggle-btn ${!previewWide ? 'active' : ''}`}
+                  onClick={() => setPreviewWide(false)}
+                  title="Fit page to screen"
+                >
+                  <Minimize2 size={13} /> Fit
+                </button>
+                <button
+                  className={`cvgen-toggle-btn ${previewWide ? 'active' : ''}`}
+                  onClick={() => setPreviewWide(true)}
+                  title="Full page width"
+                >
+                  <Maximize2 size={13} /> 100%
+                </button>
+              </div>
+              <button className="btn-save-draft" onClick={() => setShowSaveModal(true)}>
+                <Save size={15} /> {currentSaveId ? 'Update Draft' : 'Save Draft'}
+              </button>
+              <button className="btn btn-accent" onClick={handleDownloadPDF}>
+                <Download size={15} /> Download PDF
+              </button>
+            </div>
+          )}
+        </div>
+      </header>
 
       {/* ── Content ── */}
       <main className="cvgen-main">
         {step === 'template' && (
-          <>
-            <Latest5Panel saves={saves} loading={savesLoading} onLoad={handleLoad} onDelete={handleDeleteSave} onViewAll={() => navigate('/cv/saved')} />
+          <div className="cvgen-step-body">
+            <Latest5Panel saves={saves} loading={savesLoading} onLoad={handleLoad} onDelete={handleDeleteSave} onViewAll={() => navigate('/admin/cv/saved')} />
             <TemplateSelector selected={selectedTemplate} onSelect={(tpl) => { setSelectedTemplate(tpl); setStep('edit'); }} />
-          </>
+          </div>
         )}
         {step === 'edit' && (
           <div className={`cvgen-edit-wrap ${showLivePreview ? 'with-preview' : ''}`}>
@@ -377,35 +426,10 @@ export default function CVGenerator() {
           </div>
         )}
         {step === 'preview' && (
-          <div className={`cvgen-preview-wrapper ${previewWide ? 'cvgen-preview-wide' : 'cvgen-preview-fit'}`}>
-            <div className="cvgen-preview-actions-bar">
-              <span className="cvgen-preview-hint">✨ Your CV is ready — download it as PDF or save your progress.</span>
-              <div className="cvgen-preview-actions-right">
-                <div className="cvgen-scale-toggle">
-                  <button
-                    className={`cvgen-toggle-btn ${!previewWide ? 'active' : ''}`}
-                    onClick={() => setPreviewWide(false)}
-                    title="Fit page to screen"
-                  >
-                    <Minimize2 size={14} /> Fit
-                  </button>
-                  <button
-                    className={`cvgen-toggle-btn ${previewWide ? 'active' : ''}`}
-                    onClick={() => setPreviewWide(true)}
-                    title="Full page width"
-                  >
-                    <Maximize2 size={14} /> 100%
-                  </button>
-                </div>
-                <button className="btn-save-draft" onClick={() => setShowSaveModal(true)}>
-                  <Save size={15} /> {currentSaveId ? 'Update Save' : 'Save Draft'}
-                </button>
-                <button className="btn btn-accent" onClick={handleDownloadPDF}>
-                  <Download size={15} /> Download PDF
-                </button>
-              </div>
+          <div className="cvgen-step-body">
+            <div className={`cvgen-preview-wrapper ${previewWide ? 'cvgen-preview-wide' : 'cvgen-preview-fit'}`}>
+              <CVPreview ref={previewRef} cvData={cvData} template={selectedTemplate} />
             </div>
-            <CVPreview ref={previewRef} cvData={cvData} template={selectedTemplate} />
           </div>
         )}
       </main>

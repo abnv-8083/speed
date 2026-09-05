@@ -66,7 +66,7 @@ const Home = () => {
         <div 
           className="portal-card card-cv animate-fade-in" 
           style={{ animationDelay: '0.3s' }}
-          onClick={() => navigate('/cv')}
+          onClick={() => navigate('/admin/cv')}
         >
           <div className="portal-icon-wrapper">
             <FileText size={32} />

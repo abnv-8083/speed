@@ -145,10 +145,6 @@ function TemplateMiniPreview({ id, accent }) {
 export default function TemplateSelector({ selected, onSelect }) {
   return (
     <div className="tpl-selector animate-fade-in">
-      <div className="tpl-header">
-        <h2>Choose a Template</h2>
-        <p>Pick a design that represents your style, then customize it with your details.</p>
-      </div>
       <div className="tpl-grid">
         {TEMPLATES.map((tpl) => (
           <div
