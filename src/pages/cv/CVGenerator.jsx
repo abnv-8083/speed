@@ -1,7 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Download, Eye, Edit3, ChevronRight,
-  Save, FolderOpen, Trash2, Check, X, Clock, FileText, Loader, Plus,
+  Download, Eye, ChevronRight,
+  Save, FolderOpen, Trash2, Check, X, Clock, FileText, Loader,
+  PanelRight, Minimize2, Maximize2,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CVEditor from './CVEditor';
@@ -119,10 +120,11 @@ export default function CVGenerator() {
   const [selectedTemplate, setSelectedTemplate] = useState('modern');
   const [cvData, setCvData]               = useState(defaultData);
   const [saves, setSaves]                 = useState([]);
-  const [savesLoading, setSavesLoading]   = useState(true);
-  const [showSaveModal, setShowSaveModal] = useState(false);
-  const [modalSaving, setModalSaving]     = useState(false);
+  const [savesLoading, setSavesLoading]   = useState(true);  const [showSaveModal, setShowSaveModal] = useState(false);
+  const [modalSaving, setModalSaving]   = useState(false);
   const [currentSaveId, setCurrentSaveId] = useState(null);
+  const [showLivePreview, setShowLivePreview] = useState(true);
+  const [previewWide, setPreviewWide]   = useState(false);
   const toast = useToast();
   const previewRef = useRef(null);
 
@@ -216,8 +218,12 @@ export default function CVGenerator() {
   const handleDownloadPDF = async () => {
     const element = previewRef.current;
     if (!element) return;
+    // Temporarily render at 100% scale so the PDF capture is full size
+    const wasWide = previewWide;
+    if (!wasWide) setPreviewWide(true);
+    await new Promise(r => requestAnimationFrame(() => requestAnimationFrame(r)));
     const html2pdf = (await import('html2pdf.js')).default;
-    html2pdf()
+    await html2pdf()
       .set({
         margin: 0,
         filename: `${cvData.personal.name.replace(/\s+/g, '_')}_CV.pdf`,
@@ -227,6 +233,7 @@ export default function CVGenerator() {
       })
       .from(element)
       .save();
+    if (!wasWide) setPreviewWide(false);
   };
 
   return (
@@ -235,30 +242,49 @@ export default function CVGenerator() {
       {/* ── Slim action bar (no back button — uses global header) ── */}
       <div className="cvgen-action-bar glass-panel">
         <div className="cvgen-breadcrumb">
-          <span className={step === 'template' ? 'active' : 'done'}>
+          <button
+            className={`cvgen-crumb ${step === 'template' ? 'active' : step !== 'template' ? 'done' : ''}`}
+            onClick={() => setStep('template')}
+          >
             {step !== 'template' ? <Check size={12} /> : null} Template
-          </span>
+          </button>
           <ChevronRight size={13} />
-          <span className={step === 'edit' ? 'active' : step === 'preview' ? 'done' : ''}>
+          <button
+            className={`cvgen-crumb ${step === 'edit' ? 'active' : step === 'preview' ? 'done' : ''}`}
+            disabled={step === 'template'}
+            onClick={() => setStep('edit')}
+          >
             {step === 'preview' ? <Check size={12} /> : null} Edit
-          </span>
+          </button>
           <ChevronRight size={13} />
-          <span className={step === 'preview' ? 'active' : ''}>Preview</span>
+          <button
+            className={`cvgen-crumb ${step === 'preview' ? 'active' : ''}`}
+            disabled={step !== 'edit' && step !== 'preview'}
+            onClick={() => setStep('preview')}
+          >
+            Preview
+          </button>
         </div>
 
         <div className="cvgen-action-bar-right">
           {step !== 'template' && (
             <>
-              <button className="cvgen-step-btn" onClick={() => setStep(step === 'preview' ? 'edit' : 'template')}>
-                <Edit3 size={15} /> {step === 'preview' ? 'Back to Edit' : 'Change Template'}
-              </button>
               <button className="btn-save-draft" onClick={() => setShowSaveModal(true)}>
                 <Save size={15} /> {currentSaveId ? 'Update' : 'Save Draft'}
               </button>
               {step === 'edit' && (
-                <button className="btn btn-primary" onClick={() => setStep('preview')}>
-                  <Eye size={15} /> Preview
-                </button>
+                <>
+                  <button
+                    className={`cvgen-step-btn ${showLivePreview ? 'cvgen-step-btn--on' : ''}`}
+                    onClick={() => setShowLivePreview(v => !v)}
+                    title={showLivePreview ? 'Hide live preview' : 'Show live preview'}
+                  >
+                    <PanelRight size={15} /> {showLivePreview ? 'Hide Preview' : 'Live Preview'}
+                  </button>
+                  <button className="btn btn-primary" onClick={() => setStep('preview')}>
+                    <Eye size={15} /> Preview
+                  </button>
+                </>
               )}
               {step === 'preview' && (
                 <button className="btn btn-accent" onClick={handleDownloadPDF}>
@@ -284,13 +310,39 @@ export default function CVGenerator() {
           </>
         )}
         {step === 'edit' && (
-          <CVEditor cvData={cvData} setCvData={setCvData} template={selectedTemplate} onPreview={() => setStep('preview')} />
+          <div className={`cvgen-edit-wrap ${showLivePreview ? 'with-preview' : ''}`}>
+            <CVEditor cvData={cvData} setCvData={setCvData} template={selectedTemplate} onPreview={() => setStep('preview')} />
+            {showLivePreview && (
+              <aside className="cvgen-live-preview">
+                <div className="cvgen-live-preview-head"><PanelRight size={13} /> Live Preview</div>
+                <div className="cvgen-live-preview-body">
+                  <CVPreview cvData={cvData} template={selectedTemplate} />
+                </div>
+              </aside>
+            )}
+          </div>
         )}
         {step === 'preview' && (
-          <div className="cvgen-preview-wrapper">
+          <div className={`cvgen-preview-wrapper ${previewWide ? 'cvgen-preview-wide' : 'cvgen-preview-fit'}`}>
             <div className="cvgen-preview-actions-bar">
               <span className="cvgen-preview-hint">✨ Your CV is ready — download it as PDF or save your progress.</span>
-              <div style={{ display: 'flex', gap: '0.75rem' }}>
+              <div className="cvgen-preview-actions-right">
+                <div className="cvgen-scale-toggle">
+                  <button
+                    className={`cvgen-toggle-btn ${!previewWide ? 'active' : ''}`}
+                    onClick={() => setPreviewWide(false)}
+                    title="Fit page to screen"
+                  >
+                    <Minimize2 size={14} /> Fit
+                  </button>
+                  <button
+                    className={`cvgen-toggle-btn ${previewWide ? 'active' : ''}`}
+                    onClick={() => setPreviewWide(true)}
+                    title="Full page width"
+                  >
+                    <Maximize2 size={14} /> 100%
+                  </button>
+                </div>
                 <button className="btn-save-draft" onClick={() => setShowSaveModal(true)}>
                   <Save size={15} /> {currentSaveId ? 'Update Save' : 'Save Draft'}
                 </button>

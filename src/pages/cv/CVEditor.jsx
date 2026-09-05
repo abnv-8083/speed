@@ -1,5 +1,19 @@
 import React, { useState, useRef } from 'react';
-import { Plus, Trash2, Eye, Upload, X } from 'lucide-react';
+import {
+  Plus, Trash2, Eye, Upload, X,
+  User, Briefcase, GraduationCap, Wrench, Award, Languages, Sparkles,
+} from 'lucide-react';
+
+const SECTION_META = [
+  { id: 'personal',         label: 'Personal',    icon: User       },
+  { id: 'experience',       label: 'Experience',  icon: Briefcase  },
+  { id: 'training',         label: 'Training',    icon: Sparkles   },
+  { id: 'education',        label: 'Education',   icon: GraduationCap },
+  { id: 'skills',           label: 'Core Skills', icon: Wrench     },
+  { id: 'technicalSkills',  label: 'Tech Skills', icon: Wrench     },
+  { id: 'certifications',   label: 'Certs',       icon: Award      },
+  { id: 'languages',        label: 'Languages',   icon: Languages  },
+];
 
 export default function CVEditor({ cvData, setCvData, template, onPreview }) {
   const [activeSection, setActiveSection] = useState('personal');
@@ -76,43 +90,70 @@ export default function CVEditor({ cvData, setCvData, template, onPreview }) {
 
   const isATS = template === 'ats';
 
-  const SECTIONS = [
-    'personal',
-    'experience',
-    'training',
-    'education',
-    'skills',
-    'technicalSkills',
-    'certifications',
-    'languages',
-  ];
+  // ── Sidebar data: counts + completion ────────────────────────
+  const itemCounts = {
+    personal:        null,
+    experience:      cvData.experience.length,
+    training:        (cvData.training || []).length,
+    education:       cvData.education.length,
+    skills:          cvData.skills.length,
+    technicalSkills: (cvData.technicalSkills || []).length,
+    certifications:  (cvData.certifications || []).length,
+    languages:       (cvData.languages || []).length,
+  };
 
-  const sectionLabel = (s) => ({
-    personal: 'Personal',
-    experience: 'Experience',
-    training: 'Training',
-    education: 'Education',
-    skills: 'Core Skills',
-    technicalSkills: 'Tech Skills',
-    certifications: 'Certifications',
-    languages: 'Languages',
-  }[s] || s.charAt(0).toUpperCase() + s.slice(1));
+  const isComplete = (id) => {
+    if (id === 'personal') {
+      const p = cvData.personal;
+      return !!(p.name?.trim() && p.email?.trim() && p.title?.trim());
+    }
+    if (id === 'experience')  return cvData.experience.some(e => e.role?.trim() || e.company?.trim());
+    if (id === 'education')   return cvData.education.some(e => e.degree?.trim() || e.institution?.trim());
+    if (id === 'training')    return (cvData.training || []).some(t => t.role?.trim() || t.organization?.trim());
+    return (itemCounts[id] || 0) > 0;
+  };
+
+  const completedCount = SECTION_META.filter(s => isComplete(s.id)).length;
+
+  // ── Empty-state hint per section ─────────────────────────────
+  const emptyHints = {
+    experience:      'No work experience yet. Click Add to create your first entry.',
+    training:        'No training entries yet. Click Add to start.',
+    education:       'No education entries yet. Click Add to start.',
+    certifications:  'No certifications yet. Type one above and press Enter.',
+    languages:       'No languages yet. Type one above and press Enter.',
+  };
 
   return (
     <div className="cveditor-layout animate-fade-in">
       {/* Sidebar nav */}
       <aside className="cveditor-nav glass-panel">
-        {SECTIONS.map(s => (
-          <button
-            key={s}
-            className={`cveditor-nav-item ${activeSection === s ? 'active' : ''}`}
-            onClick={() => setActiveSection(s)}
-          >
-            {sectionLabel(s)}
-          </button>
-        ))}
+        <div className="cveditor-nav-progress">
+          <div className="cveditor-nav-progress-bar">
+            <span style={{ width: `${(completedCount / SECTION_META.length) * 100}%` }} />
+          </div>
+          <span className="cveditor-nav-progress-label">{completedCount}/{SECTION_META.length} complete</span>
+        </div>
+
+        {SECTION_META.map(({ id, label, icon: Icon }) => {
+          const count = itemCounts[id];
+          const done  = isComplete(id);
+          return (
+            <button
+              key={id}
+              className={`cveditor-nav-item ${activeSection === id ? 'active' : ''}`}
+              onClick={() => setActiveSection(id)}
+            >
+              <Icon size={15} className="cveditor-nav-icon" />
+              <span className="cveditor-nav-label">{label}</span>
+              {count !== null && count > 0 && <span className="cveditor-nav-count">{count}</span>}
+              <span className={`cveditor-nav-dot ${done ? 'done' : ''}`} title={done ? 'Completed' : 'Not filled yet'} />
+            </button>
+          );
+        })}
+
         <button className="btn btn-primary cveditor-preview-btn" onClick={onPreview}>
-          <Eye size={16} /> Preview CV
+          <Eye size={16} /> Full Preview
         </button>
       </aside>
 
@@ -146,25 +187,27 @@ export default function CVEditor({ cvData, setCvData, template, onPreview }) {
               </div>
             )}
 
-            {[
-              ['name', 'Full Name', 'text'],
-              ['title', 'Professional Title', 'text'],
-              ['email', 'Email Address', 'email'],
-              ['phone', 'Phone Number', 'tel'],
-              ['location', 'Location', 'text'],
-              ['website', 'Website / LinkedIn', 'text'],
-            ].map(([field, label, type]) => (
-              <div className="form-group" key={field}>
-                <label className="form-label">{label}</label>
-                <input
-                  type={type}
-                  className="input-field"
-                  value={cvData.personal[field] || ''}
-                  onChange={e => updatePersonal(field, e.target.value)}
-                  placeholder={label}
-                />
-              </div>
-            ))}
+            <div className="cveditor-form-grid">
+              {[
+                ['name', 'Full Name', 'text'],
+                ['title', 'Professional Title', 'text'],
+                ['email', 'Email Address', 'email'],
+                ['phone', 'Phone Number', 'tel'],
+                ['location', 'Location', 'text'],
+                ['website', 'Website / LinkedIn', 'text'],
+              ].map(([field, label, type]) => (
+                <div className="form-group" key={field}>
+                  <label className="form-label">{label}</label>
+                  <input
+                    type={type}
+                    className="input-field"
+                    value={cvData.personal[field] || ''}
+                    onChange={e => updatePersonal(field, e.target.value)}
+                    placeholder={label}
+                  />
+                </div>
+              ))}
+            </div>
             <div className="form-group">
               <label className="form-label">Professional Summary</label>
               <textarea
@@ -185,18 +228,21 @@ export default function CVEditor({ cvData, setCvData, template, onPreview }) {
               <h3 className="cveditor-section-title">Work Experience</h3>
               <button className="btn btn-primary" onClick={addExp}><Plus size={16} /> Add</button>
             </div>
+            {cvData.experience.length === 0 && <p className="cveditor-empty-hint">{emptyHints.experience}</p>}
             {cvData.experience.map((exp, idx) => (
               <div className="cveditor-card glass-panel" key={exp.id}>
                 <div className="cveditor-card-header">
                   <span>Experience #{idx + 1}</span>
                   <button className="btn-icon btn-danger" onClick={() => removeExp(exp.id)}><Trash2 size={16} /></button>
                 </div>
-                {[['company', 'Company / Organization'], ['role', 'Job Title / Role'], ['period', 'Period (e.g. Jan 2025 – Present)']].map(([f, l]) => (
-                  <div className="form-group" key={f}>
-                    <label className="form-label">{l}</label>
-                    <input className="input-field" value={exp[f]} onChange={e => updateExp(exp.id, f, e.target.value)} placeholder={l} />
-                  </div>
-                ))}
+                <div className="cveditor-form-grid">
+                  {[['company', 'Company / Organization'], ['role', 'Job Title / Role'], ['period', 'Period (e.g. Jan 2025 – Present)']].map(([f, l]) => (
+                    <div className="form-group" key={f}>
+                      <label className="form-label">{l}</label>
+                      <input className="input-field" value={exp[f]} onChange={e => updateExp(exp.id, f, e.target.value)} placeholder={l} />
+                    </div>
+                  ))}
+                </div>
                 <div className="form-group">
                   <label className="form-label">Description / Responsibilities {isATS && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>(use bullet points: start each with •)</span>}</label>
                   <textarea className="input-field" rows={4} value={exp.description} onChange={e => updateExp(exp.id, 'description', e.target.value)} placeholder={isATS ? "• Responsibility one\n• Responsibility two\n• Responsibility three" : "Describe your responsibilities..."} />
@@ -213,21 +259,21 @@ export default function CVEditor({ cvData, setCvData, template, onPreview }) {
               <h3 className="cveditor-section-title">Training &amp; Internship</h3>
               <button className="btn btn-primary" onClick={addTraining}><Plus size={16} /> Add</button>
             </div>
-            {(cvData.training || []).length === 0 && (
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginTop: '0.5rem' }}>No training entries yet. Click Add to start.</p>
-            )}
+            {(cvData.training || []).length === 0 && <p className="cveditor-empty-hint">{emptyHints.training}</p>}
             {(cvData.training || []).map((t, idx) => (
               <div className="cveditor-card glass-panel" key={t.id}>
                 <div className="cveditor-card-header">
                   <span>Training #{idx + 1}</span>
                   <button className="btn-icon btn-danger" onClick={() => removeTraining(t.id)}><Trash2 size={16} /></button>
                 </div>
-                {[['organization', 'Organization / Airport / Institute'], ['role', 'Training Title / Programme'], ['period', 'Period (e.g. Feb 2025)']].map(([f, l]) => (
-                  <div className="form-group" key={f}>
-                    <label className="form-label">{l}</label>
-                    <input className="input-field" value={t[f] || ''} onChange={e => updateTraining(t.id, f, e.target.value)} placeholder={l} />
-                  </div>
-                ))}
+                <div className="cveditor-form-grid">
+                  {[['organization', 'Organization / Airport / Institute'], ['role', 'Training Title / Programme'], ['period', 'Period (e.g. Feb 2025)']].map(([f, l]) => (
+                    <div className="form-group" key={f}>
+                      <label className="form-label">{l}</label>
+                      <input className="input-field" value={t[f] || ''} onChange={e => updateTraining(t.id, f, e.target.value)} placeholder={l} />
+                    </div>
+                  ))}
+                </div>
                 <div className="form-group">
                   <label className="form-label">Description <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>(use • for bullet points)</span></label>
                   <textarea className="input-field" rows={3} value={t.description || ''} onChange={e => updateTraining(t.id, 'description', e.target.value)} placeholder={"• Gained practical exposure to...\n• Observed real-time ground handling..."} />
@@ -244,24 +290,27 @@ export default function CVEditor({ cvData, setCvData, template, onPreview }) {
               <h3 className="cveditor-section-title">Education</h3>
               <button className="btn btn-primary" onClick={addEdu}><Plus size={16} /> Add</button>
             </div>
+            {cvData.education.length === 0 && <p className="cveditor-empty-hint">{emptyHints.education}</p>}
             {cvData.education.map((edu, idx) => (
               <div className="cveditor-card glass-panel" key={edu.id}>
                 <div className="cveditor-card-header">
                   <span>Education #{idx + 1}</span>
                   <button className="btn-icon btn-danger" onClick={() => removeEdu(edu.id)}><Trash2 size={16} /></button>
                 </div>
-                {[
-                  ['institution', 'Institution / University'],
-                  ['degree', 'Degree / Qualification'],
-                  ['period', 'Period (e.g. 2019 – 2021)'],
-                  ['gpa', 'GPA / Grade (optional)'],
-                  ...(isATS ? [['board', 'Board / University (optional)'], ['specialization', 'Specialization (optional)']] : []),
-                ].map(([f, l]) => (
-                  <div className="form-group" key={f}>
-                    <label className="form-label">{l}</label>
-                    <input className="input-field" value={edu[f] || ''} onChange={e => updateEdu(edu.id, f, e.target.value)} placeholder={l} />
-                  </div>
-                ))}
+                <div className="cveditor-form-grid">
+                  {[
+                    ['institution', 'Institution / University'],
+                    ['degree', 'Degree / Qualification'],
+                    ['period', 'Period (e.g. 2019 – 2021)'],
+                    ['gpa', 'GPA / Grade (optional)'],
+                    ...(isATS ? [['board', 'Board / University (optional)'], ['specialization', 'Specialization (optional)']] : []),
+                  ].map(([f, l]) => (
+                    <div className="form-group" key={f}>
+                      <label className="form-label">{l}</label>
+                      <input className="input-field" value={edu[f] || ''} onChange={e => updateEdu(edu.id, f, e.target.value)} placeholder={l} />
+                    </div>
+                  ))}
+                </div>
               </div>
             ))}
           </div>
