@@ -153,7 +153,7 @@ export default function CVEditor({ cvData, setCvData, template, onPreview }) {
         })}
 
         <button className="btn btn-primary cveditor-preview-btn" onClick={onPreview}>
-          <Eye size={16} /> Full Preview
+          <Eye size={16} /> <span className="cveditor-preview-btn-label">Full Preview</span>
         </button>
       </aside>
 

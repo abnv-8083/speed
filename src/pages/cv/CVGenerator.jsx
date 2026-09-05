@@ -1,13 +1,14 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
-  Download, Eye, ChevronRight,
-  Save, FolderOpen, Trash2, Check, X, Clock, FileText, Loader,
-  PanelRight, Minimize2, Maximize2,
+  Download, Eye, ChevronRight, ChevronDown, Check,
+  Save, FolderOpen, Trash2, X, Clock, FileText, Loader,
+  PanelRight, Minimize2, Maximize2, Paintbrush,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import CVEditor from './CVEditor';
 import CVPreview from './CVPreview';
 import TemplateSelector from './TemplateSelector';
+import { TEMPLATES } from './cvTemplates';
 import { fetchSaves, upsertSave, deleteSave } from './cvStorage';
 import { useToast } from '../../components/ToastContext';
 import './CVGenerator.css';
@@ -125,8 +126,27 @@ export default function CVGenerator() {
   const [currentSaveId, setCurrentSaveId] = useState(null);
   const [showLivePreview, setShowLivePreview] = useState(true);
   const [previewWide, setPreviewWide]   = useState(false);
+  const [tplMenuOpen, setTplMenuOpen]   = useState(false);
+  const tplMenuRef = useRef(null);
   const toast = useToast();
   const previewRef = useRef(null);
+
+  const activeTemplate = TEMPLATES.find(t => t.id === selectedTemplate) || TEMPLATES[0];
+
+  // ── Close template menu on outside click / Escape ───────────
+  useEffect(() => {
+    if (!tplMenuOpen) return;
+    const onPointerDown = (e) => {
+      if (tplMenuRef.current && !tplMenuRef.current.contains(e.target)) setTplMenuOpen(false);
+    };
+    const onKeyDown = (e) => { if (e.key === 'Escape') setTplMenuOpen(false); };
+    document.addEventListener('mousedown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [tplMenuOpen]);
 
   // ── Load saves from Supabase on mount ──────────────────────
   const refreshSaves = useCallback(async () => {
@@ -314,7 +334,41 @@ export default function CVGenerator() {
             <CVEditor cvData={cvData} setCvData={setCvData} template={selectedTemplate} onPreview={() => setStep('preview')} />
             {showLivePreview && (
               <aside className="cvgen-live-preview">
-                <div className="cvgen-live-preview-head"><PanelRight size={13} /> Live Preview</div>
+                <div className="cvgen-live-preview-head">
+                  <span className="cvgen-live-preview-title"><PanelRight size={13} /> Live Preview</span>
+                  <div className="cvgen-tpl-switcher" ref={tplMenuRef}>
+                    <button
+                      type="button"
+                      className={`cvgen-tpl-switcher-btn ${tplMenuOpen ? 'open' : ''}`}
+                      onClick={() => setTplMenuOpen(o => !o)}
+                      title="Change CV template"
+                      aria-haspopup="listbox"
+                      aria-expanded={tplMenuOpen}
+                    >
+                      <Paintbrush size={12} />
+                      <span className="cvgen-tpl-switcher-name">{activeTemplate.name}</span>
+                      <ChevronDown size={12} className="cvgen-tpl-switcher-caret" />
+                    </button>
+                    {tplMenuOpen && (
+                      <div className="cvgen-tpl-menu" role="listbox">
+                        {TEMPLATES.map(tpl => (
+                          <button
+                            key={tpl.id}
+                            type="button"
+                            role="option"
+                            aria-selected={tpl.id === selectedTemplate}
+                            className={`cvgen-tpl-option ${tpl.id === selectedTemplate ? 'selected' : ''}`}
+                            onClick={() => { setSelectedTemplate(tpl.id); setTplMenuOpen(false); }}
+                          >
+                            <span className="cvgen-tpl-option-dot" style={{ background: tpl.accent }} />
+                            <span className="cvgen-tpl-option-name">{tpl.name}</span>
+                            {tpl.id === selectedTemplate && <Check size={13} className="cvgen-tpl-option-check" />}
+                          </button>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 <div className="cvgen-live-preview-body">
                   <CVPreview cvData={cvData} template={selectedTemplate} />
                 </div>
